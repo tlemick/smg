@@ -1,0 +1,421 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String         @id @default(cuid())
+  email                   String         @unique
+  name                    String?
+  password                String
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  active                  Boolean        @default(true)
+  role                    String         @default("USER")
+  hasCompletedOnboarding  Boolean        @default(false)
+  onboardingCompletedAt   DateTime?
+  limitOrders             LimitOrder[]
+  orders                  Order[]
+  portfolios              Portfolio[]
+  transactions            Transaction[]
+  activities              UserActivity[]
+  watchlists              Watchlist[]
+
+  @@index([role])
+  @@index([active])
+}
+
+model GameSession {
+  id           String      @id @default(cuid())
+  startDate    DateTime
+  endDate      DateTime
+  startingCash Float       @default(100000)
+  name         String?
+  description  String?
+  isActive     Boolean     @default(false)
+  portfolios   Portfolio[]
+}
+
+model Portfolio {
+  id           String                 @id @default(cuid())
+  name         String
+  description  String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  userId       String
+  sessionId    String
+  cash_balance Float
+  holdings     Holding[]
+  gameSession  GameSession            @relation(fields: [sessionId], references: [id])
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  performance  PortfolioPerformance[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  name      String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WatchlistItem[]
+
+  @@index([userId])
+}
+
+model WatchlistItem {
+  id          String    @id @default(cuid())
+  watchlistId String
+  assetId     Int
+  assetType   String
+  addedAt     DateTime  @default(now())
+  notes       String?
+  asset       Asset     @relation(fields: [assetId], references: [id])
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, assetId])
+  @@index([watchlistId])
+  @@index([assetId])
+}
+
+model Asset {
+  id                    Int              @id @default(autoincrement())
+  ticker                String           @unique
+  name                  String
+  type                  String
+  market                String?
+  locale                String?
+  primaryExchange       String?
+  active                Boolean?         @default(true)
+  currencyName          String?
+  lastUpdated           DateTime?        @default(now())
+  logoUrl               String?
+  minimumPurchaseAmount Float            @default(0.0001)
+  allowFractionalShares Boolean          @default(true)
+  profile               AssetProfile?
+  quoteCache            AssetQuoteCache?
+  bond                  Bond?
+  dailyAggregates       DailyAggregate[]
+  holdings              Holding[]
+  limitOrders           LimitOrder[]
+  mutualFund            MutualFund?
+  orders                Order[]
+  stock                 Stock?
+  transactions          Transaction[]
+  userActivities        UserActivity[]
+  watchlistItems        WatchlistItem[]
+}
+
+model Stock {
+  id       Int     @id @default(autoincrement())
+  ticker   String  @unique
+  name     String
+  sector   String?
+  industry String?
+  asset    Asset   @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([id])
+  @@index([ticker])
+}
+
+model Bond {
+  id               Int       @id @default(autoincrement())
+  issuer           String?
+  issueDate        DateTime?
+  maturityDate     DateTime?
+  couponRate       Float?
+  faceValue        Float?
+  yieldToMaturity  Float?
+  creditRating     String?
+  bondType         String?
+  paymentFrequency String?
+  asset            Asset     @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([id])
+}
+
+model MutualFund {
+  id                Int       @id @default(autoincrement())
+  fundFamily        String?
+  fundType          String?
+  expenseRatio      Float?
+  fundManager       String?
+  inceptionDate     DateTime?
+  aum               Float?
+  nav               Float?
+  minimumInvestment Float?
+  asset             Asset     @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([id])
+}
+
+model DailyAggregate {
+  id            String   @id @default(cuid())
+  date          DateTime
+  open          Float
+  high          Float
+  low           Float
+  close         Float
+  volume        BigInt
+  assetId       Int
+  adjustedClose Float?
+  dataSource    String   @default("yfinance")
+  asset         Asset    @relation(fields: [assetId], references: [id])
+
+  @@unique([assetId, date], name: "assetId_date")
+  @@index([assetId])
+  @@index([date])
+  @@index([dataSource])
+}
+
+model Holding {
+  id           String    @id @default(cuid())
+  quantity     Float
+  averagePrice Float
+  portfolioId  String
+  assetId      Int
+  assetType    String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  asset        Asset     @relation(fields: [assetId], references: [id])
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, assetId])
+  @@index([portfolioId])
+  @@index([assetId])
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  type        String
+  quantity    Float
+  price       Float
+  total       Float
+  date        DateTime  @default(now())
+  portfolioId String
+  assetId     Int
+  assetType   String
+  userId      String
+  asset       Asset     @relation(fields: [assetId], references: [id])
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioId])
+  @@index([assetId])
+  @@index([userId])
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  type      String
+  quantity  Float
+  price     Float
+  createdAt DateTime @default(now())
+  userId    String
+  assetId   Int
+  assetType String
+  status    String   @default("COMPLETED")
+  priceType String   @default("MARKET")
+  asset     Asset    @relation(fields: [assetId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([assetId])
+}
+
+model LimitOrder {
+  id            String    @id @default(cuid())
+  type          String
+  quantity      Float
+  limitPrice    Float
+  createdAt     DateTime  @default(now())
+  expireAt      DateTime?
+  userId        String
+  assetId       Int
+  assetType     String
+  status        String    @default("PENDING")
+  executedPrice Float?
+  executedAt    DateTime?
+  notes         String?
+  asset         Asset     @relation(fields: [assetId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([assetId])
+  @@index([status])
+}
+
+model Daily_SP500 {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  dayOfWeek Int
+
+  @@index([date])
+  @@index([dayOfWeek])
+}
+
+model PortfolioPerformance {
+  id                       String    @id @default(cuid())
+  date                     DateTime
+  portfolio_value          Float
+  sp500_value              Float
+  portfolio_percent_change Float
+  sp500_percent_change     Float
+  outperformance           Float
+  portfolioId              String
+  portfolio                Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, date], name: "portfolioId_date")
+  @@index([portfolioId])
+  @@index([date])
+}
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserActivity {
+  id                   String    @id @default(cuid())
+  userId               String
+  type                 String
+  subtype              String
+  title                String
+  description          String?
+  data                 Json?
+  importance           Int       @default(1)
+  relatedAssetId       Int?
+  relatedOrderId       String?
+  relatedTransactionId String?
+  icon                 String?
+  color                String?
+  actionUrl            String?
+  read                 Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  expiresAt            DateTime?
+  relatedAsset         Asset?    @relation(fields: [relatedAssetId], references: [id])
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+  @@index([userId, read])
+  @@index([importance])
+}
+
+model AssetQuoteCache {
+  id                         String    @id @default(cuid())
+  assetId                    Int       @unique
+  regularMarketPrice         Float
+  regularMarketChange        Float?
+  regularMarketChangePercent Float?
+  regularMarketPreviousClose Float?
+  regularMarketOpen          Float?
+  regularMarketDayLow        Float?
+  regularMarketDayHigh       Float?
+  regularMarketVolume        BigInt?
+  currency                   String
+  exchangeName               String?
+  marketState                String?
+  preMarketPrice             Float?
+  preMarketChange            Float?
+  postMarketPrice            Float?
+  postMarketChange           Float?
+  fiftyTwoWeekLow            Float?
+  fiftyTwoWeekHigh           Float?
+  marketCap                  BigInt?
+  sharesOutstanding          BigInt?
+  averageVolume              BigInt?
+  averageVolume10days        BigInt?
+  bookValue                  Float?
+  priceToBook                Float?
+  earningsPerShare           Float?
+  trailingPE                 Float?
+  forwardPE                  Float?
+  dividendRate               Float?
+  dividendYield              Float?
+  exDividendDate             DateTime?
+  beta                       Float?
+  lastUpdated                DateTime  @updatedAt
+  expiresAt                  DateTime
+  createdAt                  DateTime  @default(now())
+  asset                      Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([expiresAt])
+  @@index([marketState])
+}
+
+model AssetProfile {
+  id                 String   @id @default(cuid())
+  assetId            Int      @unique
+  marketCap          BigInt?
+  enterpriseValue    BigInt?
+  trailingPE         Float?
+  forwardPE          Float?
+  priceToBook        Float?
+  beta               Float?
+  dividendYield      Float?
+  website            String?
+  description        String?
+  address            String?
+  city               String?
+  state              String?
+  country            String?
+  phone              String?
+  fullTimeEmployees  Int?
+  sector             String?
+  industry           String?
+  totalRevenue       BigInt?
+  totalDebt          BigInt?
+  totalCash          BigInt?
+  operatingCashflow  BigInt?
+  earningsGrowth     Float?
+  revenueGrowth      Float?
+  grossMargins       Float?
+  operatingMargins   Float?
+  profitMargins      Float?
+  returnsOnEquity    Float?
+  returnsOnAssets    Float?
+  debtToEquity       Float?
+  currentRatio       Float?
+  quickRatio         Float?
+  recommendationKey  String?
+  recommendationMean Float?
+  targetHighPrice    Float?
+  targetLowPrice     Float?
+  targetMeanPrice    Float?
+  lastUpdated        DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  asset              Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([sector])
+  @@index([industry])
+}
+
+model YahooSearchCache {
+  id          String   @id @default(cuid())
+  query       String   @unique
+  results     Json
+  lastUpdated DateTime @updatedAt
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([query])
+  @@index([expiresAt])
+}

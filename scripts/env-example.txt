@@ -1,0 +1,22 @@
+# Authentication Environment Variables Example
+# Copy these to your .env.local file
+
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/smg_database"
+
+# JWT Configuration  
+JWT_SECRET="your-super-secret-jwt-key-make-it-long-and-random-at-least-32-characters"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# Password Hashing Configuration
+BCRYPT_SALT_ROUNDS="12"
+
+# Next.js Configuration
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+
+# Optional: Node Environment
+NODE_ENV="development"
+
+# Optional: Debug Mode
+DEBUG="true" 

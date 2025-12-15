@@ -1,0 +1,139 @@
+import type { ComponentType } from 'react';
+import type { IconProps as PhosphorIconProps, IconWeight } from '@phosphor-icons/react';
+import {
+  ArrowClockwiseIcon,
+  ArrowUUpLeftIcon,
+  BellIcon,
+  BellRingingIcon,
+  BriefcaseIcon,
+  CalendarIcon,
+  CaretDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  ChartBarIcon,
+  ChartPieIcon,
+  ChatCircleIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  CircleNotchIcon,
+  ClipboardIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  DesktopIcon,
+  DiscordLogoIcon,
+  EyeIcon,
+  FileTextIcon,
+  GaugeIcon,
+  GearIcon,
+  HourglassHighIcon,
+  HouseIcon,
+  InfoIcon,
+  ListIcon,
+  LockIcon,
+  MagnifyingGlassIcon,
+  MinusIcon,
+  MoonIcon,
+  PencilSimpleIcon,
+  PlayIcon,
+  PlusIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  SpinnerGapIcon,
+  StarIcon,
+  SunIcon,
+  TargetIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+  TrashIcon,
+  TrayIcon,
+  TrophyIcon,
+  UserIcon,
+  UserPlusIcon,
+  UsersIcon,
+  WarningCircleIcon,
+  XCircleIcon,
+  XIcon,
+} from '@phosphor-icons/react';
+import { cn } from '@/lib/utils';
+
+export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+interface IconProps {
+  icon: ComponentType<PhosphorIconProps>;
+  size?: IconSize;
+  weight?: IconWeight;
+  className?: string;
+}
+
+const sizePx: Record<IconSize, number> = {
+  xs: 12,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 32,
+};
+
+export function Icon({ icon: IconComponent, size = 'md', weight = 'regular', className }: IconProps) {
+  return (
+    <IconComponent 
+      size={sizePx[size]}
+      weight={weight}
+      className={cn(className)} 
+    />
+  );
+}
+
+export {
+  ArrowClockwiseIcon,
+  ArrowUUpLeftIcon,
+  BellIcon,
+  BellRingingIcon,
+  BriefcaseIcon,
+  CalendarIcon,
+  CaretDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  ChartBarIcon,
+  ChartPieIcon,
+  ChatCircleIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  CircleNotchIcon,
+  ClipboardIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  DesktopIcon,
+  DiscordLogoIcon,
+  EyeIcon,
+  FileTextIcon,
+  GaugeIcon,
+  GearIcon,
+  HourglassHighIcon,
+  HouseIcon,
+  InfoIcon,
+  ListIcon,
+  LockIcon,
+  MagnifyingGlassIcon,
+  MinusIcon,
+  MoonIcon,
+  PencilSimpleIcon,
+  PlayIcon,
+  PlusIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  SpinnerGapIcon,
+  StarIcon,
+  SunIcon,
+  TargetIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+  TrashIcon,
+  TrayIcon,
+  TrophyIcon,
+  UserIcon,
+  UserPlusIcon,
+  UsersIcon,
+  WarningCircleIcon,
+  XIcon,
+  XCircleIcon,
+};

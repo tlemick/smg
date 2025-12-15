@@ -1,26 +1,364 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand color - kept for potential future use */
+  --highlight-color: #FEF100;
+  
+  /* Performance Chart Colors - Light Mode */
+  --chart-user: #3B82F6;          /* Blue-500 for user's performance */
+  --chart-benchmark: #000000;     /* Black for S&P 500 */
+  --chart-leader: #10B981;        /* Emerald-500 for leader */
+  --chart-reference: #1F2937;     /* Gray for reference lines */
+  --chart-label: #000000;         /* Black for labels */
+  
+  /* Category Chart Colors - Light Mode */
+  --chart-stocks: #6C8CFF;        /* Blue for stocks */
+  --chart-mutual-funds: #BFC8FF;  /* Light blue for mutual funds */
+  --chart-bonds: #E0E4FF;         /* Lighter blue for bonds */
+  --chart-legend-text: #4B5563;   /* Gray for legend text */
+  
+  /* Asset Chart Colors - Light Mode */
+  --color-positive: #10B981;      /* Emerald-500 for positive price changes */
+  --color-negative: #EF4444;      /* Red-500 for negative price changes */
+  
+  /* Chart Axis Colors - Light Mode */
+  --axis-text-color: #374151;    /* Gray-700 for primary axis labels */
+  --axis-text-color-secondary: #6B7280; /* Gray-500 for secondary axis labels */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  /* Performance Chart Colors - Dark Mode */
+  --chart-user: #60A5FA;          /* Blue-400 for user's performance */
+  --chart-benchmark: #F3F4F6;     /* Gray-100 for S&P 500 */
+  --chart-leader: #4ADE80;        /* Green-400 for leader */
+  --chart-reference: #6B7280;     /* Medium gray for reference lines */
+  --chart-label: #F9FAFB;         /* Near-white for labels */
+  
+  /* Category Chart Colors - Dark Mode */
+  --chart-stocks: #8BA3FF;        /* Lighter blue for stocks */
+  --chart-mutual-funds: #C4D0FF;  /* Even lighter blue for mutual funds */
+  --chart-bonds: #E0E7FF;         /* Lightest blue for bonds */
+  --chart-legend-text: #D1D5DB;   /* Light gray for legend text */
+  
+  /* Asset Chart Colors - Dark Mode */
+  --color-positive: #34D399;      /* Emerald-400 for positive price changes */
+  --color-negative: #F87171;      /* Red-400 for negative price changes */
+  
+  /* Chart Axis Colors - Dark Mode */
+  --axis-text-color: #D1D5DB;    /* Gray-300 for primary axis labels */
+  --axis-text-color-secondary: #9CA3AF; /* Gray-400 for secondary axis labels */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* Typography System - Google Fonts */
+  /* Note: Actual font families defined outside @theme to access Next.js font variables */
+  --font-grotesk: var(--font-dm-mono), system-ui, sans-serif;
+  --font-mono: var(--font-outfit), Menlo, Monaco, monospace;
+  --font-sans: var(--font-dm-mono), system-ui, sans-serif;
+  
+  /* Custom Typography Scale - Moderate scale for financial apps */
+  --font-size-tiny: 0.75rem;   /* 12px */
+  --font-size-small: 0.875rem; /* 14px */
+  --font-size-base: 1rem;      /* 16px - base */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  --font-size-5xl: 2.5rem;     /* 40px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Color System */
+  /* Neutrals */
+  --color-neutral-50: #ffffff;
+  --color-neutral-100: #f8f9fa;
+  --color-neutral-200: #e9ecef;
+  --color-neutral-300: #dee2e6;
+  --color-neutral-400: #ced4da;
+  --color-neutral-500: #adb5bd;
+  --color-neutral-600: #6c757d;
+  --color-neutral-700: #495057;
+  --color-neutral-800: #343a40;
+  --color-neutral-900: #212529;
+  --color-neutral-950: #000000;
+
+  /* Aliases: Map gray/black/white to neutrals so existing classes use neutral system */
+  --color-gray-50:  var(--color-neutral-50);
+  --color-gray-100: var(--color-neutral-100);
+  --color-gray-200: var(--color-neutral-200);
+  --color-gray-300: var(--color-neutral-300);
+  --color-gray-400: var(--color-neutral-400);
+  --color-gray-500: var(--color-neutral-500);
+  --color-gray-600: var(--color-neutral-600);
+  --color-gray-700: var(--color-neutral-700);
+  --color-gray-800: var(--color-neutral-800);
+  --color-gray-900: var(--color-neutral-900);
+  --color-gray-950: var(--color-neutral-950);
+
+  --color-white: var(--color-neutral-50);
+  --color-black: var(--color-neutral-950);
+  
+  /* Brand Colors */
+  --color-highlight: #FEF100;
+  --color-success: #409F57;
+  --color-danger: #AE3E3E;
+  --color-primary-100: #F5F6FE;
+  --color-primary-200: #DDE2FD;
+  --color-primary-300: #B2BDFA;
+  --color-primary-400: #5C73F5;
+  --color-primary-900: #081B82;
+  
+  /* Semantic Color Mappings */
+  --color-background: var(--color-neutral-50);
+  --color-foreground: var(--color-neutral-900);
+  --color-muted: var(--color-neutral-500);
+  --color-border: var(--color-neutral-300);
+  --color-surface: var(--color-neutral-100);
+  
+  /* Spacing Scale (based on typography rhythm) */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;   /* 4px */
+  --spacing-2: 0.5rem;    /* 8px */
+  --spacing-3: 0.75rem;   /* 12px */
+  --spacing-4: 1rem;      /* 16px - base unit */
+  --spacing-5: 1.25rem;   /* 20px */
+  --spacing-6: 1.5rem;    /* 24px */
+  --spacing-8: 2rem;      /* 32px */
+  --spacing-10: 2.5rem;   /* 40px */
+  --spacing-12: 3rem;     /* 48px */
+  --spacing-16: 4rem;     /* 64px */
+  
+  /* Container System */
+  --container-padding: 3rem; /* 48px */
+  --container-max-width: 90rem; /* 1440px */
+  
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+}
+
+/* Dark Mode Support - Manual override via .dark class */
+/* System dark mode preference is handled by next-themes */
+/* Dark mode colors are handled by Tailwind's dark: variant classes */
+
+/* Recharts Tooltip Styling */
+.recharts-default-tooltip {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+.dark .recharts-default-tooltip {
+  background-color: #212529 !important;
+  border: 1px solid #212529 !important;
+  color: #f9fafb !important;
+}
+
+.dark .recharts-tooltip-label {
+  color: #f9fafb !important;
+}
+
+.dark .recharts-tooltip-item {
+  color: #f9fafb !important;
+}
+
+/* Global Styles */
+body {
+  font-family: var(--font-sans);
+  line-height: var(--line-height-normal);
+}
+
+/* Typography Components */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-mono);
+}
+
+p {
+  font-family: var(--font-sans);
+}
+
+h1 {
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--spacing-6);
+}
+
+h2 {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--spacing-5);
+}
+
+h3 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  margin-bottom: var(--spacing-4);
+}
+
+h4 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  margin-bottom: var(--spacing-4);
+}
+
+h5 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-3);
+}
+
+h6 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-3);
+}
+
+p {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--spacing-4);
+}
+
+small {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+}
+
+/* Container System */
+.container {
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 12-Column Grid System */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--spacing-6);
+  width: 100%;
+}
+
+/* Desktop Layout: 8-column main + 4-column sidebar */
+@media (min-width: 1024px) {
+  .main-content {
+    grid-column: span 8;
+  }
+  
+  .sidebar {
+    grid-column: span 4;
+  }
+}
+
+/* Tablet Layout: Full width components */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content,
+  .sidebar {
+    grid-column: span 12;
+  }
+}
+
+/* Mobile Layout: Single column */
+@media (max-width: 767px) {
+  .grid-12 {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+  
+  .main-content,
+  .sidebar {
+    grid-column: span 1;
+  }
+}
+
+/* Grid Column Utilities */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* Responsive Grid Utilities */
+@media (min-width: 768px) {
+  .md\:col-1 { grid-column: span 1; }
+  .md\:col-2 { grid-column: span 2; }
+  .md\:col-3 { grid-column: span 3; }
+  .md\:col-4 { grid-column: span 4; }
+  .md\:col-5 { grid-column: span 5; }
+  .md\:col-6 { grid-column: span 6; }
+  .md\:col-7 { grid-column: span 7; }
+  .md\:col-8 { grid-column: span 8; }
+  .md\:col-9 { grid-column: span 9; }
+  .md\:col-10 { grid-column: span 10; }
+  .md\:col-11 { grid-column: span 11; }
+  .md\:col-12 { grid-column: span 12; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:col-1 { grid-column: span 1; }
+  .lg\:col-2 { grid-column: span 2; }
+  .lg\:col-3 { grid-column: span 3; }
+  .lg\:col-4 { grid-column: span 4; }
+  .lg\:col-5 { grid-column: span 5; }
+  .lg\:col-6 { grid-column: span 6; }
+  .lg\:col-7 { grid-column: span 7; }
+  .lg\:col-8 { grid-column: span 8; }
+  .lg\:col-9 { grid-column: span 9; }
+  .lg\:col-10 { grid-column: span 10; }
+  .lg\:col-11 { grid-column: span 11; }
+  .lg\:col-12 { grid-column: span 12; }
 }
