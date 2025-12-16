@@ -15,7 +15,6 @@ import {
   HouseIcon, 
   BriefcaseIcon, 
   TrendUpIcon, 
-  StarIcon,
   ListIcon,
   FileTextIcon,
   TrophyIcon,
@@ -33,12 +32,11 @@ const primaryNavItems = [
   { name: 'Home', href: '/dashboard', icon: HouseIcon },
   { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon },
   { name: 'Trade', href: '/trade', icon: TrendUpIcon },
-  { name: 'Watch', href: '/watchlists', icon: StarIcon },
+  { name: 'News', href: '/news', icon: FileTextIcon },
 ];
 
 const secondaryNavItems = [
   { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
-  { name: 'News', href: '/news', icon: FileTextIcon },
 ];
 
 export function MobileNav() {

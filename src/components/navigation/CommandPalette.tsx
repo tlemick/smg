@@ -15,7 +15,6 @@ import {
   BriefcaseIcon, 
   TrendUpIcon, 
   FileTextIcon,
-  StarIcon,
   TrophyIcon,
   MagnifyingGlassIcon,
   Icon 
@@ -32,7 +31,6 @@ const quickActions = [
   { name: 'Dashboard', href: '/dashboard', icon: HouseIcon, keywords: ['home', 'overview'] },
   { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon, keywords: ['holdings', 'positions'] },
   { name: 'Trade', href: '/trade', icon: TrendUpIcon, keywords: ['buy', 'sell', 'order'] },
-  { name: 'Watchlists', href: '/watchlists', icon: StarIcon, keywords: ['watch', 'tracking'] },
   { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon, keywords: ['rankings', 'competition'] },
   { name: 'News', href: '/news', icon: FileTextIcon, keywords: ['articles', 'updates'] },
 ];
@@ -141,13 +139,6 @@ export function CommandPalette() {
           >
             <Icon icon={TrendUpIcon} size="sm" className="text-muted-foreground" />
             <span>Place a Trade</span>
-          </CommandItem>
-          <CommandItem
-            onSelect={() => handleSelect(() => router.push('/watchlists'))}
-            className="flex items-center gap-3"
-          >
-            <Icon icon={StarIcon} size="sm" className="text-muted-foreground" />
-            <span>Create Watchlist</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

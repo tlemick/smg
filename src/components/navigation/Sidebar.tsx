@@ -10,7 +10,6 @@ import {
   BriefcaseIcon, 
   TrendUpIcon, 
   FileTextIcon,
-  StarIcon,
   TrophyIcon,
   CaretLeftIcon,
   CaretRightIcon,
@@ -33,7 +32,6 @@ const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HouseIcon },
   { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon },
   { name: 'Trade', href: '/trade', icon: TrendUpIcon },
-  { name: 'Watchlists', href: '/watchlists', icon: StarIcon },
   { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
   { name: 'News', href: '/news', icon: FileTextIcon },
 ];
