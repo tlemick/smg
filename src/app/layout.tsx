@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmMono.variable} ${outfit.variable} font-sans antialiased bg-neutral-200 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100`}>
+      <body className={`${dmMono.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
         <ThemeProvider>
           <UserProvider>
             <ToastProvider>
