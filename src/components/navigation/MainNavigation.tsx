@@ -52,14 +52,14 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
   };
 
   return (
-    <div>
+    <div className={`border-b border-border bg-background/80 backdrop-blur ${className}`}>
       <div className="container">
         <div className="flex justify-between items-center h-20">
           
           {/* Left side - Logo and Navigation */}
           <div className="flex items-center space-x-8">
             {/* SMG Logo */}
-            <Link href="/dashboard" className="flex items-center space-x-2 text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link href="/dashboard" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
               <Image
                     src={"/logo.png"}
                     alt={"home"}
@@ -67,7 +67,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                     height={24}
                     className="flex-shrink-0 h-6 w-6"
                 />
-              <div className="flex items-center pl-2 justify-center w-8 h-8 text-gray-900 dark:text-gray-100">
+              <div className="flex items-center pl-2 justify-center w-8 h-8 text-foreground">
                 SMG
               </div>
             </Link>
@@ -80,8 +80,8 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                   href={item.href}
                   className={` mx-4 py-2 text-sm font-medium transition-colors ${
                     isActiveRoute(item.href)
-                      ? 'text-gray-900 dark:text-gray-100 border-b-4 border-gray-900 dark:border-gray-100'
-                      : 'text-gray-900 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border-b-4 border-transparent opacity-70 hover:opacity-100'
+                      ? 'text-foreground border-b-2 border-primary'
+                      : 'text-muted-foreground hover:text-foreground border-b-2 border-transparent'
                   }`}
                 >
                   {item.name}
@@ -99,7 +99,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
           <div className="flex items-center space-x-3">
             
             {/* Mobile Search Icon */}
-            <button className="md:hidden p-2 text-gray-900 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+            <button className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors">
               <Icon icon={MagnifyingGlassIcon} size="md" />
             </button>
 
@@ -108,7 +108,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
 
             {/* Notifications */}
             <button
-              className="hidden md:flex p-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors relative "
+              className="hidden md:flex p-2 text-muted-foreground hover:text-foreground transition-colors relative"
               aria-label="Notifications"
             >
               <Icon icon={BellIcon} size="md" />
@@ -118,7 +118,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
 
             {/* Discord */}
             <button
-              className="hidden md:flex p-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              className="hidden md:flex p-2 text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Discord"
             >
               <DiscordLogoIcon size={24} weight="fill" className="text-current" />
@@ -128,7 +128,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
             {user?.role === 'ADMIN' && (
               <button
                 onClick={handleAdminClick}
-                className="hidden md:inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="hidden md:inline-flex items-center px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 <Icon icon={ShieldCheckIcon} size="sm" className="mr-1" />
                 Admin
@@ -150,20 +150,20 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                     alt={`${user.name || user.email}'s avatar`}
                     width={32}
                     height={32}
-                    className="flex-shrink-0 h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 object-cover"
+                    className="flex-shrink-0 h-8 w-8 rounded-full border border-border object-cover"
                   />
                 ) : (
-                  <div className="flex-shrink-0 h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600" />
+                  <div className="flex-shrink-0 h-8 w-8 bg-muted rounded-full flex items-center justify-center border border-border" />
                 )}
               </button>
               {isUserMenuOpen && user?.id && (
-                <div className={`absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg ${getZIndexClass('dropdown')}`}>
+                <div className={`absolute right-0 mt-2 w-40 bg-popover text-popover-foreground border border-border rounded-md shadow-lg ${getZIndexClass('dropdown')}`}>
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center px-3 py-2 text-sm text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="w-full flex items-center px-3 py-2 text-sm hover:bg-muted"
                   >
                     <Icon icon={SignOutIcon} size="sm" className="mr-2" />
                     Logout
@@ -177,7 +177,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-900 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-70 hover:opacity-100"
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
@@ -191,9 +191,9 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700">
+          <div className="md:hidden border-t border-border">
             {/* Mobile Search */}
-            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800">
+            <div className="px-4 py-3 bg-muted">
               <GlobalSearchBar />
             </div>
             
@@ -206,8 +206,8 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block px-3 py-2 rounded-lg text-base font-medium transition-colors ${
                     isActiveRoute(item.href)
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                      : 'text-gray-900 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'text-primary bg-primary/10'
+                      : 'text-foreground hover:text-primary hover:bg-muted'
                   }`}
                 >
                   {item.name}
@@ -216,7 +216,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
             </div>
 
             {/* Mobile User Section */}
-            <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="pt-4 pb-3 border-t border-border bg-muted">
               <div className="flex items-center px-5">
                 {user?.id ? (
                   <Image
@@ -224,18 +224,18 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                     alt={`${user.name || user.email}'s avatar`}
                     width={40}
                     height={40}
-                    className="flex-shrink-0 h-10 w-10 rounded-full border border-gray-300 dark:border-gray-600 object-cover"
+                    className="flex-shrink-0 h-10 w-10 rounded-full border border-border object-cover"
                   />
                 ) : (
-                  <div className="flex-shrink-0 h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600">
+                  <div className="flex-shrink-0 h-10 w-10 bg-background rounded-full flex items-center justify-center border border-border">
                     {/* Fallback for when no user */}
                   </div>
                 )}
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-900 dark:text-gray-200">
+                  <div className="text-base font-medium text-foreground">
                     {user?.name || 'User'}
                   </div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-sm font-medium text-muted-foreground">
                     {user?.email || 'user@example.com'}
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                       setIsMobileMenuOpen(false);
                       handleAdminClick();
                     }}
-                    className="flex items-center w-full px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center w-full px-3 py-2 text-base font-medium text-foreground hover:text-primary hover:bg-background rounded-lg transition-colors"
                   >
                     <Icon icon={ShieldCheckIcon} size="sm" className="mr-2" />
                     Admin Panel
@@ -258,7 +258,7 @@ export function MainNavigation({ className = '' }: MainNavigationProps) {
                     setIsMobileMenuOpen(false);
                     logout();
                   }}
-                  className="flex items-center w-full px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="flex items-center w-full px-3 py-2 text-base font-medium text-foreground hover:text-destructive hover:bg-background rounded-lg transition-colors"
                 >
                   <Icon icon={SignOutIcon} size="sm" className="mr-2" />
                   Logout

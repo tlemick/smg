@@ -8,7 +8,8 @@ import {
   OnboardingSearch,
   SimplifiedBuyForm,
 } from '@/components/onboarding';
-import { CaretRightIcon, Icon } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Icon } from '@/components/ui';
+import { CaretRightIcon } from '@/components/ui';
 import { OnboardingAssetSuggestion } from '@/types';
 
 const STOCK_SUGGESTIONS: OnboardingAssetSuggestion[] = [
@@ -122,7 +123,7 @@ export default function OnboardingStocksPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Sidebar */}
-      <aside className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-y-auto">
+      <aside className="w-80 bg-card text-card-foreground border-r border-border flex-shrink-0 overflow-y-auto">
         <div className="p-4 space-y-4">
           {/* Progress */}
           <OnboardingProgress currentStep="stocks" />
@@ -137,24 +138,24 @@ export default function OnboardingStocksPage() {
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24">
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+            <h1 className="text-2xl font-semibold mb-1">
               Let's Start with Stocks 📈
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Stocks are the foundation of most investment portfolios. Let's find some companies you believe in!
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-visible">
+          <Card className="overflow-visible">
             {/* Tab Headers */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-t-xl overflow-hidden">
+            <div className="flex border-b border-border rounded-t-xl overflow-hidden">
               <button
                 onClick={() => setActiveTab('search')}
                 className={`flex-1 px-5 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'search'
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    ? 'bg-muted text-foreground border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
               >
                 🔍 Search
@@ -163,8 +164,8 @@ export default function OnboardingStocksPage() {
                 onClick={() => setActiveTab('suggestions')}
                 className={`flex-1 px-5 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'suggestions'
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    ? 'bg-muted text-foreground border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
               >
                 ⭐ Suggestions
@@ -172,13 +173,13 @@ export default function OnboardingStocksPage() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-4">
+            <CardContent className="p-4">
               {activeTab === 'search' && (
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-base font-semibold mb-2">
                     Search for Any Stock
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Type a company name or ticker symbol to find stocks.
                   </p>
                   <OnboardingSearch onSelect={handleAssetSelect} placeholder="Search for stocks (e.g., Apple, TSLA)..." />
@@ -187,10 +188,10 @@ export default function OnboardingStocksPage() {
 
               {activeTab === 'suggestions' && (
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-base font-semibold mb-2">
                     Popular Picks for Beginners
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     These companies are well-known and great for starting your portfolio.
                   </p>
                   <div className="grid gap-3">
@@ -198,18 +199,18 @@ export default function OnboardingStocksPage() {
                       <button
                         key={suggestion.ticker}
                         onClick={() => handleAssetSelect(suggestion.ticker)}
-                        className="text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600"
+                        className="text-left p-3 rounded-lg hover:bg-muted transition-colors border border-border"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
+                            <div className="text-sm font-semibold mb-1">
                               {suggestion.ticker} - {suggestion.name}
                             </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                            <div className="text-xs text-muted-foreground">
                               {suggestion.reason}
                             </div>
                             <div className="mt-2">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                 {suggestion.category}
                               </span>
                             </div>
@@ -220,15 +221,17 @@ export default function OnboardingStocksPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Buy Form or Placeholder */}
           {isLoadingAsset ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Loading asset details...</p>
-            </div>
+            <Card className="text-center">
+              <CardContent className="p-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading asset details...</p>
+              </CardContent>
+            </Card>
           ) : selectedAsset ? (
             <SimplifiedBuyForm
               assetId={selectedAsset.id}
@@ -239,12 +242,12 @@ export default function OnboardingStocksPage() {
               onSuccess={handlePurchaseSuccess}
             />
           ) : (
-            <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-xl p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
+            <div className="bg-muted rounded-xl p-8 border-2 border-dashed border-border text-center">
               <div className="text-5xl mb-3">👆</div>
-              <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h4 className="text-lg font-semibold mb-2">
                 Select a Stock to Get Started
               </h4>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 Click on any stock from the sidebar or search to begin investing
               </p>
             </div>
@@ -253,24 +256,24 @@ export default function OnboardingStocksPage() {
       </main>
 
       {/* Fixed Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-80 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-50">
+      <div className="fixed bottom-0 left-80 right-0 bg-card text-card-foreground border-t border-border shadow-lg z-50">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex gap-4 justify-end">
-            <button
+            <Button
               onClick={handleSkipToDashboard}
-              className="px-5 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-medium transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              variant="secondary"
             >
               Skip to Dashboard
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={handleContinue}
               disabled={!hasPurchased}
-              className="group px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="group flex items-center"
             >
               {hasPurchased ? 'Continue to Mutual Funds' : 'Purchase a Stock to Continue'}
               <Icon icon={CaretRightIcon} size="md" className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

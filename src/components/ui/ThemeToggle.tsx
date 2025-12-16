@@ -31,7 +31,7 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
 
   if (!mounted) {
     return (
-      <div className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      <div className="w-8 h-8 rounded-md bg-muted animate-pulse" />
     );
   }
 
@@ -48,7 +48,7 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
     return (
       <button
         onClick={cycleTheme}
-        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label={`Switch to ${theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'} mode`}
         title={`Current: ${theme} (${resolvedTheme})`}
       >
@@ -62,7 +62,7 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
     <div className="relative">
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+        className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-haspopup="menu"
         aria-expanded={isDropdownOpen}
       >
@@ -83,7 +83,7 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
           />
           
           {/* Dropdown menu */}
-          <div className={`absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg ${getZIndexClass('dropdown')}`}>
+          <div className={`absolute right-0 mt-2 w-40 bg-popover text-popover-foreground border border-border rounded-md shadow-lg ${getZIndexClass('dropdown')}`}>
             <div className="py-1">
               <button
                 onClick={() => {
@@ -92,8 +92,8 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                   theme === 'light'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
               >
                 <Icon icon={SunIcon} size="sm" />
@@ -107,8 +107,8 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                   theme === 'dark'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
               >
                 <Icon icon={MoonIcon} size="sm" />
@@ -122,8 +122,8 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                   theme === 'system'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
               >
                 <Icon icon={DesktopIcon} size="sm" />

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui';
 
 export default function OnboardingLayout({
   children,
@@ -21,28 +22,28 @@ export default function OnboardingLayout({
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-          <span className="text-lg text-gray-600 dark:text-gray-400">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <span className="text-lg text-muted-foreground">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Logout Button - Top Right */}
       <div className="absolute top-4 right-4 z-50">
-        <button
+        <Button
           onClick={() => {
             logout();
             router.push('/');
           }}
-          className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors shadow-sm"
+          variant="secondary"
         >
           Log Out
-        </button>
+        </Button>
       </div>
 
       {/* Content with context for children to access */}

@@ -31,40 +31,40 @@ function getToastStyles(type: ToastType['type']) {
   switch (type) {
     case 'success':
       return {
-        container: 'bg-green-50 border border-green-200',
-        icon: 'text-green-400',
-        title: 'text-green-800',
-        message: 'text-green-700',
-        button: 'text-green-400 hover:text-green-600',
-        action: 'text-green-600 hover:text-green-700',
+        container: 'bg-popover text-popover-foreground border border-border border-l-4 border-l-chart-positive',
+        icon: 'text-chart-positive',
+        title: 'text-foreground',
+        message: 'text-muted-foreground',
+        button: 'text-muted-foreground hover:text-foreground',
+        action: 'text-primary hover:underline',
       };
     case 'error':
       return {
-        container: 'bg-red-50 border border-red-200',
-        icon: 'text-red-400',
-        title: 'text-red-800',
-        message: 'text-red-700',
-        button: 'text-red-400 hover:text-red-600',
-        action: 'text-red-600 hover:text-red-700',
+        container: 'bg-popover text-popover-foreground border border-border border-l-4 border-l-destructive',
+        icon: 'text-destructive',
+        title: 'text-foreground',
+        message: 'text-muted-foreground',
+        button: 'text-muted-foreground hover:text-foreground',
+        action: 'text-primary hover:underline',
       };
     case 'warning':
       return {
-        container: 'bg-yellow-50 border border-yellow-200',
-        icon: 'text-yellow-400',
-        title: 'text-yellow-800',
-        message: 'text-yellow-700',
-        button: 'text-yellow-400 hover:text-yellow-600',
-        action: 'text-yellow-600 hover:text-yellow-700',
+        container: 'bg-popover text-popover-foreground border border-border border-l-4 border-l-chart-4',
+        icon: 'text-chart-4',
+        title: 'text-foreground',
+        message: 'text-muted-foreground',
+        button: 'text-muted-foreground hover:text-foreground',
+        action: 'text-primary hover:underline',
       };
     case 'info':
     default:
       return {
-        container: 'bg-blue-50 border border-blue-200',
-        icon: 'text-blue-400',
-        title: 'text-blue-800',
-        message: 'text-blue-700',
-        button: 'text-blue-400 hover:text-blue-600',
-        action: 'text-blue-600 hover:text-blue-700',
+        container: 'bg-popover text-popover-foreground border border-border border-l-4 border-l-primary',
+        icon: 'text-primary',
+        title: 'text-foreground',
+        message: 'text-muted-foreground',
+        button: 'text-muted-foreground hover:text-foreground',
+        action: 'text-primary hover:underline',
       };
   }
 }
@@ -143,7 +143,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
             <button
               type="button"
               onClick={handleRemove}
-              className={`inline-flex ${styles.button} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-400`}
+              className={`inline-flex ${styles.button} rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
             >
               <span className="sr-only">Close</span>
               <Icon icon={XIcon} size="md" />

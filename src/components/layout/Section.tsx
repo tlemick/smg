@@ -4,7 +4,7 @@ interface SectionProps {
   children: React.ReactNode;
   className?: string;
   spacing?: 'sm' | 'md' | 'lg' | 'xl' | 'none';
-  background?: 'default' | 'surface' | 'muted';
+  background?: 'default' | 'card' | 'muted';
 }
 
 export function Section({ 
@@ -23,8 +23,8 @@ export function Section({
 
   const backgroundClasses = {
     default: '',
-    surface: 'bg-surface',
-    muted: 'bg-neutral-100 dark:bg-neutral-800'
+    card: 'bg-card text-card-foreground',
+    muted: 'bg-muted text-foreground'
   };
   
   return (

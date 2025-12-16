@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface GridProps {
   children: React.ReactNode;
@@ -20,10 +21,17 @@ export function Grid({
     xl: 'gap-12'
   };
 
-  const gridClass = columns === 12 ? 'grid-12' : `grid grid-cols-${columns}`;
+  const columnClasses: Record<GridProps['columns'], string> = {
+    12: 'grid-cols-12',
+    6: 'grid-cols-6',
+    4: 'grid-cols-4',
+    3: 'grid-cols-3',
+    2: 'grid-cols-2',
+    1: 'grid-cols-1',
+  };
   
   return (
-    <div className={`${gridClass} ${gapClasses[gap]} ${className}`}>
+    <div className={cn('grid', columnClasses[columns], gapClasses[gap], className)}>
       {children}
     </div>
   );
