@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { usePortfolioCategorySeries } from '@/hooks/usePortfolioCategorySeries';
+import { useChartColors } from '@/hooks/useChartColors';
 import { ResponsiveContainer, BarChart, Bar, Tooltip, Rectangle, YAxis } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -16,14 +17,16 @@ const TIMEFRAMES = [
 
 export function PortfolioCategoryChart() {
   const { range, setRange, points, loading, error } = usePortfolioCategorySeries('1m');
+  const { colors: resolvedColors, mounted } = useChartColors();
+  
   const colors = useMemo(
     () => ({
-      stocks: 'hsl(var(--chart-2))',
-      mutualFunds: 'hsl(var(--chart-4))',
-      bonds: 'hsl(var(--chart-3))',
-      legendText: 'hsl(var(--muted-foreground))',
+      stocks: resolvedColors['chart-2'] || '#000',
+      mutualFunds: resolvedColors['chart-4'] || '#000',
+      bonds: resolvedColors['chart-3'] || '#000',
+      legendText: resolvedColors['muted-foreground'] || '#666',
     }),
-    []
+    [resolvedColors]
   );
 
   const data = useMemo(

@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { AssetTopActions } from '@/components/asset';
 import { getZIndexClass } from '@/lib/z-index';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface AssetChartProps {
   ticker: string;
@@ -54,6 +55,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
   const [chartLoading, setChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState('1mo');
+  const { colors: resolvedColors, mounted: colorsLoaded } = useChartColors();
 
   const timeframes = [
     { value: '1d', label: '1D', interval: '15m' },
@@ -64,6 +66,14 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
     { value: '1y', label: '1Y', interval: '1d' },
     { value: '5y', label: '5Y', interval: '1d' },
   ];
+  
+  const chartColors = useMemo(() => ({
+    positive: resolvedColors['chart-positive'] || '#10b981',
+    negative: resolvedColors['chart-negative'] || '#ef4444',
+    foreground: resolvedColors['foreground'] || '#000',
+    muted: resolvedColors['muted'] || '#ccc',
+    mutedForeground: resolvedColors['muted-foreground'] || '#666',
+  }), [resolvedColors]);
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -331,12 +341,12 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                >
               <defs>
                 <linearGradient id={`priceGradient-${ticker}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={isPositive ? "hsl(var(--chart-positive))" : "hsl(var(--chart-negative))"} stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor={isPositive ? "hsl(var(--chart-positive))" : "hsl(var(--chart-negative))"} stopOpacity={0.1}/>
+                  <stop offset="5%" stopColor={isPositive ? chartColors.positive : chartColors.negative} stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor={isPositive ? chartColors.positive : chartColors.negative} stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
                
-               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+               <CartesianGrid strokeDasharray="3 3" stroke={resolvedColors['border'] || '#e5e7eb'} />
                
                <XAxis 
                  dataKey="formattedDate"
@@ -345,7 +355,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tick={{ 
                    fontSize: 11, 
                    textAnchor: 'middle',
-                   fill: 'hsl(var(--muted-foreground))'
+                   fill: chartColors.mutedForeground
                  }}
                  interval={
                    transformedData.length > 20 ? Math.floor(transformedData.length / 8) : 
@@ -363,7 +373,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tickLine={false}
                  tick={{ 
                    fontSize: 12,
-                   fill: 'hsl(var(--muted-foreground))'
+                   fill: chartColors.mutedForeground
                  }}
                  tickFormatter={(value) => formatPrice(value)}
                  width={80}
@@ -376,7 +386,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tickLine={false}
                  tick={{ 
                    fontSize: 12,
-                   fill: 'hsl(var(--muted-foreground))'
+                   fill: chartColors.mutedForeground
                  }}
                  tickFormatter={(value) => formatVolume(value)}
                  width={60}
@@ -388,7 +398,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                <ReferenceLine 
                  yAxisId="price"
                  y={currentPrice} 
-                 className="stroke-muted-foreground" 
+                 stroke={chartColors.mutedForeground}
                  strokeDasharray="2 2" 
                  label={{  }}
                />
@@ -397,7 +407,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                <Bar
                  yAxisId="volume"
                  dataKey="volume"
-                 className="fill-muted"
+                 fill={chartColors.muted}
                  opacity={0.6}
                  name="Volume"
                />
@@ -407,7 +417,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  yAxisId="price"
                  type="monotone"
                  dataKey="close"
-                 className="stroke-foreground"
+                 stroke={chartColors.foreground}
                  strokeWidth={2}
                  dot={false}
                  fill={`url(#priceGradient-${ticker})`}

@@ -2,19 +2,22 @@
 
 import { useMemo } from 'react';
 import { usePortfolioPerformanceSeries } from '@/hooks/usePortfolioPerformanceSeries';
+import { useChartColors } from '@/hooks/useChartColors';
 import { ResponsiveContainer, LineChart, Line, Tooltip, YAxis, XAxis, ReferenceLine } from 'recharts';
 
 export function PortfolioPerformanceChart() {
   const { points, loading, error } = usePortfolioPerformanceSeries();
+  const { colors: resolvedColors, mounted } = useChartColors();
+  
   const colors = useMemo(
     () => ({
-      you: 'hsl(var(--chart-1))',
-      benchmark: 'hsl(var(--chart-6))',
-      leader: 'hsl(var(--chart-3))',
-      reference: 'hsl(var(--border))',
-      label: 'hsl(var(--muted-foreground))',
+      you: resolvedColors['chart-1'] || '#000',
+      benchmark: resolvedColors['chart-6'] || '#000',
+      leader: resolvedColors['chart-3'] || '#000',
+      reference: resolvedColors['border'] || '#ccc',
+      label: resolvedColors['muted-foreground'] || '#666',
     }),
-    []
+    [resolvedColors]
   );
 
   const data = useMemo(() => points.map(p => ({
