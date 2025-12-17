@@ -3,18 +3,81 @@
 import { useMemo } from 'react';
 import { usePortfolioPerformanceSeries } from '@/hooks/usePortfolioPerformanceSeries';
 import { useChartColors } from '@/hooks/useChartColors';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, LineChart, Line, Tooltip, YAxis, XAxis, ReferenceLine } from 'recharts';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+    dataKey: string;
+  }>;
+  label?: string;
+  colors: {
+    you: string;
+    benchmark: string;
+    leader: string;
+  };
+}
+
+function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  // Map dataKey to display name and corresponding color
+  const dataMap: Record<string, { label: string; color: string }> = {
+    youPct: { label: 'You', color: colors.you },
+    sp500Pct: { label: 'S&P 500', color: colors.benchmark },
+    leaderPct: { label: 'Leader', color: colors.leader },
+  };
+
+  return (
+    <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg px-4 py-3">
+      {/* Date header */}
+      <div className="text-xs font-medium text-foreground mb-2 pb-2 border-b border-border/50">
+        {label}
+      </div>
+      
+      {/* Data values */}
+      <div className="space-y-1.5">
+        {payload.map((entry, index) => {
+          const info = dataMap[entry.dataKey];
+          if (!info) return null;
+          
+          const value = entry.value;
+          const formattedValue = `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+          
+          return (
+            <div key={index} className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: info.color, opacity: 0.8 }}
+                />
+                <span className="text-xs text-muted-foreground">{info.label}</span>
+              </div>
+              <span className="text-xs font-mono font-medium text-foreground tabular-nums">
+                {formattedValue}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function PortfolioPerformanceChart() {
-  const { points, loading, error } = usePortfolioPerformanceSeries();
+  const { points, meta, loading, error } = usePortfolioPerformanceSeries();
   const { colors: resolvedColors, mounted } = useChartColors();
   
   const colors = useMemo(
     () => ({
-      you: resolvedColors['chart-1'] || '#000',
+      you: resolvedColors['chart-1'] || '#8b5cf6',
       benchmark: resolvedColors['chart-6'] || '#000',
       leader: resolvedColors['chart-3'] || '#000',
-      reference: resolvedColors['border'] || '#ccc',
+      reference: resolvedColors['foreground'] || '#333',
       label: resolvedColors['muted-foreground'] || '#666',
     }),
     [resolvedColors]
@@ -22,10 +85,41 @@ export function PortfolioPerformanceChart() {
 
   const data = useMemo(() => points.map(p => ({
     date: new Date(p.date).toLocaleDateString(),
+    dateObj: new Date(p.date),
     youPct: p.youPct,
     sp500Pct: p.sp500Pct,
     leaderPct: p.leaderPct,
   })), [points]);
+
+  const dateMarkers = useMemo(() => {
+    if (!meta?.startDate || data.length === 0) return [];
+    const start = new Date(meta.startDate);
+    const end = data[data.length - 1]?.dateObj || new Date();
+    const markers = [];
+    
+    // Add start date marker
+    markers.push({
+      date: start.toLocaleDateString(),
+      label: `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+      isStart: true,
+    });
+    
+    // Calculate intermediate markers (roughly 4-5 markers across the timeline)
+    const daysDiff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const numMarkers = Math.min(4, Math.max(2, Math.floor(daysDiff / 14))); // One every ~2 weeks, max 4
+    const interval = daysDiff / (numMarkers + 1);
+    
+    for (let i = 1; i <= numMarkers; i++) {
+      const markerDate = new Date(start.getTime() + (interval * i * 24 * 60 * 60 * 1000));
+      markers.push({
+        date: markerDate.toLocaleDateString(),
+        label: markerDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        isStart: false,
+      });
+    }
+    
+    return markers;
+  }, [meta, data]);
 
   const lastValues = useMemo(() => {
     const lastNonNull = (arr: Array<number | null>) => {
@@ -58,7 +152,7 @@ export function PortfolioPerformanceChart() {
   }, [data]);
 
   return (
-    <div className="rounded-lg p-4">
+    <div className="">
       {error && (
         <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded p-2">{error}</div>
       )}
@@ -66,32 +160,73 @@ export function PortfolioPerformanceChart() {
       <div className="mb-3 flex flex-col items-end gap-2">
         <div className="flex items-end gap-6">
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-primary-foreground" style={{ backgroundColor: colors.you }}>You</span>
+            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.you }}>You</span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.youLabel}</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-background" style={{ backgroundColor: colors.benchmark }}>S&P 500</span>
+            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.benchmark }}>S&P 500</span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.spLabel}</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-background" style={{ backgroundColor: colors.leader }}>Leader</span>
+            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.leader }}>Leader</span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.leaderLabel}</span>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="h-64 flex items-center justify-center text-muted-foreground">Loading…</div>
+        <div className="h-64 space-y-2">
+          <Skeleton className="h-full w-full" />
+        </div>
       ) : data.length === 0 ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">No data yet</div>
       ) : (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 8, left: 0, right: 0, bottom: 12 }}>
+            <LineChart data={data} margin={{ top: 8, left: 0, right: 16, bottom: 32 }}>
               <XAxis dataKey="date" hide />
               <YAxis hide domain={yDomain} tickFormatter={(v) => `${v}%`} />
-              <Tooltip formatter={(v: any) => `${Number(v).toFixed(2)}%`} />
-              <ReferenceLine x={data[0].date} stroke={colors.reference} strokeDasharray="3 3" label={{ value: 'Game start', position: 'insideBottomLeft', fill: colors.label, fontSize: 12 }} />
+              <Tooltip content={<CustomTooltip colors={colors} />} />
+              
+              {/* Game start line with date */}
+              {dateMarkers.length > 0 && dateMarkers[0].isStart && (
+                <ReferenceLine 
+                  x={dateMarkers[0].date} 
+                  stroke={colors.reference} 
+                  strokeDasharray="3 3" 
+                  strokeWidth={2}
+                  strokeOpacity={0.6}
+                  label={{ 
+                    value: `Game start: ${dateMarkers[0].label}`, 
+                    position: 'insideBottomLeft', 
+                    fill: colors.label, 
+                    fontSize: 11,
+                    offset: -2,
+                    dx: 6
+                  }} 
+                />
+              )}
+              
+              {/* Intermediate date markers */}
+              {dateMarkers.slice(1).map((marker, idx) => (
+                <ReferenceLine 
+                  key={idx}
+                  x={marker.date} 
+                  stroke={colors.label} 
+                  strokeDasharray="2 2" 
+                  strokeWidth={1}
+                  strokeOpacity={0.3}
+                  label={{ 
+                    value: marker.label, 
+                    position: 'insideBottomLeft', 
+                    fill: colors.label, 
+                    fontSize: 11,
+                    offset: -2,
+                    dx: 6
+                  }} 
+                />
+              ))}
+              
               <Line type="monotone" dataKey="youPct" stroke={colors.you} strokeWidth={2} dot={false} name="You" />
               <Line type="monotone" dataKey="sp500Pct" stroke={colors.benchmark} strokeWidth={2} dot={false} name="S&P 500" />
               <Line type="monotone" dataKey="leaderPct" stroke={colors.leader} strokeWidth={2} dot={false} name="Leader" />
