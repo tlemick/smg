@@ -2,6 +2,55 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* Tailwind v4 Typography Configuration - 4px baseline rhythm */
+@theme {
+  /* Override font sizes with explicit line-heights for vertical rhythm */
+  --font-size-xs: 0.75rem;
+  --font-size-xs--line-height: 1rem;
+  
+  --font-size-sm: 0.875rem;
+  --font-size-sm--line-height: 1.25rem;
+  
+  --font-size-base: 1rem;
+  --font-size-base--line-height: 1.5rem;
+  
+  --font-size-lg: 1.125rem;
+  --font-size-lg--line-height: 1.75rem;
+  
+  --font-size-xl: 1.25rem;
+  --font-size-xl--line-height: 1.75rem;
+  
+  --font-size-2xl: 1.5rem;
+  --font-size-2xl--line-height: 2rem;
+  
+  --font-size-3xl: 1.875rem;
+  --font-size-3xl--line-height: 2.5rem;
+  
+  --font-size-4xl: 2.25rem;
+  --font-size-4xl--line-height: 3rem;
+
+  /* Tailwind v4 Color Configuration - shadcn theme colors */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
 :root {
   /* Brand color - kept for potential future use */
   --highlight-color: #FEF100;
@@ -28,7 +77,7 @@
   --primary-foreground: 0 0% 98%;
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
+  --muted: 240 6% 92%;
   --muted-foreground: 240 3.8% 46.1%;
   --accent: 240 4.8% 95.9%;
   --accent-foreground: 240 5.9% 10%;
@@ -63,7 +112,7 @@
   --primary-foreground: 0 0% 98%;
   --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
+  --muted: 240 4% 18%;
   --muted-foreground: 240 5% 64.9%;
   --accent: 240 3.7% 15.9%;
   --accent-foreground: 0 0% 98%;
@@ -75,14 +124,54 @@
 }
 
 @layer base {
+  /* Critical resets for baseline alignment */
   * {
     border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
+
+  /* Vertical Rhythm System - 4px baseline */
+  :root {
+    --baseline: 4px;
+  }
+
+  /* Normalize text rendering */
+  body, button, input, textarea, select {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    /* Base font: 16px with 24px line-height (6 baseline units) */
+    /* Line-height now controlled by Tailwind fontSize config */
+    font-size: 1rem;
   }
+
+  /* Remove default margins that break rhythm */
+  h1, h2, h3, h4, h5, h6, p, ul, ol, dl, blockquote, pre {
+    margin: 0;
+    padding: 0;
+    font-weight: inherit;
+  }
+
+  /* Ensure consistent baseline for inline elements */
+  button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  /* Fix SVG alignment - SVGs have vertical-align: middle by default which breaks baselines */
+  svg {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  /* Line-heights now defined in Tailwind config for proper specificity */
+  /* Removed .text-* overrides - now handled by fontSize config in tailwind.config.ts */
 }
 
 /* Recharts tooltip styling aligned to tokens */

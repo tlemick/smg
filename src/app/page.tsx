@@ -59,7 +59,7 @@ export default function LandingPage() {
       style={{ backgroundImage: 'url(/hero_bg.webp)' }}
     >
       {/* Title */}
-      <h1 className="text-6xl font-bold text-white text-center drop-shadow-lg">
+      <h1 className="text-6xl font-bold font-mono text-white text-center drop-shadow-lg">
         The Stock <br /> Market Game
       </h1>
 

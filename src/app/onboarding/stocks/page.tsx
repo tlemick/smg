@@ -138,7 +138,7 @@ export default function OnboardingStocksPage() {
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24">
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-semibold mb-1">
+            <h1 className="text-2xl font-semibold font-mono mb-1">
               Let's Start with Stocks 📈
             </h1>
             <p className="text-muted-foreground">

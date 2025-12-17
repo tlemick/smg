@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
-import { CompanyLogo } from '@/components/ui';
+import { CompanyLogo, Button, Badge, Input, Icon } from '@/components/ui';
 import { ArrowUUpLeftIcon, CheckIcon, CircleNotchIcon, ClipboardIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, XIcon } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface SearchResult {
   symbol?: string;
@@ -223,56 +225,57 @@ export function AddAssetToWatchlistModal({
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
       
       {/* Full Screen Modal */}
-      <div className="relative h-full w-full bg-white dark:bg-gray-900 flex flex-col">
+      <div className="relative h-full w-full bg-background flex flex-col">
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-500 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">
+        <div className="px-8 py-6 border-b border-border bg-muted/50">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-lg font-bold leading-none -mb-2 text-gray-900 dark:text-gray-100">
+              <h4 className="text-lg font-bold text-foreground">
                 {watchlistName}
               </h4>
-              <p className="text-sm leading-none -mt-4 !mb-0 text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground mt-1">
                 Manage assets in your watchlist
               </p>
             </div>
-            <button
+            <Button
               onClick={handleClose}
-              className="text-black dark:text-white bg-gray-400 dark:bg-gray-700 rounded-md px-4 py-2 flex flex-row items-center gap-2 hover:bg-gray-500 dark:hover:bg-gray-600 transition-colors"
+              variant="outline"
+              className="gap-2"
             >
-              <ArrowUUpLeftIcon className="h-6 w-6" />
+              <Icon icon={ArrowUUpLeftIcon} size="sm" />
               Return to Dashboard
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Two Column Layout */}
         <div className="flex-1 flex overflow-hidden">
           {/* Left Section - Current Watchlist Items */}
-          <div className="w-1/3 border-r border-gray-500 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 overflow-y-auto">
+          <div className="w-1/3 border-r border-border bg-muted/30 overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-normal leading-none text-gray-900 dark:text-gray-100">
+                <h4 className="text-lg font-medium text-foreground">
                   Current Assets
                 </h4>
-                <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm font-medium rounded-full">
+                <Badge variant="secondary">
                   {watchlistItems.length}
-                </span>
+                </Badge>
               </div>
 
               {loadingItems ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 dark:border-gray-100"></div>
+                  <Icon icon={CircleNotchIcon} size="lg" className="animate-spin text-muted-foreground" />
                 </div>
               ) : watchlistItems.length === 0 ? (
                 <div className="text-center py-12">
-                  <ClipboardIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-                  <h4 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">No assets yet</h4>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <Icon icon={ClipboardIcon} size="xl" className="mx-auto text-muted-foreground mb-3" />
+                  <h4 className="text-sm font-medium text-foreground">No assets yet</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Search and add assets to get started
                   </p>
                 </div>
@@ -281,7 +284,7 @@ export function AddAssetToWatchlistModal({
                   {watchlistItems.map((item) => (
                     <div
                       key={item.id}
-                      className="group flex items-center justify-between p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:shadow-md transition-all"
+                      className="group flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-all"
                     >
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <CompanyLogo 
@@ -291,33 +294,39 @@ export function AddAssetToWatchlistModal({
                           className="flex-shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-4">
-                            <p className="text-base !mb-0 font-bold text-gray-900 dark:text-gray-100">
+                          <div className="flex items-center gap-2">
+                            <p className="text-base font-semibold text-foreground">
                               {item.asset.ticker}
                             </p>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
+                            <Badge variant="secondary" className="text-xs">
                               {item.asset.type}
-                            </span>
+                            </Badge>
                           </div>
-                          <p className="text-sm !mb-0 text-gray-600 dark:text-gray-400 truncate">
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">
                             {item.asset.name}
                           </p>
-                          
                         </div>
                       </div>
-                      <button
+                      <Button
                         onClick={() => handleRemoveAsset(item.id, item.asset.ticker)}
                         disabled={removingItem === item.id}
-                        className="ml-4 flex flex-row items-center p-2 gap-2 text-sm text-gray-900 dark:text-white hover:bg-rose-400 bg-gray-300 dark:bg-gray-700 dark:hover:bg-rose-900/80 rounded-md transition-colors disabled:opacity-50"
+                        variant="destructive"
+                        size="sm"
+                        className="ml-4 gap-2"
                         title="Remove from watchlist"
                       >
                         {removingItem === item.id ? (
-                          <CircleNotchIcon className="animate-spin h-5 w-5" />
+                          <>
+                            <Icon icon={CircleNotchIcon} size="sm" className="animate-spin" />
+                            Removing
+                          </>
                         ) : (
-                          <TrashIcon className="h-4 w-4" />
+                          <>
+                            <Icon icon={TrashIcon} size="sm" />
+                            Remove
+                          </>
                         )}
-                        Delete
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -326,12 +335,12 @@ export function AddAssetToWatchlistModal({
           </div>
 
           {/* Right Section - Search and Add Assets */}
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+          <div className="flex-1 overflow-y-auto bg-background">
             <div className="p-8">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Search for Assets
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-sm text-muted-foreground mb-6">
                 Find and add stocks, bonds, ETFs, and mutual funds to your watchlist
               </p>
 
@@ -339,14 +348,14 @@ export function AddAssetToWatchlistModal({
               <div className="mb-6">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                    <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
                   </div>
-                  <input
+                  <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by ticker symbol or company name (e.g., AAPL, Apple)"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400"
+                    className="pl-12 h-11"
                     autoFocus
                   />
                 </div>
@@ -354,33 +363,30 @@ export function AddAssetToWatchlistModal({
 
               {/* Error Message */}
               {error && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+                <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
 
               {/* Search Results */}
               <div>
                 {searching && (
-                  <div className="flex items-center justify-center py-16">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Searching...</span>
+                  <div className="flex items-center justify-center py-16 gap-3">
+                    <Icon icon={CircleNotchIcon} size="lg" className="animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Searching...</span>
                   </div>
                 )}
 
                 {!searching && searchQuery.length > 0 && searchResults.length === 0 && !error && (
                   <div className="text-center py-16">
-                    <MagnifyingGlassIcon className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" />
-                    <h4 className="mt-4 text-base font-medium text-gray-900 dark:text-gray-100">No results found</h4>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Try searching with a different term</p>
+                    <Icon icon={MagnifyingGlassIcon} size="xl" className="mx-auto text-muted-foreground mb-4" />
+                    <h4 className="text-base font-medium text-foreground">No results found</h4>
+                    <p className="mt-2 text-sm text-muted-foreground">Try searching with a different term</p>
                   </div>
                 )}
 
                 {searchResults.length > 0 && (
                   <div className="space-y-3">
-                    {/* <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                      Search Results
-                    </h4> */}
                     {searchResults.map((result) => {
                       const symbol = result.symbol || 'N/A';
                       const name = result.longname || result.shortname || 'Unknown';
@@ -390,7 +396,7 @@ export function AddAssetToWatchlistModal({
                       return (
                         <div
                           key={symbol}
-                          className="flex items-center justify-between p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="flex items-center justify-between p-5 border border-border rounded-lg hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-4">
@@ -399,54 +405,53 @@ export function AddAssetToWatchlistModal({
                                 size="lg"
                                 className="flex-shrink-0"
                               />
-                              <div className="min-w-0 items-centerflex-1">
-                                <div className="flex flex-row items-center space-x-2">
-                                  <p className="text-lg !mb-0 font-semibold text-gray-900 dark:text-gray-100">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-row items-center gap-2">
+                                  <p className="text-lg font-semibold text-foreground">
                                     {symbol}
                                   </p>
-                                  <div className="flex items-center space-x-2">
-                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                  <Badge variant="secondary" className="text-xs">
                                     {quoteType}
-                                  </span>
+                                  </Badge>
                                   {result.exchange && (
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="text-xs text-muted-foreground">
                                       {result.exchange}
                                     </span>
                                   )}
                                 </div>
-                                </div>
-                                <p className="text-sm !mb-0 text-gray-600 dark:text-gray-400 truncate">
+                                <p className="text-sm text-muted-foreground truncate mt-0.5">
                                   {name}
                                 </p>
-                                
                               </div>
                             </div>
                           </div>
 
                           <div className="flex-shrink-0 ml-4">
                             {isInWatchlist ? (
-                              <div className="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <CheckIcon className="h-4 w-4 mr-2" />
+                              <div className="inline-flex items-center px-4 py-2 text-sm font-medium bg-[hsl(var(--chart-positive))]/10 text-[hsl(var(--chart-positive))] border border-[hsl(var(--chart-positive))]/20 rounded-lg gap-2">
+                                <Icon icon={CheckIcon} size="sm" />
                                 Added
                               </div>
                             ) : (
-                              <button
+                              <Button
                                 onClick={() => handleAddAsset(symbol, name)}
                                 disabled={adding === symbol}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                variant="default"
+                                size="sm"
+                                className="gap-2"
                               >
                                 {adding === symbol ? (
                                   <>
-                                    <CircleNotchIcon className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
+                                    <Icon icon={CircleNotchIcon} size="sm" className="animate-spin" />
                                     Adding...
                                   </>
                                 ) : (
                                   <>
-                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                    <Icon icon={PlusIcon} size="sm" />
                                     Add to Watchlist
                                   </>
                                 )}
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -458,9 +463,9 @@ export function AddAssetToWatchlistModal({
                 {/* Empty State */}
                 {!searching && searchQuery.length === 0 && (
                   <div className="text-center py-16">
-                    <MagnifyingGlassIcon className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" />
-                    <h4 className="mt-4 text-base font-medium text-gray-900 dark:text-gray-100">Search for assets</h4>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <Icon icon={MagnifyingGlassIcon} size="xl" className="mx-auto text-muted-foreground mb-4" />
+                    <h4 className="text-base font-medium text-foreground">Search for assets</h4>
+                    <p className="mt-2 text-sm text-muted-foreground">
                       Start typing to search for stocks, ETFs, bonds, and mutual funds
                     </p>
                   </div>

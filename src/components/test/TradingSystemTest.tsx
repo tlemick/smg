@@ -433,7 +433,7 @@ export default function TradingSystemTest() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">🧪 Trading System Integration Test</h1>
+        <h1 className="text-3xl font-bold font-mono text-gray-900 mb-6">🧪 Trading System Integration Test</h1>
         
         <div className="mb-6">
           <p className="text-gray-700 mb-4">

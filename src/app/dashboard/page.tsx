@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
-import { PortfolioCard, Watchlists, TransactionsCard, LeaderboardCard, LessonsCard } from '@/components/dashboard';
+import { PortfolioCard, Watchlists, TransactionsCard } from '@/components/dashboard';
 import { CircleNotchIcon, Icon } from '@/components/ui';
 
 export default function DashboardPage() {
@@ -30,24 +30,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Main Content - 2 Column Layout */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left: Portfolio + Watchlists (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
-          <PortfolioCard />
-          <Watchlists />
-        </div>
-        
-        {/* Right: Sidebar widgets (1/3 width) */}
-        <div className="space-y-6">
-          <TransactionsCard />
-          <LeaderboardCard />
-        </div>
-      </div>
-      
-      {/* Full Width - Lessons */}
-      <LessonsCard />
+    <div className="space-y-8">
+      {/* Full Width Stacked Layout - 32px spacing (8 baseline units) for clear section separation */}
+      <PortfolioCard />
+      <Watchlists />
+      <TransactionsCard />
     </div>
   );
 } 

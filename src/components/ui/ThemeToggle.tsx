@@ -3,12 +3,14 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-import { DesktopIcon, Icon, MoonIcon, SunIcon } from './Icon';
+import { CircleHalfIcon, Icon } from './Icon';
 import { getZIndexClass } from '@/lib/z-index';
+import { cn } from '@/lib/utils';
 
 interface ThemeToggleProps {
   showLabel?: boolean;
   variant?: 'icon' | 'dropdown';
+  className?: string;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ThemeToggleProps {
  * <ThemeToggle showLabel /> - Icon with label
  * <ThemeToggle variant="dropdown" /> - Dropdown menu with all options
  */
-export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggleProps) {
+export function ThemeToggle({ showLabel = false, variant = 'icon', className }: ThemeToggleProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -39,101 +41,46 @@ export function ThemeToggle({ showLabel = false, variant = 'icon' }: ThemeToggle
   if (variant === 'icon') {
     const cycleTheme = () => {
       if (theme === 'light') setTheme('dark');
-      else if (theme === 'dark') setTheme('system');
+      else if (theme === 'dark') setTheme('light');
       else setTheme('light');
     };
-
-    const currentIcon = resolvedTheme === 'dark' ? MoonIcon : SunIcon;
 
     return (
       <button
         onClick={cycleTheme}
-        className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        aria-label={`Switch to ${theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'} mode`}
+        className={cn(
+          'p-2 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          className
+        )}
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         title={`Current: ${theme} (${resolvedTheme})`}
       >
-        <Icon icon={currentIcon} size="md" />
+        <div className={cn('transition-transform duration-300', theme === 'dark' && 'rotate-180')}>
+          <Icon icon={CircleHalfIcon} size="md" />
+        </div>
       </button>
     );
   }
 
-  // Dropdown variant with all options
+  // Dropdown variant - just toggle between light and dark
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        aria-haspopup="menu"
-        aria-expanded={isDropdownOpen}
-      >
-        <Icon icon={resolvedTheme === 'dark' ? MoonIcon : SunIcon} size="md" />
-        {showLabel && (
-          <span className="text-sm font-medium">
-            {theme === 'system' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}
-          </span>
-        )}
-      </button>
-
-      {isDropdownOpen && (
-        <>
-          {/* Backdrop to close dropdown */}
-          <div
-            className="fixed inset-0"
-            onClick={() => setIsDropdownOpen(false)}
-          />
-          
-          {/* Dropdown menu */}
-          <div className={`absolute right-0 mt-2 w-40 bg-popover text-popover-foreground border border-border rounded-md shadow-lg ${getZIndexClass('dropdown')}`}>
-            <div className="py-1">
-              <button
-                onClick={() => {
-                  setTheme('light');
-                  setIsDropdownOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  theme === 'light'
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <Icon icon={SunIcon} size="sm" />
-                Light
-              </button>
-              
-              <button
-                onClick={() => {
-                  setTheme('dark');
-                  setIsDropdownOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <Icon icon={MoonIcon} size="sm" />
-                Dark
-              </button>
-              
-              <button
-                onClick={() => {
-                  setTheme('system');
-                  setIsDropdownOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  theme === 'system'
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <Icon icon={DesktopIcon} size="sm" />
-                System
-              </button>
-            </div>
-          </div>
-        </>
+    <button
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+      className={cn(
+        'p-2 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background flex items-center gap-2',
+        className
       )}
-    </div>
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    >
+      <div className={cn('transition-transform duration-300', theme === 'dark' && 'rotate-180')}>
+        <Icon icon={CircleHalfIcon} size="md" />
+      </div>
+      {showLabel && (
+        <span className="text-sm font-medium">
+          {theme === 'dark' ? 'Dark' : 'Light'}
+        </span>
+      )}
+    </button>
   );
 }
 

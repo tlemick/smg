@@ -22,7 +22,7 @@ export default function OnboardingWelcomePage() {
         {/* Hero Section */}
         <div className="text-left mb-12 mt-12">
 
-          <h2 className="text-2xl font-semibold mb-3">
+          <h2 className="text-2xl font-semibold font-mono mb-3">
             Welcome to the Stock Market Game!
           </h2>
           <p className="text-left text-muted-foreground mb-8">

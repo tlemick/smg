@@ -4,6 +4,7 @@ import { UserProvider } from "@/context/UserContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastContainer } from "@/components/ui/toast";
+import { BaselineGrid } from "@/components/dev/BaselineGrid";
 import "./globals.css";
 
 const dmMono = DM_Mono({
@@ -38,6 +39,7 @@ export default function RootLayout({
             <ToastProvider>
               {children}
               <ToastContainer />
+              <BaselineGrid />
             </ToastProvider>
           </UserProvider>
         </ThemeProvider>

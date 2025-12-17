@@ -39,7 +39,7 @@ export default function UiTestPage() {
   return (
     <div className="container py-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold">UI Examples</h1>
+        <h1 className="text-3xl font-semibold font-mono">UI Examples</h1>
         <p className="text-muted-foreground mt-2">
           Quick visual sanity-check for the design system in light/dark.
         </p>

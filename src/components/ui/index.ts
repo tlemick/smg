@@ -22,3 +22,4 @@ export * from './collapsible';
 export * from './avatar';
 export * from './skeleton';
 export * from './command';
+export * from './table';

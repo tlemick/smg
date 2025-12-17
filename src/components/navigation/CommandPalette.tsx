@@ -11,11 +11,11 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { 
-  HouseIcon, 
-  BriefcaseIcon, 
+  DiamondsFourIcon, 
+  ChartPieSliceIcon, 
   TrendUpIcon, 
-  FileTextIcon,
-  TrophyIcon,
+  ArticleMediumIcon,
+  SketchLogoIcon,
   MagnifyingGlassIcon,
   Icon 
 } from '@/components/ui';
@@ -28,11 +28,11 @@ interface Asset {
 }
 
 const quickActions = [
-  { name: 'Dashboard', href: '/dashboard', icon: HouseIcon, keywords: ['home', 'overview'] },
-  { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon, keywords: ['holdings', 'positions'] },
-  { name: 'Trade', href: '/trade', icon: TrendUpIcon, keywords: ['buy', 'sell', 'order'] },
-  { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon, keywords: ['rankings', 'competition'] },
-  { name: 'News', href: '/news', icon: FileTextIcon, keywords: ['articles', 'updates'] },
+  { name: 'Dashboard', href: '/dashboard', icon: DiamondsFourIcon, keywords: ['home', 'overview'] },
+  { name: 'Portfolio', href: '/dashboard/portfolio', icon: ChartPieSliceIcon, keywords: ['holdings', 'positions'] },
+  { name: 'Trade', href: '/dashboard/trade', icon: TrendUpIcon, keywords: ['buy', 'sell', 'order'] },
+  { name: 'Leaderboard', href: '/leaderboard', icon: SketchLogoIcon, keywords: ['rankings', 'competition'] },
+  { name: 'News', href: '/dashboard/news', icon: ArticleMediumIcon, keywords: ['articles', 'updates'] },
 ];
 
 export function CommandPalette() {
@@ -118,7 +118,7 @@ export function CommandPalette() {
             {watchlistAssets.slice(0, 8).map((asset) => (
               <CommandItem
                 key={asset.id}
-                onSelect={() => handleSelect(() => router.push(`/asset/${asset.ticker}`))}
+                onSelect={() => handleSelect(() => router.push(`/dashboard/asset/${asset.ticker}`))}
                 className="flex items-center gap-3"
               >
                 <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
@@ -134,7 +134,7 @@ export function CommandPalette() {
         {/* Common Actions */}
         <CommandGroup heading="Actions">
           <CommandItem
-            onSelect={() => handleSelect(() => router.push('/trade'))}
+            onSelect={() => handleSelect(() => router.push('/dashboard/trade'))}
             className="flex items-center gap-3"
           >
             <Icon icon={TrendUpIcon} size="sm" className="text-muted-foreground" />

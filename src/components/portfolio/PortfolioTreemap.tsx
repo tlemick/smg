@@ -210,7 +210,7 @@ export function PortfolioTreemap() {
       <g
         onClick={() => {
           if (dataPoint.ticker && dataPoint.ticker !== dataPoint.type) {
-            router.push(`/asset/${dataPoint.ticker}`);
+            router.push(`/dashboard/asset/${dataPoint.ticker}`);
           }
         }}
         style={{ cursor: 'pointer' }}
@@ -402,7 +402,7 @@ export function PortfolioTreemap() {
             Start investing to see your portfolio visualization. Make your first trade to see it displayed here.
           </p>
           <button 
-            onClick={() => router.push('/trade')}
+            onClick={() => router.push('/dashboard/trade')}
             className="bg-primary-400 text-white px-4 py-2 rounded hover:bg-primary-900 font-medium transition-colors"
           >
             Start Trading

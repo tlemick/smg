@@ -10,7 +10,6 @@ import { StockMetrics } from '@/components/asset/StockMetrics';
 import { BondMetrics } from '@/components/asset/BondMetrics';
 import { FundMetrics } from '@/components/asset/FundMetrics';
 import { UserHoldings } from '@/components/asset/UserHoldings';
-import { MainNavigation } from '@/components/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { TikTokLessons } from '@/components/dashboard/TikTokLessons';
 
@@ -50,10 +49,10 @@ export default function AssetDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading {ticker?.toUpperCase()} data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading {ticker?.toUpperCase()} data...</p>
         </div>
       </div>
     );
@@ -61,15 +60,15 @@ export default function AssetDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-destructive/10 border border-destructive/40 text-destructive px-4 py-3 rounded mb-4">
             <h2 className="font-bold text-lg mb-2">Error Loading Asset</h2>
             <p>{error}</p>
           </div>
           <button 
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -80,8 +79,8 @@ export default function AssetDetailPage() {
 
   if (!assetData) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-neutral-300">No data available</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">No data available</p>
       </div>
     );
   }
@@ -89,50 +88,63 @@ export default function AssetDetailPage() {
   const { asset, quote, typeSpecific, userHoldings, authenticated, profile } = assetData;
 
   return (
-    <div className="min-h-screen pb-10">
-      <MainNavigation />
-      <PageLayout>
-        <div className="space-y-4">
-          {/* Full-width chart at the top */}
-          <AssetChart 
-            ticker={asset.ticker}
-            currentPrice={quote.regularMarketPrice}
-            currency={quote.currency}
-            assetName={asset.name}
-            overlayActions={{
-              asset: { id: asset.id, ticker: asset.ticker, name: asset.name, allowFractionalShares: asset.allowFractionalShares },
-              authenticated: authenticated,
-              hasHoldings: !!userHoldings,
-            }}
-          />
+    <PageLayout>
+      <div className="space-y-4">
+        {/* Full-width chart at the top */}
+        <AssetChart 
+          ticker={asset.ticker}
+          currentPrice={quote.regularMarketPrice}
+          currency={quote.currency}
+        />
 
-          
-
-          {/* Two-column info grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AssetOverviewPanel 
-              asset={asset}
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Left Column: Header + Top Actions + Metrics */}
+          <div className="lg:col-span-7 space-y-4">
+            <AssetHeader 
+              ticker={asset.ticker}
+              name={asset.name}
+              type={asset.type}
               quote={quote}
-              typeSpecific={typeSpecific}
               profile={profile}
             />
 
-            <RiskMeasuresPanel 
-              riskMeasures={assetData.riskMeasures}
-              assetType={asset.type}
-            />
-          </div>
+            {authenticated && userHoldings && (
+              <UserHoldings holdings={userHoldings} />
+            )}
 
-          {/* News panel - responsive layout */}
-          <div className="w-full">
-            <AssetNewsPanel 
+            <AssetTopActions 
               ticker={asset.ticker}
-              assetName={asset.name}
+              name={asset.name}
+              authenticated={authenticated}
             />
+
+            {/* Type-specific metrics */}
+            {asset.type === 'STOCK' && typeSpecific && (
+              <StockMetrics stock={typeSpecific} />
+            )}
+            {asset.type === 'BOND' && typeSpecific && (
+              <BondMetrics bond={typeSpecific} />
+            )}
+            {(asset.type === 'MUTUAL_FUND' || asset.type === 'ETF') && typeSpecific && (
+              <FundMetrics fund={typeSpecific} />
+            )}
           </div>
 
+          {/* Right Column: Overview, Risk, News */}
+          <div className="lg:col-span-5 space-y-4">
+            <AssetOverviewPanel asset={asset} quote={quote} profile={profile} />
+            <RiskMeasuresPanel asset={asset} quote={quote} profile={profile} />
+            <AssetNewsPanel ticker={asset.ticker} name={asset.name} />
+          </div>
         </div>
-      </PageLayout>
-    </div>
+
+        {/* Full-width lessons at the bottom */}
+        <div className="mt-8">
+          <TikTokLessons />
+        </div>
+      </div>
+    </PageLayout>
   );
-} 
+}
+

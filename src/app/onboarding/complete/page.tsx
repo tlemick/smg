@@ -103,7 +103,7 @@ export default function OnboardingCompletePage() {
 
         {/* Main Message */}
         <div>
-          <h1 className="text-4xl font-semibold text-foreground mb-3">
+          <h1 className="text-4xl font-semibold font-mono text-foreground mb-3">
             Congratulations! 🏆
           </h1>
           <p className="text-xl text-foreground mb-2">

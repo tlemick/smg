@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{ts,tsx}",
     "./src/components/**/*.{ts,tsx}",
@@ -16,6 +16,20 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-outfit)"],
+        mono: ["var(--font-dm-mono)"],
+      },
+      /* fontSize now configured in globals.css @theme for Tailwind v4 */
+      lineHeight: {
+        'rhythm-4': '1rem',    // 16px = 4 baseline units
+        'rhythm-5': '1.25rem', // 20px = 5 baseline units  
+        'rhythm-6': '1.5rem',  // 24px = 6 baseline units
+        'rhythm-7': '1.75rem', // 28px = 7 baseline units
+        'rhythm-8': '2rem',    // 32px = 8 baseline units
+        'rhythm-10': '2.5rem', // 40px = 10 baseline units
+        'rhythm-12': '3rem',   // 48px = 12 baseline units
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

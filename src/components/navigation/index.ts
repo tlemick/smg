@@ -1,2 +1,1 @@
-export { GlobalSearchBar } from './GlobalSearchBar';
-export { MainNavigation } from './MainNavigation'; 
+export { GlobalSearchBar } from './GlobalSearchBar'; 

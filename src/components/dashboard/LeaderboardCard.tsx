@@ -47,6 +47,7 @@ export function LeaderboardCard() {
 
           {loading ? (
             <div className="space-y-2">
+              {/* space-y-2 = 8px (2 units), py-2 = 8px (2 units), h-6/h-4 = 24px/16px (6/4 units) */}
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="py-2 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -112,7 +113,7 @@ export function LeaderboardCard() {
                 </div>
               )}
 
-              {/* Remaining ranks */}
+              {/* Remaining ranks - py-4 = 16px (4 units), gap-3 = 12px (3 units), h-6/h-7 = 24px/28px (6/7 units) */}
               {others.length > 0 && (
                 <div className="divide-y divide-border">
                   {others.map(({ rank, name, returnPercent, isCurrentUser, avatarUrl }) => (

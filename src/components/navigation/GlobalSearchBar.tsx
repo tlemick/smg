@@ -86,7 +86,7 @@ export function GlobalSearchBar({ className = '' }: GlobalSearchBarProps) {
       clearSearch();
       setIsOpen(false);
       setFocusedIndex(-1);
-      router.push(`/asset/${ticker}`);
+      router.push(`/dashboard/asset/${ticker}`);
     }
   };
 

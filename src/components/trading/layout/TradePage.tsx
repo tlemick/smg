@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { MainNavigation } from '@/components/navigation';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface TradePageProps {
@@ -79,7 +78,6 @@ export function TradePage({
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
-      <MainNavigation />
 
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-4">
@@ -87,7 +85,7 @@ export function TradePage({
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-semibold">{title}</h1>
+                <h1 className="text-3xl font-semibold font-mono">{title}</h1>
                 {subtitle && (
                   <p className="text-muted-foreground mt-1">{subtitle}</p>
                 )}

@@ -4,41 +4,43 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/context/UserContext';
 import { 
-  HouseIcon, 
-  BriefcaseIcon, 
+  DiamondsFourIcon, 
+  ChartPieSliceIcon, 
   TrendUpIcon, 
-  FileTextIcon,
-  TrophyIcon,
+  ArticleMediumIcon,
+  SketchLogoIcon,
+  GearIcon,
   CaretLeftIcon,
   CaretRightIcon,
-  SignOutIcon,
   Icon 
 } from '@/components/ui';
-import { ThemeToggle } from '@/components/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getUserAvatarUrl } from '@/lib/avatar-service';
 
 interface SidebarProps {
   className?: string;
 }
 
-const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HouseIcon },
-  { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon },
-  { name: 'Trade', href: '/trade', icon: TrendUpIcon },
-  { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
-  { name: 'News', href: '/news', icon: FileTextIcon },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+}
+
+const navigationItems: NavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: DiamondsFourIcon },
+  { name: 'Portfolio', href: '/dashboard/portfolio', icon: ChartPieSliceIcon },
+  { name: 'Trade', href: '/dashboard/trade', icon: TrendUpIcon },
+  { name: 'Leaderboard', href: '/leaderboard', icon: SketchLogoIcon },
+  { name: 'News', href: '/dashboard/news', icon: ArticleMediumIcon },
+  { name: 'Settings', href: '/settings', icon: GearIcon },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
-  const { user, logout } = useUser();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Load collapsed state from localStorage on mount
@@ -47,6 +49,7 @@ export function Sidebar({ className }: SidebarProps) {
     if (stored !== null) {
       setIsCollapsed(stored === 'true');
     }
+    setMounted(true);
   }, []);
 
   // Save collapsed state to localStorage
@@ -63,22 +66,34 @@ export function Sidebar({ className }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
-  const getInitials = (name: string | null, email: string): string => {
-    if (name) {
-      return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    return email.slice(0, 2).toUpperCase();
-  };
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <aside
+        className={cn(
+          'bg-card border-r border-border flex flex-col h-screen transition-all duration-300 w-60',
+          className
+        )}
+      >
+        <div className="h-20 flex items-center justify-between px-4 border-b border-border">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-muted animate-pulse rounded" />
+            <div className="w-12 h-5 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+        <div className="flex-1 px-3 pt-12 pb-4 space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-9 bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside
       className={cn(
-        'bg-card border-r border-border flex flex-col h-screen transition-all duration-300',
+        'bg-muted/20 border-r border-border flex flex-col h-screen transition-all duration-300',
         isCollapsed ? 'w-20' : 'w-60',
         className
       )}
@@ -136,81 +151,47 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       )}
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      {/* Navigation - pt-8 = 32px to match main content padding */}
+      <ScrollArea className="flex-1 px-3 pt-8 pb-4">
         <nav className="space-y-1">
           {navigationItems.map((item) => {
             const isActive = isActiveRoute(item.href);
+
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  'flex gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors group',
+                  'hover:bg-muted',
                   isCollapsed && 'justify-center'
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
-                <Icon icon={item.icon} size="md" />
-                {!isCollapsed && <span>{item.name}</span>}
+                <div 
+                  className={cn(
+                    'transition-colors',
+                    isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                  )}
+                >
+                  <Icon icon={item.icon} size="md" />
+                </div>
+                {!isCollapsed && (
+                  <span 
+                    className={cn(
+                      'transition-colors',
+                      isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                    )}
+                  >
+                    {item.name}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
       </ScrollArea>
 
-      <Separator />
-
-      {/* Footer - User Menu & Theme Toggle */}
-      <div className="p-4 space-y-3">
-        <ThemeToggle className={cn(isCollapsed && 'justify-center')} />
-        
-        {user && (
-          <>
-            <Separator />
-            <div className={cn('flex items-center gap-3', isCollapsed && 'justify-center')}>
-              {!isCollapsed ? (
-                <>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={getUserAvatarUrl(user.id)} alt={user.email} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {getInitials(user.name, user.email)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {user.name || user.email.split('@')[0]}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                </>
-              ) : (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={getUserAvatarUrl(user.id)} alt={user.email} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {getInitials(user.name, user.email)}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-            
-            <Button
-              variant="ghost"
-              onClick={logout}
-              className={cn(
-                'w-full justify-start text-muted-foreground hover:text-foreground',
-                isCollapsed && 'justify-center px-0'
-              )}
-            >
-              <Icon icon={SignOutIcon} size="md" />
-              {!isCollapsed && <span className="ml-2">Sign Out</span>}
-            </Button>
-          </>
-        )}
-      </div>
     </aside>
   );
 }

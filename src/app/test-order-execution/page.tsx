@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { MainNavigation } from '@/components/navigation';
 
 interface ProcessingResult {
   success: boolean;
@@ -84,12 +83,11 @@ export default function TestOrderExecutionPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <MainNavigation />
       
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+            <h1 className="text-4xl font-bold font-mono text-gray-800 mb-2">
               Order Execution System Test
             </h1>
             <p className="text-gray-600">
@@ -99,7 +97,7 @@ export default function TestOrderExecutionPage() {
 
           {/* Control Panel */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-2xl font-semibold mb-4">Control Panel</h2>
+            <h2 className="text-2xl font-semibold font-mono mb-4">Control Panel</h2>
             
             <div className="flex gap-4 mb-4">
               <button
@@ -138,7 +136,7 @@ export default function TestOrderExecutionPage() {
           {/* Results Display */}
           {lastResult && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-2xl font-semibold mb-4">Last Execution Results</h2>
+              <h2 className="text-2xl font-semibold font-mono mb-4">Last Execution Results</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Processing Results */}
@@ -225,7 +223,7 @@ export default function TestOrderExecutionPage() {
 
           {/* Information Panel */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-semibold mb-4">How It Works</h2>
+            <h2 className="text-2xl font-semibold font-mono mb-4">How It Works</h2>
             
             <div className="space-y-4 text-gray-700">
               <div>

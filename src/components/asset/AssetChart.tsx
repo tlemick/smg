@@ -277,7 +277,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
             <h4 className="text-sm font-semibold !leading-none">{assetName || 'Asset'}</h4>
             <span className="text-sm bg-secondary text-secondary-foreground px-2 py-1 rounded-md mb-4 leading-none border border-border">{ticker}</span>
           </div>
-          <h1 className="text-2xl font-semibold">{formatPrice(currentPrice)}</h1>
+          <h1 className="text-2xl font-semibold font-mono">{formatPrice(currentPrice)}</h1>
         </div>
         {/* Static Timeframe Buttons - Always Interactive */}
         <div className="flex items-start gap-3">
