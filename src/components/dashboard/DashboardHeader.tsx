@@ -39,17 +39,30 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              asChild
+              // Added [&_svg]:size-5 to match your Bell icon (20px)
+              // Or use size-6 (24px) if you want it slightly bigger
+              className="text-muted-foreground hover:text-foreground [&_svg]:size-5"
               title="Discord"
             >
-              <Icon icon={DiscordLogoIcon} size="md" />
+              <a 
+                href="" 
+                target="_blank" 
+                rel="noreferrer"
+                title="Discord"
+              >
+                {/* The size="xl" here is being ignored by the Button's CSS, 
+                    so the class above is what actually controls the size. */}
+                <Icon icon={DiscordLogoIcon} size="md" />
+              </a>
             </Button>
-
             {/* Bell Notification Icon */}
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              // The [&_svg] selector targets any SVG inside this button
+              // :size-6 forces width/height to 1.5rem (24px)
+              className="text-muted-foreground hover:text-foreground [&_svg]:size-5"
               title="Notifications"
             >
               <Icon icon={BellIcon} size="md" />

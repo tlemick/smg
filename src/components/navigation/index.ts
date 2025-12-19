@@ -1,1 +1,1 @@
-export { GlobalSearchBar } from './GlobalSearchBar'; 
+// GlobalSearchBar has been moved to dashboard components 

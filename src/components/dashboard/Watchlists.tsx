@@ -350,32 +350,34 @@ export function Watchlists() {
     <div className="bg-card pt-16">
       {/* Header */}
      
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex-column justify-start gap-4">
         <h1 className="text-2xl font-mono text-foreground">Watchlists</h1>
-        <div className="flex items-center space-x-3">
-          {/* Search */}
-          <div className="relative w-48">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
+        <div className='flex items-center gap-4'>
+          <div className="flex items-center space-x-3">
+            {/* Search */}
+            <div className="relative w-48">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
+              </div>
+              <Input
+                type="text"
+                placeholder="Filter"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-8 text-sm"
+              />
             </div>
-            <Input
-              type="text"
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-8 text-sm"
-            />
+            
+            {/* Add new watchlist button */}
+            <Button
+              onClick={handleOpenCreateModal}
+              size="sm"
+              className="text-sm"
+              variant="outline"
+            >
+              + New
+            </Button>
           </div>
-          
-          {/* Add new watchlist button */}
-          <Button
-            onClick={handleOpenCreateModal}
-            size="sm"
-            className="text-sm"
-            variant="outline"
-          >
-            + New
-          </Button>
         </div>
       </div>
 
@@ -409,7 +411,7 @@ export function Watchlists() {
               >
                 <CollapsibleTrigger asChild>
                   {/* px-4 py-3 = 16px/12px (4/3 units), space-x-3 = 12px (3 units) */}
-                  <div className="w-full px-4 py-3 border-b border-muted-foreground flex items-center transition-colors cursor-pointer">
+                  <div className="w-full py-3 border-b border-muted-foreground flex items-center transition-colors cursor-pointer">
                     <Icon
                       icon={CaretRightIcon}
                       size="sm"

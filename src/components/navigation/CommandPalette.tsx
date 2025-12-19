@@ -10,37 +10,22 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { 
-  DiamondsFourIcon, 
-  ChartPieSliceIcon, 
-  TrendUpIcon, 
-  ArticleMediumIcon,
-  SketchLogoIcon,
-  MagnifyingGlassIcon,
-  Icon 
-} from '@/components/ui';
+// No UI icon imports needed - using shadcn command component
 
-interface Asset {
-  id: number;
+interface SearchResult {
+  id: string;
   ticker: string;
   name: string;
   type: string;
+  exchange?: string;
 }
-
-const quickActions = [
-  { name: 'Dashboard', href: '/dashboard', icon: DiamondsFourIcon, keywords: ['home', 'overview'] },
-  { name: 'Portfolio', href: '/dashboard/portfolio', icon: ChartPieSliceIcon, keywords: ['holdings', 'positions'] },
-  { name: 'Trade', href: '/dashboard/trade', icon: TrendUpIcon, keywords: ['buy', 'sell', 'order'] },
-  { name: 'Leaderboard', href: '/leaderboard', icon: SketchLogoIcon, keywords: ['rankings', 'competition'] },
-  { name: 'News', href: '/dashboard/news', icon: ArticleMediumIcon, keywords: ['articles', 'updates'] },
-];
 
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [watchlistAssets, setWatchlistAssets] = useState<Asset[]>([]);
-  const [recentAssets, setRecentAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Register keyboard shortcut
   useEffect(() => {
@@ -55,92 +40,117 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  // Load watchlist assets when opened
+  // Search for assets when query changes
   useEffect(() => {
-    if (open && watchlistAssets.length === 0) {
-      loadWatchlistAssets();
+    if (!query.trim() || query.length < 2) {
+      setResults([]);
+      return;
     }
-  }, [open]);
 
-  const loadWatchlistAssets = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/watchlist?include=items');
-      const data = await response.json();
-      
-      if (data.success) {
-        const assets: Asset[] = [];
-        data.data.forEach((watchlist: any) => {
-          watchlist.items.forEach((item: any) => {
-            // Avoid duplicates
-            if (!assets.find(a => a.id === item.asset.id)) {
-              assets.push(item.asset);
-            }
-          });
+    const searchAssets = async () => {
+      try {
+        setIsSearching(true);
+        const response = await fetch('/api/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: query.trim(),
+            quotesCount: 10,
+            newsCount: 0
+          }),
         });
-        setWatchlistAssets(assets);
+
+        const data = await response.json();
+
+        if (data.success && data.data.quotes) {
+          const validResults = data.data.quotes
+            .filter((result: any) => 
+              result && result.symbol && (result.longname || result.shortname)
+            )
+            .map((result: any) => ({
+              id: result.symbol,
+              ticker: result.symbol,
+              name: result.longname || result.shortname || result.symbol,
+              type: result.quoteType || 'EQUITY',
+              exchange: result.exchange
+            }));
+          setResults(validResults);
+        } else {
+          setResults([]);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setIsSearching(false);
       }
-    } catch (error) {
-      console.error('Failed to load watchlist assets:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    const timeoutId = setTimeout(() => {
+      searchAssets();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   const handleSelect = (callback: () => void) => {
     setOpen(false);
+    setQuery('');
+    setResults([]);
     callback();
   };
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search assets, pages, actions..." />
+      <CommandInput 
+        placeholder="Search stocks, ETFs, bonds..." 
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        {isSearching && (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            Searching...
+          </div>
+        )}
         
-        {/* Quick Navigation */}
-        <CommandGroup heading="Pages">
-          {quickActions.map((action) => (
-            <CommandItem
-              key={action.href}
-              onSelect={() => handleSelect(() => router.push(action.href))}
-              className="flex items-center gap-3"
-            >
-              <Icon icon={action.icon} size="sm" className="text-muted-foreground" />
-              <span>{action.name}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {!isSearching && query.length >= 2 && results.length === 0 && (
+          <CommandEmpty>No assets found. Try searching with a ticker symbol.</CommandEmpty>
+        )}
+        
+        {!isSearching && query.length < 2 && (
+          <CommandEmpty>Type at least 2 characters to search for assets.</CommandEmpty>
+        )}
 
-        {/* Watchlist Assets */}
-        {watchlistAssets.length > 0 && (
-          <CommandGroup heading="Watchlist Assets">
-            {watchlistAssets.slice(0, 8).map((asset) => (
+        {/* Search Results */}
+        {!isSearching && results.length > 0 && (
+          <CommandGroup heading="Assets">
+            {results.map((asset) => (
               <CommandItem
                 key={asset.id}
                 onSelect={() => handleSelect(() => router.push(`/dashboard/asset/${asset.ticker}`))}
                 className="flex items-center gap-3"
               >
-                <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="font-medium">{asset.ticker}</span>
-                  <span className="text-xs text-muted-foreground">{asset.name}</span>
+                <div className="h-8 w-8 rounded flex items-center justify-center flex-shrink-0 bg-muted">
+                  <span className="text-xs font-semibold">
+                    {asset.ticker.slice(0, 2).toUpperCase()}
+                  </span>
                 </div>
+                <div className="flex flex-col flex-1">
+                  <span className="font-medium">{asset.ticker}</span>
+                  <span className="text-xs text-muted-foreground truncate">{asset.name}</span>
+                </div>
+                {asset.type && (
+                  <span className="text-xs text-muted-foreground uppercase">
+                    {asset.type}
+                  </span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
         )}
-
-        {/* Common Actions */}
-        <CommandGroup heading="Actions">
-          <CommandItem
-            onSelect={() => handleSelect(() => router.push('/dashboard/trade'))}
-            className="flex items-center gap-3"
-          >
-            <Icon icon={TrendUpIcon} size="sm" className="text-muted-foreground" />
-            <span>Place a Trade</span>
-          </CommandItem>
-        </CommandGroup>
       </CommandList>
     </CommandDialog>
   );

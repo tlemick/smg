@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   DiamondsFourIcon, 
@@ -93,32 +92,32 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-muted/20 border-r border-border flex flex-col h-screen transition-all duration-300',
+        'bg-muted/40 border-r border-border flex flex-col h-screen transition-all duration-300',
         isCollapsed ? 'w-20' : 'w-60',
         className
       )}
     >
       {/* Header - Logo & Collapse Toggle */}
-      <div className="h-20 flex items-center justify-between px-4 border-b border-border">
+      <div className="h-20 flex items-center justify-between px-6 border-b border-border">
         {!isCollapsed ? (
-          <Link href="/dashboard" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
-            <Image
-              src="/logo.png"
+          <Link href="/dashboard" className="flex items-center space-x-2 text-foreground">
+            <img
+              src="/svg_logo.svg"
               alt="SMG"
               width={24}
               height={24}
-              className="flex-shrink-0"
+              className="flex-shrink-0 dark:invert"
             />
             <span className="font-semibold text-lg">SMG</span>
           </Link>
         ) : (
-          <Link href="/dashboard" className="flex items-center justify-center w-full">
-            <Image
-              src="/logo.png"
+          <Link href="/dashboard" className="flex items-center justify-center w-full text-foreground">
+            <img
+              src="/svg_logo.svg"
               alt="SMG"
               width={24}
               height={24}
-              className="flex-shrink-0"
+              className="flex-shrink-0 dark:invert"
             />
           </Link>
         )}

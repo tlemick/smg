@@ -1,33 +1,36 @@
 @import "tailwindcss";
-
+@plugin "tailwindcss-animate";
 @variant dark (&:where(.dark, .dark *));
 
 /* Tailwind v4 Typography Configuration - 4px baseline rhythm */
 @theme {
-  /* Override font sizes with explicit line-heights for vertical rhythm */
-  --font-size-xs: 0.75rem;
-  --font-size-xs--line-height: 1rem;
+  /* 1. Define the Baseline Unit */
+  --spacing-rhythm: 0.25rem; /* 4px */
+
+  /* 2. Lock Font Sizes to Line Heights that divide by 4 */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --text-xs--line-height: 1rem; /* 16px (4 units) */
   
-  --font-size-sm: 0.875rem;
-  --font-size-sm--line-height: 1.25rem;
+  --font-size-sm: 0.875rem;    /* 14px */
+  --text-sm--line-height: 1.25rem; /* 20px (5 units) */
   
-  --font-size-base: 1rem;
-  --font-size-base--line-height: 1.5rem;
+  --font-size-base: 1rem;      /* 16px */
+  --text-base--line-height: 1.5rem; /* 24px (6 units) */
   
-  --font-size-lg: 1.125rem;
-  --font-size-lg--line-height: 1.75rem;
+  --font-size-lg: 1.125rem;    /* 18px */
+  --text-lg--line-height: 1.75rem; /* 28px (7 units) */
   
-  --font-size-xl: 1.25rem;
-  --font-size-xl--line-height: 1.75rem;
+  --font-size-xl: 1.25rem;     /* 20px */
+  --text-xl--line-height: 1.75rem; /* 28px (7 units) */
   
-  --font-size-2xl: 1.5rem;
-  --font-size-2xl--line-height: 2rem;
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --text-2xl--line-height: 2rem;   /* 32px (8 units) */
   
-  --font-size-3xl: 1.875rem;
-  --font-size-3xl--line-height: 2.5rem;
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --text-3xl--line-height: 2.5rem; /* 40px (10 units) */
   
-  --font-size-4xl: 2.25rem;
-  --font-size-4xl--line-height: 3rem;
+  --font-size-4xl: 2.25rem;    /* 36px */
+  --text-4xl--line-height: 3rem;   /* 48px (12 units) */
 
   /* Tailwind v4 Color Configuration - shadcn theme colors */
   --color-background: hsl(var(--background));
@@ -49,6 +52,16 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-6: hsl(var(--chart-6));
+  
+  --color-chart-positive: hsl(var(--chart-positive));
+  --color-chart-negative: hsl(var(--chart-negative));
 }
 
 :root {
@@ -58,7 +71,7 @@
   /* Charts (HSL) */
   --chart-1: 262.1 83.3% 57.8%; /* violet */
   --chart-2: 221.2 83.2% 53.3%; /* blue */
-  --chart-3: 142.1 70.6% 45.3%; /* emerald */
+  --chart-3: 150 100% 21%; /* emerald */
   --chart-4: 47.9 95.8% 53.1%; /* amber */
   --chart-5: 0 84.2% 60.2%; /* red */
   --chart-6: 240 10% 3.9%; /* near-black */
@@ -93,7 +106,7 @@
   /* Charts (HSL) */
   --chart-1: 262.1 83.3% 67.8%; /* violet (brighter) */
   --chart-2: 217.2 91.2% 59.8%; /* blue */
-  --chart-3: 142.1 76.2% 56.3%; /* emerald */
+  --chart-3: 142.1 70.6% 58%; /* emerald */
   --chart-4: 47.9 95.8% 63.1%; /* amber */
   --chart-5: 0 84.2% 70.2%; /* red */
   --chart-6: 0 0% 98%; /* near-white */
@@ -125,6 +138,7 @@
 
 @layer base {
   /* Critical resets for baseline alignment */
+
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
@@ -150,28 +164,44 @@
     font-size: 1rem;
   }
 
-  /* Remove default margins that break rhythm */
-  h1, h2, h3, h4, h5, h6, p, ul, ol, dl, blockquote, pre {
-    margin: 0;
-    padding: 0;
-    font-weight: inherit;
+  h1, h2, h3, h4, h5, h6, p, ul, ol {
+    margin-bottom: calc(var(--baseline) * 4); /* 16px standard margin */
   }
 
-  /* Ensure consistent baseline for inline elements */
-  button, input, select, textarea {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-  }
-
-  /* Fix SVG alignment - SVGs have vertical-align: middle by default which breaks baselines */
-  svg {
-    display: inline-block;
-    vertical-align: top;
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
   }
 
   /* Line-heights now defined in Tailwind config for proper specificity */
   /* Removed .text-* overrides - now handled by fontSize config in tailwind.config.ts */
+}
+
+@layer utilities {
+  /* THE DEBUG GRID: Toggle this class on your <body> tag */
+  .debug-rhythm {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: linear-gradient(
+        to bottom,
+        rgba(255, 0, 0, 0.15) 1px,  /* Red line every 4px */
+        transparent 1px
+      );
+      background-size: 100% 4px; 
+    }
+  }
+
+  /* Cap-height fix: Sometimes text is mathematically aligned but looks "high" */
+  .cap-fix {
+     transform: translateY(1px); 
+  }
 }
 
 /* Recharts tooltip styling aligned to tokens */

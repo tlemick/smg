@@ -158,17 +158,37 @@ export function PortfolioPerformanceChart() {
       )}
 
       <div className="mb-3 flex flex-col items-end gap-2">
-        <div className="flex items-end gap-6">
+      <div className="flex items-end gap-6">
+          {/* Badge 1: You */}
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.you }}>You</span>
+            <span 
+              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
+              style={{ borderColor: colors.you, color: colors.you }}
+            >
+              You
+            </span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.youLabel}</span>
           </div>
+
+          {/* Badge 2: S&P 500 */}
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.benchmark }}>S&P 500</span>
+            <span 
+              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
+              style={{ borderColor: colors.benchmark, color: colors.benchmark }}
+            >
+              S&P 500
+            </span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.spLabel}</span>
           </div>
+
+          {/* Badge 3: Leader */}
           <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-xs rounded-full text-white" style={{ backgroundColor: colors.leader }}>Leader</span>
+            <span 
+              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
+              style={{ borderColor: colors.leader, color: colors.leader }}
+            >
+              Leader
+            </span>
             <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.leaderLabel}</span>
           </div>
         </div>

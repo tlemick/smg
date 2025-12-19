@@ -61,14 +61,18 @@ export function UserMenu() {
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col items-start min-w-0">
-          {/* text-sm = 20px line-height (5 units), text-xs = 16px line-height (4 units) */}
-          <p className="text-sm font-medium text-foreground truncate max-w-[150px]">
-            {user.name || user.email.split('@')[0]}
-          </p>
-          <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-            {user.email}
-          </p>
-        </div>
+  {/* 1. m-0: Removes the global 16px bottom margin 
+      2. leading-none: Pulls lines closer internally (optional, but looks cleaner for names)
+  */}
+  <p className="text-sm font-medium text-foreground truncate max-w-[150px] m-0 leading-none">
+    {user.name || user.email.split('@')[0]}
+  </p>
+  
+  {/* Add a tiny top margin (mt-0.5 is 2px) if you want a micro-gap, or keep it 0 */}
+  <p className="text-xs text-muted-foreground truncate max-w-[150px] m-0 leading-tight">
+    {user.email}
+  </p>
+</div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={handleSettings} className="cursor-pointer">

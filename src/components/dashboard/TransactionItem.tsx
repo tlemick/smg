@@ -54,7 +54,7 @@ export function TransactionItem({
   return (
     <div
       className={`
-        relative flex items-center justify-between py-4 px-6
+        relative flex items-center justify-between py-4
         transition-colors duration-200 border-b border-border
         ${onOrderClick ? 'cursor-pointer hover:bg-accent' : ''}
       `}
