@@ -262,7 +262,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                     </div>
                     {/* Price info below ticker line */}
                     <div className="mt-4">
-                      <h1 className="text-4xl text-gray-900 leading-none !mb-0">
+                      <h1 className="text-4xl font-mono text-gray-900 leading-none !mb-0">
                         {formatPrice(quote.regularMarketPrice)}
                       </h1>
                       {(quote.regularMarketChange !== undefined && quote.regularMarketChange !== null) && 

@@ -64,6 +64,7 @@ const ActivityIcon = ({ icon, color }: { icon?: string; color?: string }) => {
 
   return (
     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getColorClasses()}`}>
+      {/* Icon container: 32px (8 baseline units) */}
       {getIconComponent()}
     </div>
   );
@@ -109,7 +110,7 @@ export function ActivityItem({
   return (
     <div
       className={`
-        relative p-4 border border-gray-200 rounded-lg transition-all duration-200
+        relative border border-gray-200 rounded-lg transition-all duration-200
         ${activity.actionUrl ? 'cursor-pointer hover:bg-gray-50 hover:shadow-md' : ''}
         ${!activity.read ? 'bg-blue-50 border-blue-200' : 'bg-white'}
         ${compact ? 'p-3' : 'p-4'}
@@ -117,6 +118,7 @@ export function ActivityItem({
       `}
       onClick={handleClick}
     >
+      {/* p-4 = 16px (4 units), p-3 = 12px (3 units), space-x-3 = 12px (3 units) */}
       <div className="flex items-start space-x-3">
         {/* Activity Icon */}
         <ActivityIcon icon={activity.icon} color={activity.color} />
@@ -139,6 +141,7 @@ export function ActivityItem({
 
           {activity.description && (
             <p className={`text-gray-600 mt-1 ${compact ? 'text-xs' : 'text-sm'}`}>
+              {/* text-xs = 16px line-height (4 units), text-sm = 20px line-height (5 units) */}
               {activity.description}
             </p>
           )}
@@ -146,6 +149,7 @@ export function ActivityItem({
           {/* Related Asset Info */}
           {activity.relatedAsset && (
             <div className="mt-2 flex items-center space-x-2">
+              {/* mt-2 = 8px (2 units), space-x-2 = 8px (2 units), px-2 py-1 = 8px/4px (2/1 units) */}
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {activity.relatedAsset.ticker}
               </span>

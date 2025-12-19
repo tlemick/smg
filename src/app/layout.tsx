@@ -4,6 +4,7 @@ import { UserProvider } from "@/context/UserContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastContainer } from "@/components/ui/toast";
+import { BaselineGrid } from "@/components/dev/BaselineGrid";
 import "./globals.css";
 
 const dmMono = DM_Mono({
@@ -32,12 +33,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmMono.variable} ${outfit.variable} font-sans antialiased bg-neutral-200 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100`}>
+      <body className={`${dmMono.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
         <ThemeProvider>
           <UserProvider>
             <ToastProvider>
               {children}
               <ToastContainer />
+              <BaselineGrid />
             </ToastProvider>
           </UserProvider>
         </ThemeProvider>

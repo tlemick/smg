@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { usePortfolioCategorySeries } from '@/hooks/usePortfolioCategorySeries';
+import { useChartColors } from '@/hooks/useChartColors';
 import { ResponsiveContainer, BarChart, Bar, Tooltip, Rectangle, YAxis } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -14,57 +15,19 @@ const TIMEFRAMES = [
   { value: 'ytd', label: 'YTD' },
 ];
 
-/**
- * Get category chart colors from CSS variables
- * This allows colors to adapt to light/dark mode automatically
- */
-function useCategoryChartColors() {
-  const [colors, setColors] = useState({
-    stocks: '#6C8CFF',
-    mutualFunds: '#BFC8FF',
-    bonds: '#E0E4FF',
-    legendText: '#4B5563',
-  });
-
-  useEffect(() => {
-    const updateColors = () => {
-      const root = document.documentElement;
-      const style = getComputedStyle(root);
-      
-      setColors({
-        stocks: style.getPropertyValue('--chart-stocks').trim() || '#6C8CFF',
-        mutualFunds: style.getPropertyValue('--chart-mutual-funds').trim() || '#BFC8FF',
-        bonds: style.getPropertyValue('--chart-bonds').trim() || '#E0E4FF',
-        legendText: style.getPropertyValue('--chart-legend-text').trim() || '#4B5563',
-      });
-    };
-
-    // Initial update
-    updateColors();
-
-    // Listen for theme changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          updateColors();
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  return colors;
-}
-
 export function PortfolioCategoryChart() {
   const { range, setRange, points, loading, error } = usePortfolioCategorySeries('1m');
-  const colors = useCategoryChartColors();
+  const { colors: resolvedColors, mounted } = useChartColors();
+  
+  const colors = useMemo(
+    () => ({
+      stocks: resolvedColors['chart-2'] || '#000',
+      mutualFunds: resolvedColors['chart-4'] || '#000',
+      bonds: resolvedColors['chart-3'] || '#000',
+      legendText: resolvedColors['muted-foreground'] || '#666',
+    }),
+    [resolvedColors]
+  );
 
   const data = useMemo(
     () =>
@@ -91,7 +54,7 @@ export function PortfolioCategoryChart() {
   return (
     <div className="rounded-lg p-4">
       {error && (
-        <div className="text-sm text-red-600 border border-red-200 bg-red-50 rounded p-2">{error}</div>
+        <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded p-2">{error}</div>
       )}
 
       {/* Right-aligned legend and timeframe picker above the chart */}
@@ -110,9 +73,9 @@ export function PortfolioCategoryChart() {
       </div>
 
       {loading ? (
-        <div className="h-64 flex items-center justify-center text-gray-400">Loading…</div>
+        <div className="h-64 flex items-center justify-center text-muted-foreground">Loading…</div>
       ) : data.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-gray-400">No data yet</div>
+        <div className="h-64 flex items-center justify-center text-muted-foreground">No data yet</div>
       ) : (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">

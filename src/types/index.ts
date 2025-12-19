@@ -914,12 +914,9 @@ export interface PortfolioPerformanceSeriesResponse extends ApiResponse<Portfoli
 
 export interface TransactionsFeedProps {
   className?: string;
-  maxPendingItems?: number;
-  maxCompletedItems?: number;
   showHeader?: boolean;
   autoRefresh?: boolean;
   refreshInterval?: number;
-  onShowAllClick?: () => void;
 }
 
 export interface TransactionItemProps {
@@ -932,9 +929,7 @@ export interface TransactionItemProps {
 export interface TransactionSectionProps {
   title: string;
   icon: 'pending' | 'completed';
-  badgeColor: 'yellow' | 'green';
   orders: UnifiedOrder[];
-  maxItems?: number;
   emptyMessage: string;
   loading?: boolean;
 }

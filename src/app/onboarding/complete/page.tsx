@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import { Icon, TargetIcon, TrendUpIcon, TrophyIcon } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Icon, TargetIcon, TrophyIcon } from '@/components/ui';
 
 export default function OnboardingCompletePage() {
   const router = useRouter();
@@ -96,84 +96,86 @@ export default function OnboardingCompletePage() {
       <div className="text-center space-y-6">
         {/* Success Animation */}
         <div className="relative py-6">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-500 to-blue-600 rounded-full mb-4 animate-bounce">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-primary rounded-full mb-4 animate-bounce shadow">
             <span className="text-5xl">🎉</span>
           </div>
         </div>
 
         {/* Main Message */}
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+          <h1 className="text-4xl font-semibold font-mono text-foreground mb-3">
             Congratulations! 🏆
           </h1>
-          <p className="text-xl text-gray-700 dark:text-gray-300 mb-2">
+          <p className="text-xl text-foreground mb-2">
             You've Built Your First Portfolio!
           </p>
-          <p className="text-base text-gray-600 dark:text-gray-400">
+          <p className="text-base text-muted-foreground">
             You're now ready to compete in the Stock Market Game
           </p>
         </div>
 
         {/* Portfolio Summary */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Icon icon={TrophyIcon} size="lg" className="text-yellow-500" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Your Portfolio Summary
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {/* Total Invested */}
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Invested</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatCurrency(portfolioStats.totalInvested)}
-              </div>
+        <Card className="rounded-2xl shadow">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-center space-x-2">
+              <Icon icon={TrophyIcon} size="lg" className="text-chart-4" />
+              <CardTitle className="text-xl">Your Portfolio Summary</CardTitle>
             </div>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Total Invested */}
+              <div className="bg-muted rounded-xl p-4 border border-border">
+                <div className="text-sm text-muted-foreground mb-1">Total Invested</div>
+                <div className="text-2xl font-semibold text-primary">
+                {formatCurrency(portfolioStats.totalInvested)}
+                </div>
+              </div>
 
             {/* Cash Remaining */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Cash Available</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="bg-muted rounded-xl p-4 border border-border">
+                <div className="text-sm text-muted-foreground mb-1">Cash Available</div>
+                <div className="text-2xl font-semibold text-chart-positive">
                 {formatCurrency(portfolioStats.remainingCash)}
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Asset Breakdown */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
             <div className="text-center">
               <div className="text-2xl mb-2">📈</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Stocks</div>
-              <div className="text-base font-bold text-gray-900 dark:text-gray-100">
+                <div className="text-sm text-muted-foreground">Stocks</div>
+                <div className="text-base font-semibold text-foreground">
                 {portfolioStats.stocks > 0 ? formatCurrency(portfolioStats.stocks) : '—'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-2xl mb-2">📊</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Funds</div>
-              <div className="text-base font-bold text-gray-900 dark:text-gray-100">
+                <div className="text-sm text-muted-foreground">Funds</div>
+                <div className="text-base font-semibold text-foreground">
                 {portfolioStats.funds > 0 ? formatCurrency(portfolioStats.funds) : '—'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-2xl mb-2">🏦</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Bonds</div>
-              <div className="text-base font-bold text-gray-900 dark:text-gray-100">
+                <div className="text-sm text-muted-foreground">Bonds</div>
+                <div className="text-base font-semibold text-foreground">
                 {portfolioStats.bonds > 0 ? formatCurrency(portfolioStats.bonds) : '—'}
               </div>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Ready to Start Section */}
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center justify-center">
-            <Icon icon={TargetIcon} size="md" className="mr-2 text-purple-600 dark:text-purple-400" />
+        <div className="bg-primary/10 rounded-2xl p-6 border border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center justify-center">
+            <Icon icon={TargetIcon} size="md" className="mr-2 text-primary" />
             You're Ready to Compete!
           </h3>
-          <p className="text-base text-gray-700 dark:text-gray-300">
+          <p className="text-base text-muted-foreground">
             Monitor your portfolio, keep investing, compete with peers, and beat the S&P 500. Your journey to becoming a savvy investor starts now!
           </p>
         </div>
@@ -182,15 +184,12 @@ export default function OnboardingCompletePage() {
         <div>
           {!isCompleting && (
             <div>
-              <p className="text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-muted-foreground mb-3">
                 Redirecting to your dashboard in a few seconds...
               </p>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-xl transition-all"
-              >
+              <Button onClick={() => router.push('/dashboard')} size="lg">
                 Go to Dashboard Now
-              </button>
+              </Button>
             </div>
           )}
         </div>

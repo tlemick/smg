@@ -54,14 +54,14 @@ export function TransactionItem({
   return (
     <div
       className={`
-        relative flex items-center justify-between py-3 
-        transition-all duration-200 bg-white dark:bg-gray-800
-        ${onOrderClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}
+        relative flex items-center justify-between py-4
+        transition-colors duration-200 border-b border-border
+        ${onOrderClick ? 'cursor-pointer hover:bg-accent' : ''}
       `}
       onClick={handleClick}
     >
-      {/* Left side: Logo, Status, and Order Info */}
-      <div className="flex items-center space-x-3">
+      {/* Left side: Logo and Order Info */}
+      <div className="flex items-center gap-4">
         {/* Company Logo */}
         <CompanyLogo 
           ticker={order.asset.ticker}
@@ -70,19 +70,17 @@ export function TransactionItem({
           size="sm"
         />
 
-        {/* Status Indicator */}
-
         {/* Order Details */}
-        <div className="flex flex-col">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-foreground text-sm">
               {order.orderType} {formatQuantity(order.quantity)} {order.asset.ticker}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               @ ${getDisplayPrice().toFixed(2)}
             </span>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <div className="text-xs text-muted-foreground">
             {order.status === 'EXECUTED' && order.executedAt 
               ? formatDate(order.executedAt)
               : order.status === 'PENDING' 
@@ -94,11 +92,11 @@ export function TransactionItem({
       </div>
 
       {/* Right side: Total Value and Status */}
-      <div className="flex flex-col items-end">
-        <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+      <div className="flex flex-col items-end gap-1">
+        <span className="font-medium text-foreground text-sm">
           ${(getDisplayPrice() * order.quantity).toFixed(2)}
         </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+        <span className="text-xs text-muted-foreground capitalize">
           {order.status.toLowerCase()}
         </span>
       </div>

@@ -101,7 +101,7 @@ export function InvestmentProjectionsCalculator() {
     <div className="mt-32">
       {/* Header */}
       <div className="">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">Growth over time</h2>
+      <h2 className="text-2xl font-bold font-mono text-neutral-900 dark:text-white mb-2">Growth over time</h2>
         <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-prose">
           The longer you invest, the more your money will grow. This calculator will show you how your portfolio could grow over time, based on your current holdings and your monthly contributions.
         </p>

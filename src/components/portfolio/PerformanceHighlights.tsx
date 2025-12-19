@@ -285,7 +285,7 @@ export function PerformanceHighlights() {
     <div className="rounded-lg p-8">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">How to manage winners & losers</h2>
+        <h2 className="text-2xl font-bold font-mono text-neutral-900 dark:text-white mb-2">How to manage winners & losers</h2>
         <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-prose">
           Let's take a look at your assets that are performing well and those that aren't performing as well. 
           It can be hard to know when to buy, hold, or sell an asset, but we'll give you some general guidance!

@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   children: React.ReactNode;
@@ -10,7 +11,7 @@ export function Sidebar({ children, className = '', position = 'right' }: Sideba
   const positionClasses = position === 'left' ? 'order-first lg:order-none' : '';
   
   return (
-    <aside className={`sidebar ${positionClasses} ${className}`}>
+    <aside className={cn('col-span-12 lg:col-span-4', positionClasses, className)}>
       {children}
     </aside>
   );

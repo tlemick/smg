@@ -161,7 +161,7 @@ export default function SellTradePageWrapper() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold font-mono text-gray-900 mb-2">
             Unable to Load Trading Page
           </h2>
           <p className="text-gray-600 mb-6">

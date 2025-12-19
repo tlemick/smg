@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { AssetTopActions } from '@/components/asset';
 import { getZIndexClass } from '@/lib/z-index';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface AssetChartProps {
   ticker: string;
@@ -54,6 +55,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
   const [chartLoading, setChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState('1mo');
+  const { colors: resolvedColors, mounted: colorsLoaded } = useChartColors();
 
   const timeframes = [
     { value: '1d', label: '1D', interval: '15m' },
@@ -64,6 +66,14 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
     { value: '1y', label: '1Y', interval: '1d' },
     { value: '5y', label: '5Y', interval: '1d' },
   ];
+  
+  const chartColors = useMemo(() => ({
+    positive: resolvedColors['chart-positive'] || '#10b981',
+    negative: resolvedColors['chart-negative'] || '#ef4444',
+    foreground: resolvedColors['foreground'] || '#000',
+    muted: resolvedColors['muted'] || '#ccc',
+    mutedForeground: resolvedColors['muted-foreground'] || '#666',
+  }), [resolvedColors]);
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -246,11 +256,11 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
           style={{ left: coordinate.x }}
         >
           {/* Date on the left side of the vertical line */}
-          <div className="absolute top-0 -left-2 -translate-x-full bg-neutral-900 dark:bg-neutral-100 text-xs text-white dark:text-neutral-900 rounded px-2 py-1 shadow-sm whitespace-nowrap">
+          <div className="absolute top-0 -left-2 -translate-x-full bg-popover text-popover-foreground text-xs rounded px-2 py-1 shadow-sm whitespace-nowrap border border-border">
             {data.formattedDate}
           </div>
           {/* Price on the right side of the vertical line */}
-          <div className="absolute top-0 left-2 bg-neutral-900 dark:bg-neutral-100 text-xs font-medium text-white dark:text-neutral-900 rounded px-2 py-1 shadow-sm">
+          <div className="absolute top-0 left-2 bg-popover text-popover-foreground text-xs font-medium rounded px-2 py-1 shadow-sm border border-border">
             {formatPrice(data.close)}
           </div>
         </div>
@@ -259,15 +269,15 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg pl-6 pr-6 pt-6 pb-0">
+    <div className="bg-card text-card-foreground rounded-lg pl-6 pr-6 pt-6 pb-0 border border-border">
       {/* Static Header - Never Re-renders */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-bold !leading-none text-gray-900 dark:text-white">{assetName || 'Asset'}</h4>
-            <span className="text-sm text-white dark:text-gray-900 bg-gray-950 dark:bg-white px-2 py-1 rounded-md mb-4 leading-none">{ticker}</span>
+            <h4 className="text-sm font-semibold !leading-none">{assetName || 'Asset'}</h4>
+            <span className="text-sm bg-secondary text-secondary-foreground px-2 py-1 rounded-md mb-4 leading-none border border-border">{ticker}</span>
           </div>
-          <h1 className="text-2xl font-light text-gray-900 dark:text-white">{formatPrice(currentPrice)}</h1>
+          <h1 className="text-2xl font-semibold font-mono">{formatPrice(currentPrice)}</h1>
         </div>
         {/* Static Timeframe Buttons - Always Interactive */}
         <div className="flex items-start gap-3">
@@ -279,10 +289,10 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                 disabled={chartLoading}
                 className={`px-3 py-1 text-sm rounded transition-colors ${
                   tf.value === timeframe
-                    ? 'bg-gray-900 dark:bg-gray-700 text-white dark:text-gray-100'
+                    ? 'bg-primary text-primary-foreground'
                     : chartLoading 
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-muted-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                 }`}
               >
                 {tf.label}
@@ -295,19 +305,19 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
        {/* Chart Area - Only This Section Updates */}
        <div className="relative">
          {chartLoading && (
-           <div className={`absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 ${getZIndexClass('overlay')} flex items-center justify-center`}>
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+           <div className={`absolute inset-0 bg-background/70 ${getZIndexClass('overlay')} flex items-center justify-center`}>
+             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
            </div>
          )}
          
          {error ? (
            <div className="h-80 flex items-center justify-center">
              <div className="text-center">
-               <p className="text-red-600 mb-2">Failed to load chart data</p>
-               <p className="text-sm text-gray-500 mb-3">{error}</p>
+               <p className="text-destructive mb-2">Failed to load chart data</p>
+               <p className="text-sm text-muted-foreground mb-3">{error}</p>
                <button 
                  onClick={() => setTimeframe(timeframe)} // Trigger refetch
-                 className="text-sm text-gray-900 hover:text-blue-800 underline"
+                 className="text-sm text-foreground hover:text-primary underline"
                >
                  Try again
                </button>
@@ -315,7 +325,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
            </div>
          ) : transformedData.length === 0 && !chartLoading ? (
            <div className="h-80 flex items-center justify-center">
-             <p className="text-gray-500">No chart data available for {ticker}</p>
+             <p className="text-muted-foreground">No chart data available for {ticker}</p>
            </div>
          ) : (
            <div className="h-80">
@@ -331,12 +341,12 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                >
               <defs>
                 <linearGradient id={`priceGradient-${ticker}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={isPositive ? "var(--color-positive)" : "var(--color-negative)"} stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor={isPositive ? "var(--color-positive)" : "var(--color-negative)"} stopOpacity={0.1}/>
+                  <stop offset="5%" stopColor={isPositive ? chartColors.positive : chartColors.negative} stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor={isPositive ? chartColors.positive : chartColors.negative} stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
                
-               <CartesianGrid strokeDasharray="3 3" className="stroke-neutral-200 dark:stroke-neutral-600" />
+               <CartesianGrid strokeDasharray="3 3" stroke={resolvedColors['border'] || '#e5e7eb'} />
                
                <XAxis 
                  dataKey="formattedDate"
@@ -345,7 +355,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tick={{ 
                    fontSize: 11, 
                    textAnchor: 'middle',
-                   fill: 'var(--axis-text-color)'
+                   fill: chartColors.mutedForeground
                  }}
                  interval={
                    transformedData.length > 20 ? Math.floor(transformedData.length / 8) : 
@@ -363,7 +373,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tickLine={false}
                  tick={{ 
                    fontSize: 12,
-                   fill: 'var(--axis-text-color)'
+                   fill: chartColors.mutedForeground
                  }}
                  tickFormatter={(value) => formatPrice(value)}
                  width={80}
@@ -376,7 +386,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  tickLine={false}
                  tick={{ 
                    fontSize: 12,
-                   fill: 'var(--axis-text-color-secondary)'
+                   fill: chartColors.mutedForeground
                  }}
                  tickFormatter={(value) => formatVolume(value)}
                  width={60}
@@ -388,7 +398,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                <ReferenceLine 
                  yAxisId="price"
                  y={currentPrice} 
-                 className="stroke-neutral-500 dark:stroke-neutral-400" 
+                 stroke={chartColors.mutedForeground}
                  strokeDasharray="2 2" 
                  label={{  }}
                />
@@ -397,7 +407,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                <Bar
                  yAxisId="volume"
                  dataKey="volume"
-                 className="fill-neutral-200 dark:fill-neutral-700"
+                 fill={chartColors.muted}
                  opacity={0.6}
                  name="Volume"
                />
@@ -407,7 +417,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                  yAxisId="price"
                  type="monotone"
                  dataKey="close"
-                 className="stroke-neutral-900 dark:stroke-white"
+                 stroke={chartColors.foreground}
                  strokeWidth={2}
                  dot={false}
                  fill={`url(#priceGradient-${ticker})`}

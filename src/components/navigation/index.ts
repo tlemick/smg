@@ -1,2 +1,1 @@
-export { GlobalSearchBar } from './GlobalSearchBar';
-export { MainNavigation } from './MainNavigation'; 
+// GlobalSearchBar has been moved to dashboard components 

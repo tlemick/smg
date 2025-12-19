@@ -29,7 +29,7 @@ export function ExploreWinningPortfolios() {
 
   return (
     <div className="py-6 mt-40">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">
+      <h2 className="text-2xl font-bold font-mono text-neutral-900 dark:text-neutral-100 mb-6">
         Explore past winning portfolios
       </h2>
       
