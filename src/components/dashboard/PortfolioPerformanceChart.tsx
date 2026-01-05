@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
       </div>
       
       {/* Data values */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {payload.map((entry, index) => {
           const info = dataMap[entry.dataKey];
           if (!info) return null;
@@ -74,11 +74,11 @@ export function PortfolioPerformanceChart() {
   
   const colors = useMemo(
     () => ({
-      you: resolvedColors['chart-1'] || '#8b5cf6',
-      benchmark: resolvedColors['chart-6'] || '#000',
-      leader: resolvedColors['chart-3'] || '#000',
-      reference: resolvedColors['foreground'] || '#333',
-      label: resolvedColors['muted-foreground'] || '#666',
+      you: resolvedColors['chart-1'] || 'hsl(var(--chart-1))',
+      benchmark: resolvedColors['chart-6'] || 'hsl(var(--chart-6))',
+      leader: resolvedColors['chart-3'] || 'hsl(var(--chart-3))',
+      reference: resolvedColors['foreground'] || 'hsl(var(--foreground))',
+      label: resolvedColors['muted-foreground'] || 'hsl(var(--muted-foreground))',
     }),
     [resolvedColors]
   );
@@ -152,7 +152,7 @@ export function PortfolioPerformanceChart() {
   }, [data]);
 
   return (
-    <div className="">
+    <div>
       {error && (
         <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded p-2">{error}</div>
       )}
@@ -167,7 +167,7 @@ export function PortfolioPerformanceChart() {
             >
               You
             </span>
-            <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.youLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.youLabel}</span>
           </div>
 
           {/* Badge 2: S&P 500 */}
@@ -178,7 +178,7 @@ export function PortfolioPerformanceChart() {
             >
               S&P 500
             </span>
-            <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.spLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.spLabel}</span>
           </div>
 
           {/* Badge 3: Leader */}
@@ -189,7 +189,7 @@ export function PortfolioPerformanceChart() {
             >
               Leader
             </span>
-            <span className="text-[11px] mt-1 font-medium text-foreground">{lastValues.leaderLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.leaderLabel}</span>
           </div>
         </div>
       </div>

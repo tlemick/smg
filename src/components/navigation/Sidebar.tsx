@@ -92,13 +92,13 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-muted/40 border-r border-border flex flex-col h-screen transition-all duration-300',
+        'bg-muted/40 border-r border-border flex flex-col h-screen transition-all duration-300 relative',
         isCollapsed ? 'w-20' : 'w-60',
         className
       )}
     >
-      {/* Header - Logo & Collapse Toggle */}
-      <div className="h-20 flex items-center justify-between px-6 border-b border-border">
+      {/* Header - Logo */}
+      <div className="h-20 flex items-center px-6 border-b border-border">
         {!isCollapsed ? (
           <Link href="/dashboard" className="flex items-center space-x-2 text-foreground">
             <img
@@ -121,34 +121,7 @@ export function Sidebar({ className }: SidebarProps) {
             />
           </Link>
         )}
-        
-        {!isCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapse}
-            className="h-8 w-8"
-            title="Collapse sidebar"
-          >
-            <Icon icon={CaretLeftIcon} size="sm" />
-          </Button>
-        )}
       </div>
-
-      {/* Collapsed toggle button - shown when collapsed */}
-      {isCollapsed && (
-        <div className="px-4 py-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapse}
-            className="h-8 w-8 mx-auto"
-            title="Expand sidebar"
-          >
-            <Icon icon={CaretRightIcon} size="sm" />
-          </Button>
-        </div>
-      )}
 
       {/* Navigation - pt-8 = 32px to match main content padding */}
       <ScrollArea className="flex-1 px-3 pt-8 pb-4">
@@ -190,6 +163,17 @@ export function Sidebar({ className }: SidebarProps) {
           })}
         </nav>
       </ScrollArea>
+
+      {/* Collapse button - positioned at first menu item level, centered on border */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleCollapse}
+        className="absolute h-8 w-8 right-[-16px] top-[128px] -translate-y-1/2 z-10 bg-background border border-border rounded-full shadow-sm hover:bg-muted"
+        title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        <Icon icon={isCollapsed ? CaretRightIcon : CaretLeftIcon} size="sm" />
+      </Button>
 
     </aside>
   );

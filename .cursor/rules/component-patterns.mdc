@@ -1,0 +1,530 @@
+---
+description: Component Patterns - Separation of Concerns, Data Flow, and Best Practices
+globs: **/*.tsx
+alwaysApply: true
+---
+
+# Component Patterns
+
+## The Golden Rule of Components
+
+**Components are for UI rendering and user interaction ONLY.**
+
+No logic. No calculations. No formatting. Just display and interaction.
+
+## Component Responsibilities
+
+### ✅ What Components SHOULD Do
+1. **Render UI** - Display data in JSX
+2. **Handle user input** - onClick, onChange, onSubmit
+3. **Manage local UI state** - Modal open/closed, selected tab, form input
+4. **Call hooks** - Get data from custom hooks
+5. **Pass data to children** - Props down, events up
+
+### ❌ What Components MUST NOT Do
+1. **Perform calculations** - Not even `value1 + value2`
+2. **Format values** - No inline `toFixed()`, `toLocaleString()`, etc.
+3. **Fetch data directly** - No `fetch()` calls in components
+4. **Contain business logic** - No validation rules, no algorithms
+5. **Define utility functions** - Move to services
+
+## The Data Flow
+
+```
+API Route → Hook → Service → Hook → Component
+           ↓                        ↑
+       useState/useEffect      Display Only
+```
+
+### Detailed Flow
+1. **API Route** returns raw data
+2. **Hook** manages state and calls services
+3. **Service** transforms/calculates data
+4. **Hook** returns clean data to component
+5. **Component** displays data in UI
+
+## Pattern Examples
+
+### ❌ BAD: Logic in Component
+```typescript
+export function PortfolioCard({ holdings, cash }) {
+  // BAD - Calculation in component
+  const total = holdings.reduce((sum, h) => sum + (h.shares * h.price), 0) + cash;
+  
+  // BAD - Formatting in component
+  const formatted = `$${total.toFixed(2)}`;
+  
+  // BAD - Inline formatter function
+  const formatPercent = (val: number) => `${(val * 100).toFixed(2)}%`;
+  
+  return (
+    <div>
+      <p>Total: {formatted}</p>
+      <p>Return: {formatPercent(holdings[0].return)}</p>
+    </div>
+  );
+}
+```
+
+### ✅ GOOD: Pure Display Component
+```typescript
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
+
+export function PortfolioCard() {
+  // Hook provides ALL data (raw + formatted)
+  const { 
+    loading,
+    error,
+    totalPortfolioValue,      // Raw number
+    formatted                  // Pre-formatted strings
+  } = usePortfolioOverview();
+  
+  if (loading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+  
+  // Component just displays - no logic
+  return (
+    <div>
+      <p>Total: {formatted.totalPortfolioValue}</p>
+      <p>Return: {formatted.totalReturn}</p>
+    </div>
+  );
+}
+```
+
+## Component Categories
+
+### 1. Page Components
+**Location:** `src/app/[route]/page.tsx`
+
+**Responsibility:** Layout and orchestration
+```typescript
+export default function DashboardPage() {
+  return (
+    <div className="grid">
+      <PortfolioCard />
+      <ActivityFeed />
+      <TransactionsFeed />
+    </div>
+  );
+}
+```
+
+### 2. Feature Components
+**Location:** `src/components/[feature]/`
+
+**Responsibility:** Data fetching and feature rendering
+```typescript
+export function PortfolioCard() {
+  const { data, loading, error } = usePortfolioOverview();
+  
+  if (loading) return <CardSkeleton />;
+  if (error) return <ErrorState error={error} />;
+  
+  return (
+    <Card>
+      <PortfolioStats data={data} />
+      <PortfolioChart data={data.allocations} />
+    </Card>
+  );
+}
+```
+
+### 3. Presentation Components
+**Location:** `src/components/[feature]/` or `src/components/ui/`
+
+**Responsibility:** Pure UI rendering (no hooks except UI-related)
+```typescript
+interface PortfolioStatsProps {
+  totalValue: number;
+  formattedValue: string;
+  returnPercent: number;
+  formattedReturn: string;
+}
+
+export function PortfolioStats({ 
+  totalValue, 
+  formattedValue, 
+  returnPercent, 
+  formattedReturn 
+}: PortfolioStatsProps) {
+  return (
+    <div>
+      <div className="text-2xl">{formattedValue}</div>
+      <div className={returnPercent >= 0 ? 'text-green' : 'text-red'}>
+        {formattedReturn}
+      </div>
+    </div>
+  );
+}
+```
+
+## Importing in Components
+
+### ✅ Allowed Imports
+```typescript
+// React
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+// Custom hooks (data fetching, state management)
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
+import { useUser } from '@/hooks/useUser';
+
+// UI components
+import { Card, Button, Input } from '@/components/ui';
+
+// Types
+import type { Portfolio, Asset } from '@/types';
+
+// Utilities (sparingly, prefer hooks to provide data)
+import { cn } from '@/lib/utils'; // Only for className merging
+```
+
+### ❌ Forbidden Imports
+```typescript
+// ❌ NO - Services should be called by hooks, not components
+import { FinancialCalculators } from '@/lib/financial/calculators';
+
+// ❌ NO - Formatters should be called by hooks, not components
+import { Formatters } from '@/lib/financial/formatters';
+
+// ❌ NO - Direct API calls
+import { ApiClient } from '@/lib/api/api-client';
+
+// ❌ NO - Prisma in frontend components
+import { prisma } from '@/prisma/client';
+```
+
+**Exception:** Formatters MAY be imported in components ONLY for dynamic formatting based on user interaction (e.g., real-time input formatting). Prefer pre-formatted data from hooks.
+
+## Handling Calculations
+
+### ❌ BAD: Math in Component
+```typescript
+export function OrderModal({ asset, shares, price }) {
+  const total = shares * price; // NO
+  const fee = total * 0.001; // NO
+  const finalCost = total + fee; // NO
+  
+  return <div>Total: ${finalCost.toFixed(2)}</div>;
+}
+```
+
+### ✅ GOOD: Hook Provides Calculated Data
+```typescript
+// Hook
+export function useOrderCalculation(shares: number, price: number) {
+  return useMemo(() => {
+    const cost = FinancialCalculators.calculateOrderCost(shares, price);
+    return {
+      total: cost.total,
+      formatted: {
+        total: Formatters.currency(cost.total),
+        fee: Formatters.currency(cost.fee),
+      }
+    };
+  }, [shares, price]);
+}
+
+// Component
+export function OrderModal({ asset, shares, price }) {
+  const { formatted } = useOrderCalculation(shares, price);
+  
+  return <div>Total: {formatted.total}</div>;
+}
+```
+
+## Handling Formatting
+
+### ❌ BAD: Inline Formatting
+```typescript
+export function AssetCard({ price, change }) {
+  return (
+    <div>
+      {/* BAD - Inline formatting */}
+      <p>${price.toFixed(2)}</p>
+      <p>{(change * 100).toFixed(2)}%</p>
+    </div>
+  );
+}
+```
+
+### ✅ GOOD: Pre-Formatted from Hook
+```typescript
+// Hook provides formatted values
+export function useAssetQuote(ticker: string) {
+  const [data, setData] = useState<AssetQuote | null>(null);
+  
+  useEffect(() => {
+    const rawData = await fetchQuote(ticker);
+    setData({
+      raw: rawData,
+      formatted: {
+        price: Formatters.currency(rawData.price),
+        change: Formatters.percentage(rawData.change, { showSign: true }),
+      }
+    });
+  }, [ticker]);
+  
+  return data;
+}
+
+// Component just displays
+export function AssetCard({ ticker }: { ticker: string }) {
+  const quote = useAssetQuote(ticker);
+  
+  if (!quote) return <Skeleton />;
+  
+  return (
+    <div>
+      <p>{quote.formatted.price}</p>
+      <p>{quote.formatted.change}</p>
+    </div>
+  );
+}
+```
+
+## Local UI State vs. Data State
+
+### ✅ Local UI State (in Component)
+State that only affects UI presentation:
+```typescript
+export function TradingModal() {
+  const [isOpen, setIsOpen] = useState(false); // ✅ UI state
+  const [selectedTab, setSelectedTab] = useState('buy'); // ✅ UI state
+  const [shares, setShares] = useState(''); // ✅ Form input state
+  
+  // ... rest of component
+}
+```
+
+### ❌ Data State (in Hook, NOT Component)
+State derived from external data:
+```typescript
+// BAD - Don't do this in component
+export function PortfolioCard() {
+  const [portfolioValue, setPortfolioValue] = useState(0); // ❌ Data state
+  
+  useEffect(() => {
+    fetch('/api/portfolio').then(res => res.json()).then(data => {
+      setPortfolioValue(data.total); // ❌ Fetching in component
+    });
+  }, []);
+}
+
+// GOOD - Use a hook
+export function PortfolioCard() {
+  const { totalPortfolioValue } = usePortfolioOverview(); // ✅ Hook handles data
+}
+```
+
+## Event Handlers
+
+### ✅ Components Handle User Events
+```typescript
+export function TradeButton({ asset }: { asset: Asset }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const handleClick = () => {
+    setIsModalOpen(true); // ✅ Local UI state
+  };
+  
+  const handleSubmit = async (orderData: OrderData) => {
+    // ✅ Component calls hook/API, doesn't perform logic
+    await submitOrder(orderData);
+    setIsModalOpen(false);
+  };
+  
+  return (
+    <>
+      <Button onClick={handleClick}>Trade</Button>
+      <OrderModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        asset={asset}
+      />
+    </>
+  );
+}
+```
+
+## Conditional Rendering
+
+### ✅ Simple Conditions in Components (OK)
+```typescript
+export function AssetPrice({ price, change }: { price: number; change: number }) {
+  // ✅ Simple conditional for styling is OK
+  const colorClass = change >= 0 ? 'text-green-600' : 'text-red-600';
+  
+  return (
+    <div>
+      <span className={colorClass}>{price}</span>
+    </div>
+  );
+}
+```
+
+### ❌ Complex Logic in Conditionals (NOT OK)
+```typescript
+export function RiskBadge({ asset }: { asset: Asset }) {
+  // ❌ BAD - Complex calculation in component
+  const riskLevel = asset.volatility > 0.2 
+    ? 'high' 
+    : asset.volatility > 0.1 
+    ? 'medium' 
+    : 'low';
+  
+  // This logic should be in a service!
+}
+```
+
+### ✅ Business Logic in Service
+```typescript
+// Service
+export class RiskCalculator {
+  static getRiskLevel(volatility: number): 'low' | 'medium' | 'high' {
+    if (volatility > 0.2) return 'high';
+    if (volatility > 0.1) return 'medium';
+    return 'low';
+  }
+}
+
+// Hook
+export function useAssetRisk(asset: Asset) {
+  return useMemo(() => ({
+    level: RiskCalculator.getRiskLevel(asset.volatility),
+    formatted: RiskCalculator.formatRiskLevel(asset.volatility)
+  }), [asset]);
+}
+
+// Component
+export function RiskBadge({ asset }: { asset: Asset }) {
+  const { formatted } = useAssetRisk(asset);
+  return <Badge>{formatted}</Badge>;
+}
+```
+
+## Component File Structure
+
+```typescript
+// 1. Imports
+import { useState } from 'react';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
+import { Card, Button } from '@/components/ui';
+
+// 2. Type definitions (props interfaces)
+interface PortfolioCardProps {
+  className?: string;
+  showHeader?: boolean;
+}
+
+// 3. Component implementation
+export function PortfolioCard({ 
+  className, 
+  showHeader = true 
+}: PortfolioCardProps) {
+  // a) Hooks at the top
+  const { data, loading, error } = usePortfolioOverview();
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // b) Early returns for loading/error
+  if (loading) return <CardSkeleton />;
+  if (error) return <ErrorState />;
+  
+  // c) Event handlers
+  const handleExpand = () => setIsExpanded(prev => !prev);
+  
+  // d) Render
+  return (
+    <Card className={className}>
+      {showHeader && <CardHeader />}
+      <CardContent>
+        {/* Pure display - no logic */}
+      </CardContent>
+    </Card>
+  );
+}
+
+// 4. Sub-components (if any)
+function CardSkeleton() {
+  return <div>Loading...</div>;
+}
+```
+
+## Common Violations and Fixes
+
+### Violation 1: Inline Formatters
+```typescript
+// ❌ BEFORE
+const formatCurrency = (val: number) => `$${val.toFixed(2)}`;
+return <div>{formatCurrency(price)}</div>;
+
+// ✅ AFTER
+import { Formatters } from '@/lib/financial'; // Only if truly needed
+return <div>{Formatters.currency(price)}</div>;
+
+// ✅✅ BEST: Hook provides formatted value
+const { formatted } = useAssetPrice(ticker);
+return <div>{formatted.price}</div>;
+```
+
+### Violation 2: Calculations
+```typescript
+// ❌ BEFORE
+const total = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+
+// ✅ AFTER (in hook)
+const total = useMemo(() => 
+  FinancialCalculators.calculateTotal(items),
+  [items]
+);
+```
+
+### Violation 3: Validation Logic
+```typescript
+// ❌ BEFORE (in component)
+const isValid = shares > 0 && shares * price <= cashBalance;
+
+// ✅ AFTER (in service, called by hook)
+const validation = TradingValidation.validateOrder(shares, price, cashBalance);
+const isValid = validation.isValid;
+```
+
+## Testing Component Logic
+
+If you find yourself writing complex tests for component logic, **that logic should be in a service**.
+
+```typescript
+// ❌ If you're testing this...
+test('component calculates total correctly', () => {
+  render(<Component shares={10} price={50} />);
+  expect(screen.getByText('$500.00')).toBeInTheDocument();
+});
+
+// ✅ Extract to service and test the service
+test('FinancialCalculators.calculateCost works', () => {
+  const result = FinancialCalculators.calculateCost(10, 50);
+  expect(result.toNumber()).toBe(500);
+});
+```
+
+## Quick Checklist
+
+Before committing a component, verify:
+- [ ] No arithmetic operators (`+`, `-`, `*`, `/`, `%`)
+- [ ] No `.toFixed()`, `.toLocaleString()`, or formatting functions
+- [ ] No inline utility functions (extract to services)
+- [ ] No `fetch()` calls (use hooks)
+- [ ] No business logic (move to services)
+- [ ] Props are typed with interfaces
+- [ ] Component has single responsibility
+- [ ] JSX is readable and semantic
+
+## Summary
+
+**Components are dumb.**  
+**Hooks are smart.**  
+**Services are brilliant.**
+
+Keep components focused on one thing: taking data and showing it beautifully.

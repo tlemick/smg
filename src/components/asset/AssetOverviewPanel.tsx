@@ -12,30 +12,23 @@ interface Props {
   profile?: AssetDetailData['profile'];
 }
 
+import { Formatters } from '@/lib/financial';
+
+// Helper wrappers for backward compatibility (can be removed if all usages are updated)
 function formatNumber(value: number | undefined | null, decimals = 2): string {
-  if (value == null || Number.isNaN(value)) return 'N/A';
-  return value.toFixed(decimals);
+  return Formatters.number(value, { decimals });
 }
 
 function formatPercentage(value: number | undefined | null, decimals = 2): string {
-  if (value == null || Number.isNaN(value)) return 'N/A';
-  return `${(value * 100).toFixed(decimals)}%`;
+  return Formatters.percentage(value, { decimals });
 }
 
 function formatCurrency(value: number | undefined | null, decimals = 2): string {
-  if (value == null || Number.isNaN(value)) return 'N/A';
-  return `$${value.toFixed(decimals)}`;
+  return Formatters.currency(value, { decimals });
 }
 
 function formatMarketCap(value: string | undefined | null): string {
-  if (!value || value === 'N/A') return 'N/A';
-  const num = Number(value);
-  if (Number.isNaN(num)) return 'N/A';
-  
-  if (num >= 1e12) return `$${(num / 1e12).toFixed(1)}T`;
-  if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
-  if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-  return `$${num.toLocaleString()}`;
+  return Formatters.marketCap(value);
 }
 
 function getConsensusColor(consensus?: string): string {

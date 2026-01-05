@@ -30,15 +30,15 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="space-y-12">
+    <div>
       {/* Page Header */}
       <div>
-        <h1 className="text-4xl font-bold font-mono text-foreground leading-tight">
-          Your Portfolio
+        <h1 className="text-2xl font-mono text-foreground">
+            Your portfolio
         </h1>
-        <p className="text-foreground mt-2 max-w-prose">
+        {/* <p className="text-foreground mt-2 max-w-prose">
           In this section you can see all your <Highlight>assets by size and performance</Highlight> in the treemap. Get some advice on what to do with <Highlight>winners, losers</Highlight>, and the assets that don't seem to be doing much at all. Also, check out <Highlight>some past portfolios</Highlight> with an analysis on why they performed so well!
-        </p>
+        </p> */}
       </div>
 
       {/* Portfolio Content */}

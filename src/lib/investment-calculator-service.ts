@@ -3,7 +3,12 @@
  * 
  * Provides calculations for compound growth, portfolio projections,
  * and educational financial planning for teen investors.
+ * 
+ * NOTE: Core calculations still use native math for compound interest
+ * (acceptable for long-term projections). Display formatting uses Formatters service.
  */
+
+import { Formatters } from './financial';
 
 export interface AssetAllocation {
   stocks: number;      // percentage (0-100)
@@ -310,20 +315,17 @@ export class InvestmentCalculator {
 
   /**
    * Format currency for display
+   * @deprecated Use Formatters.currency() from '@/lib/financial' instead
    */
   static formatCurrency(amount: number, decimals: number = 0): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
-    }).format(amount);
+    return Formatters.currency(amount, { decimals });
   }
 
   /**
    * Format percentage for display
+   * @deprecated Use Formatters.percentage() from '@/lib/financial' instead
    */
   static formatPercent(value: number, decimals: number = 1): string {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(decimals)}%`;
+    return Formatters.percentage(value / 100, { showSign: value >= 0, decimals });
   }
 }

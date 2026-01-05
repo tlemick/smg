@@ -1,5 +1,6 @@
 import { AssetDetailQuote } from '@/types';
 import { TikTokEmbed } from '@/components/ui/TikTokEmbed';
+import { Formatters } from '@/lib/financial';
 
 interface FundMetricsProps {
   fund: {
@@ -19,41 +20,6 @@ interface FundMetricsProps {
 }
 
 export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
-  const formatNumber = (num: number | undefined | null, decimals = 2) => {
-    if (num === undefined || num === null) return 'N/A';
-    return num.toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  };
-
-  const formatCurrency = (num: number | undefined | null) => {
-    if (num === undefined || num === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: quote.currency || 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
-
-  const formatPercentage = (num: number | undefined | null) => {
-    if (num === undefined || num === null) return 'N/A';
-    return `${num.toFixed(2)}%`;
-  };
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString();
-  };
-
-  const formatAssets = (assets: number | null) => {
-    if (!assets) return 'N/A';
-    if (assets >= 1e12) return `$${(assets / 1e12).toFixed(1)}T`;
-    if (assets >= 1e9) return `$${(assets / 1e9).toFixed(1)}B`;
-    if (assets >= 1e6) return `$${(assets / 1e6).toFixed(1)}M`;
-    return `$${assets.toLocaleString()}`;
-  };
 
   const getExpenseRatioColor = (ratio: number | null) => {
     if (!ratio) return 'bg-gray-100 text-gray-800';
@@ -112,7 +78,7 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
           )}
           <div className="flex justify-between">
             <span className="text-gray-600">Inception Date:</span>
-            <span className="font-medium">{formatDate(fund.inceptionDate)}</span>
+            <span className="font-medium">{Formatters.date(fund.inceptionDate)}</span>
           </div>
           {yearsSinceInception !== null && (
             <div className="flex justify-between">
@@ -130,7 +96,7 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Expense Ratio:</span>
             <div className="flex items-center">
-              <span className="font-medium mr-2">{formatPercentage(fund.expenseRatio)}</span>
+              <span className="font-medium mr-2">{Formatters.percentage(fund.expenseRatio, { multiplier: 1 })}</span>
               {fund.expenseRatio && (
                 <span className={`text-xs px-2 py-1 rounded ${getExpenseRatioColor(fund.expenseRatio)}`}>
                   {getExpenseRatioLabel(fund.expenseRatio)}
@@ -140,11 +106,11 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Minimum Investment:</span>
-            <span className="font-medium">{formatCurrency(fund.minimumInvestment)}</span>
+            <span className="font-medium">{Formatters.currency(fund.minimumInvestment, { currency: quote.currency || 'USD' })}</span>
           </div>
           {fund.expenseRatio && (
             <div className="text-xs text-gray-500 mt-1">
-              <p>Annual cost per $10,000 invested: {formatCurrency(fund.expenseRatio * 100)}</p>
+              <p>Annual cost per $10,000 invested: {Formatters.currency((fund.expenseRatio || 0) * 100, { currency: quote.currency || 'USD' })}</p>
             </div>
           )}
         </div>
@@ -156,7 +122,7 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Total Assets (AUM):</span>
-            <span className="font-medium">{formatAssets(fund.totalAssets)}</span>
+            <span className="font-medium">{Formatters.marketCap(fund.totalAssets)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Trading Volume:</span>
@@ -168,7 +134,7 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">NAV:</span>
-            <span className="font-medium">{formatCurrency(quote.regularMarketPrice)}</span>
+            <span className="font-medium">{Formatters.price(quote.regularMarketPrice, quote.currency || 'USD')}</span>
           </div>
         </div>
       </div>
@@ -179,22 +145,22 @@ export function FundMetrics({ fund, quote, assetType }: FundMetricsProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">52W High:</span>
-            <span className="font-medium">{formatCurrency(quote.fiftyTwoWeekHigh)}</span>
+            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekHigh, quote.currency || 'USD')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">52W Low:</span>
-            <span className="font-medium">{formatCurrency(quote.fiftyTwoWeekLow)}</span>
+            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekLow, quote.currency || 'USD')}</span>
           </div>
           {quote.dividendYield && (
             <div className="flex justify-between">
               <span className="text-gray-600">Dividend Yield:</span>
-              <span className="font-medium">{formatPercentage(quote.dividendYield)}</span>
+              <span className="font-medium">{Formatters.percentage(quote.dividendYield, { multiplier: 1 })}</span>
             </div>
           )}
           {quote.beta && (
             <div className="flex justify-between">
               <span className="text-gray-600">Beta:</span>
-              <span className="font-medium">{formatNumber(quote.beta)}</span>
+              <span className="font-medium">{Formatters.number(quote.beta, { decimals: 2 })}</span>
             </div>
           )}
         </div>

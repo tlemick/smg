@@ -1,0 +1,234 @@
+---
+description: Financial Math Standards - Precision, Calculations, and Type Safety
+globs: **/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Financial Math Standards
+
+## The Cardinal Rule: NO Native JavaScript Arithmetic for Money
+
+**NEVER** use JavaScript's native arithmetic operators (`+`, `-`, `*`, `/`) for financial calculations. JavaScript's floating-point arithmetic is fundamentally flawed for money:
+
+```javascript
+// ❌ WRONG - JavaScript floating point precision error
+0.1 + 0.2 = 0.30000000000000004
+100 * 0.29 = 28.999999999999996
+
+// ✅ CORRECT - Use FinancialMath service
+FinancialMath.add(0.1, 0.2) = 0.3
+FinancialMath.multiply(100, 0.29) = 29.00
+```
+
+## Mandatory Service Usage
+
+### 1. All Financial Calculations MUST Use FinancialMath Service
+```typescript
+import { FinancialMath } from '@/lib/financial';
+
+// ❌ BAD
+const total = shares * price;
+const gain = currentValue - costBasis;
+const percent = (gain / costBasis) * 100;
+
+// ✅ GOOD
+const total = FinancialMath.multiply(shares, price);
+const gain = FinancialMath.subtract(currentValue, costBasis);
+const percent = FinancialMath.calculateGainPercent(gain, costBasis);
+```
+
+### 2. All Formatting MUST Use Formatters Service
+```typescript
+import { Formatters } from '@/lib/financial';
+
+// ❌ BAD - Inline formatting
+const formatted = `$${value.toLocaleString()}`;
+const percent = `${(value * 100).toFixed(2)}%`;
+
+// ✅ GOOD
+const formatted = Formatters.currency(value);
+const percent = Formatters.percentage(value, { showSign: true });
+```
+
+## Type Safety Guidelines
+
+### Money Amount Types
+```typescript
+// Raw numbers from API/database - use sparingly
+type MoneyNumber = number;
+
+// Decimal for calculations - preferred
+import Decimal from 'decimal.js';
+
+// In function signatures, accept both:
+function calculateCost(shares: number | Decimal, price: number | Decimal): Decimal {
+  return FinancialMath.multiply(shares, price);
+}
+```
+
+### Conversion Points
+```typescript
+// API → Component: Convert once at hook level
+function usePortfolio() {
+  const rawData = await fetchPortfolio();
+  
+  // Convert to Decimal for calculations
+  const totalValue = FinancialMath.add(
+    rawData.cash,
+    rawData.holdingsValue
+  );
+  
+  // Return both raw and calculated
+  return {
+    raw: rawData,
+    calculated: {
+      totalValue: totalValue.toNumber(),
+      formatted: Formatters.currency(totalValue)
+    }
+  };
+}
+```
+
+## Rounding Standards
+
+### Currency (Money Values)
+- **Always 2 decimal places**
+- Round using `Decimal.ROUND_HALF_UP` (banker's rounding)
+- Examples: `$1,234.56`, `$0.99`, `$1,000,000.00`
+
+### Percentages
+- **Always 2 decimal places for display**
+- Calculations use full precision internally
+- Examples: `+12.34%`, `-0.05%`, `100.00%`
+
+### Shares/Quantities
+- **Whole numbers for most stocks**: `100 shares`
+- **Up to 6 decimals for fractional shares**: `10.532145 shares`
+- Smart formatting: Show decimals only when needed
+
+### Prices
+- **2-4 decimal places depending on asset**
+- Stocks: 2 decimals (`$123.45`)
+- Penny stocks: 4 decimals (`$0.0012`)
+- Crypto (if added): 8 decimals
+
+## Where Calculations Belong
+
+### Backend (Python/API Routes)
+- CAGR (Compound Annual Growth Rate)
+- Beta calculations
+- Sharpe ratio
+- Standard deviation / volatility
+- Moving averages
+- Portfolio performance vs. benchmarks
+- Complex risk metrics
+- Historical analysis
+
+### Frontend (Service Layer)
+- Order cost calculations (shares × price)
+- P&L calculations (current - cost basis)
+- Percentage calculations (gain / cost basis)
+- Portfolio allocation percentages
+- Simple aggregations (sum of holdings)
+- Display formatting
+- Date math (days remaining, time held)
+
+### Never in Components
+- **Components NEVER perform calculations**
+- **Components NEVER format values**
+- Components only display pre-calculated/pre-formatted data
+
+## Common Pitfalls to Avoid
+
+### ❌ Pitfall 1: Inline Math in Components
+```typescript
+// BAD
+function Component({ price, shares }) {
+  return <div>${(price * shares).toFixed(2)}</div>;
+}
+```
+
+### ✅ Solution: Use Hook + Service
+```typescript
+// GOOD
+function Component({ price, shares }) {
+  const total = useMemo(
+    () => FinancialMath.multiply(price, shares),
+    [price, shares]
+  );
+  
+  return <div>{Formatters.currency(total)}</div>;
+}
+```
+
+### ❌ Pitfall 2: Chaining Operations Without Precision
+```typescript
+// BAD - Accumulates floating point errors
+let total = 0;
+holdings.forEach(h => {
+  total = total + (h.shares * h.price);
+});
+```
+
+### ✅ Solution: Use Decimal Throughout
+```typescript
+// GOOD
+let total = new Decimal(0);
+holdings.forEach(h => {
+  const value = FinancialMath.multiply(h.shares, h.price);
+  total = FinancialMath.add(total, value);
+});
+```
+
+### ❌ Pitfall 3: Direct toFixed() on Numbers
+```typescript
+// BAD - Can produce incorrect results
+const percent = ((value / total) * 100).toFixed(2);
+```
+
+### ✅ Solution: Use FinancialMath + Formatters
+```typescript
+// GOOD
+const percent = FinancialMath.calculatePortfolioPercent(value, total);
+const formatted = Formatters.percentage(percent);
+```
+
+## Testing Requirements
+
+Every financial calculation must have unit tests covering:
+1. **Precision**: Verify no floating-point errors
+2. **Edge Cases**: Zero, negative, very large numbers
+3. **Rounding**: Verify correct rounding behavior
+4. **Type Safety**: Test with both number and Decimal inputs
+
+Example:
+```typescript
+test('calculates order cost with precision', () => {
+  const cost = FinancialMath.calculateCost(100, 29.99);
+  expect(cost.toNumber()).toBe(2999.00); // Exactly, not 2999.0000000001
+});
+```
+
+## Migration Checklist
+
+When refactoring existing code:
+- [ ] Replace all arithmetic operators with FinancialMath methods
+- [ ] Replace all formatting with Formatters service
+- [ ] Move calculations from components to services/hooks
+- [ ] Add proper type annotations
+- [ ] Write unit tests
+- [ ] Verify no precision errors in UI
+- [ ] Check for NaN/undefined in displays
+
+## Quick Reference
+
+| Operation | ❌ Wrong | ✅ Correct |
+|-----------|---------|-----------|
+| Addition | `a + b` | `FinancialMath.add(a, b)` |
+| Subtraction | `a - b` | `FinancialMath.subtract(a, b)` |
+| Multiplication | `a * b` | `FinancialMath.multiply(a, b)` |
+| Division | `a / b` | `FinancialMath.divide(a, b)` |
+| Format Currency | `$${num.toFixed(2)}` | `Formatters.currency(num)` |
+| Format Percent | `${num}%` | `Formatters.percentage(num)` |
+| P&L | `current - cost` | `FinancialMath.calculateGain(current, cost)` |
+| ROI % | `(current/invested)*100` | `FinancialMath.calculateROI(invested, current)` |

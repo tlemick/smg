@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+
+---
+description: Data Fetching, API Integration, and State Management
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Data Layer Architecture
+
+## 1. The Golden Rule: UI vs. Logic Separation
+- **Components** (`.tsx`) must NEVER contain `fetch()` calls or business logic calculations.
+- **Hooks** (`/hooks`) are the only place where data fetching and side effects occur.
+- **Pattern:**
+  - ❌ Bad: Component calls `fetch('/api/stock')`.
+  - ✅ Good: Component calls `const { data, loading } = useStockData()`.
+
+## 2. API Communication Layer
+- **No Direct External Calls:** The Frontend NEVER calls `yahoo-finance2` directly.
+  - Frontend calls -> Your Backend API -> Yahoo Finance.
+- **Client:** Use a centralized API client (or utility function) for all requests, not raw `fetch` in every hook.
+- **Paths:** Do not hardcode URLs (e.g., `localhost:8000`). Use environment variables or a configured base URL.
+
+## 3. TypeScript Interfaces & DTOs
+- **Strict Typing:** Every API response must have a corresponding interface.
+- **Naming:**
+  - Backend responses: `*Response` (e.g., `StockPriceResponse`).
+  - Frontend models: `*Asset`, `*Portfolio`.
+- **Location:** Store shared types in `@/types/api.ts` or similar. Do not define interfaces inside components.
+
+## 4. State Management (Hooks)
+- **Loading/Error States:** Custom hooks must always return `{ data, isLoading, error }`.
+- **Data Transformation:** If the backend returns "snake_case" (Python style), the hook must transform it to "camelCase" (JS style) before returning it to the component.
+  - *Exceptions:* If the project strictly uses snake_case everywhere, note that here.
+
+## 5. Calculations
+- **Heavy Math:** Financial calculations (CAGR, Beta, Moving Averages) belong on the Backend (Python).
+- **Display Math:** Simple formatting (percentages, currency strings) belongs in the Frontend Helper (`/lib/utils.ts`).
+
+## 6. Server vs. Client (Next.js Specific)
+- If using Next.js App Router:
+  - Prefer **Server Actions** for mutations (buying/selling).
+  - Prefer **API Routes** or specialized hooks for fetching high-frequency data (stock prices).

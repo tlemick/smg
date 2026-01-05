@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { FinancialMath, FinancialCalculators } from './financial';
 
 export interface CashValidationResult {
   isValid: boolean;
@@ -23,6 +24,8 @@ export interface OrderCostCalculation {
 /**
  * Cash Management Service for educational trading
  * Handles cash balance validation, order cost calculations, and portfolio updates
+ * 
+ * NOTE: All financial calculations now use FinancialMath for precision
  */
 export class CashManagementService {
   
@@ -62,30 +65,25 @@ export class CashManagementService {
   /**
    * Calculate the total cost of an order including fees
    * For educational purposes, we'll simulate realistic fees
+   * 
+   * Now uses FinancialCalculators.calculateOrderCost for precision
    */
   static calculateOrderCost(
     shares: number, 
     pricePerShare: number, 
     orderType: 'BUY' | 'SELL' = 'BUY'
   ): OrderCostCalculation {
-    const orderValue = shares * pricePerShare;
-    
-    // Educational fee structure (simplified)
-    const commissionFee = 0; // Most modern brokers are commission-free
-    const regulatoryFees = orderType === 'SELL' ? orderValue * 0.0000229 : 0; // SEC fee for sells only
-    
-    const estimatedFees = commissionFee + regulatoryFees;
-    const totalCost = orderValue + estimatedFees;
+    const orderCost = FinancialCalculators.calculateOrderCost(shares, pricePerShare, orderType);
     
     return {
-      orderValue,
-      estimatedFees,
-      totalCost,
+      orderValue: orderCost.subtotal,
+      estimatedFees: orderCost.fees,
+      totalCost: orderCost.total,
       breakdown: {
-        shares,
-        pricePerShare,
-        commissionFee,
-        regulatoryFees,
+        shares: orderCost.shares,
+        pricePerShare: orderCost.pricePerShare,
+        commissionFee: orderCost.breakdown.commissionFee,
+        regulatoryFees: orderCost.breakdown.regulatoryFees,
       }
     };
   }
@@ -284,8 +282,14 @@ export class CashManagementService {
       
       const currentCash = Number(portfolio.cash_balance);
       const startingCash = Number(portfolio.gameSession.startingCash);
-      const totalSpent = startingCash - currentCash;
-      const cashUtilization = ((totalSpent / startingCash) * 100);
+      
+      // Use FinancialMath for precise calculations
+      const totalSpent = FinancialMath.subtract(startingCash, currentCash).toNumber();
+      const cashUtilizationDecimal = FinancialMath.divide(
+        totalSpent,
+        startingCash
+      );
+      const cashUtilization = FinancialMath.multiply(cashUtilizationDecimal, 100).toNumber();
       
       return {
         currentCash,

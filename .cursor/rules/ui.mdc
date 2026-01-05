@@ -1,0 +1,73 @@
+---
+alwaysApply: false
+---
+
+---
+---
+description: UI Standards, Tailwind v4 Hybrid Setup, and Vertical Rhythm
+globs: **/*.{tsx,jsx,css}
+---
+
+# UI Architecture & Styling Rules
+
+## 1. Source of Truth (Hybrid Tailwind v4)
+- **Theme Definition (`globals.css`):** ALL design tokens (colors, font sizes, spacing, shadows) are defined in the `@theme` block in `@app/globals.css`.
+- **Configuration (`tailwind.config.ts`):** Handles content paths and plugins only. Do not look here for theme customizations.
+- **Dark Mode:** We use the `class` strategy. The `.dark` class triggers CSS variable swaps in `globals.css`.
+
+## 2. STRICT Vertical Rhythm (The 4px Rule)
+This project uses a hard-coded 4px vertical baseline defined in CSS.
+- **Spacing Unit:** 1 unit = `0.25rem` (4px).
+- **Allowed Spacing:** ALWAYS use multiples of 4 (e.g., `p-4`, `gap-6`, `my-8`).
+- **Forbidden:** Never use odd pixel values like `10px` or `3px`.
+- **Line Height:** DO NOT set `leading-*` manually on standard text.
+    - The classes `text-sm`, `text-base`, etc., have line-heights hard-locked in `@globals.css`.
+    - *Example:* `text-base` is locked to `1.5rem` (24px). Adding `leading-tight` breaks the grid.
+
+## 3. Typography & Fonts
+- **Headings/UI:** Use `font-sans` (Outfit).
+- **Data/Numbers:** Use `font-mono` (DM Mono).
+- **Scale:** Use the predefined `text-*` scale only. No arbitrary values (e.g., `text-[17px]`).
+
+## 4. Component Usage
+- **Library:** Check `@components/ui` first.
+- **Imports:**
+  - `import { Button } from "@/components/ui/button"` (or index)
+  - `import { Card, CardHeader... } from "@/components/ui/card"`
+  - `import { FormField, Input } from "@/components/ui/form"`
+- **Construction:**
+  - Do not build `<div className="border rounded...">` if a `<Card>` component exists.
+  - Do not build `<input className="...">` if `<Input>` exists.
+
+## 5. Color System (Semantic Only)
+- **Do not use:** Hex codes or `bg-slate-100`.
+- **Use Semantic Tokens:**
+  - Backgrounds: `bg-background`, `bg-muted`, `bg-card`.
+  - Text: `text-foreground`, `text-muted-foreground`.
+  - Borders: `border-border`.
+  - Primary: `bg-primary text-primary-foreground`.
+  - Charts: Use `var(--chart-1)` through `var(--chart-6)`.
+
+## 6. Layout Patterns
+- **Root:** `layout.tsx` contains global Providers (`UserProvider`, `ThemeProvider`).
+- **Page Structure:** Pages should not contain global shells (navbars). They should return a clean container (usually `<main>`).
+- **Forms:** Follow the `LandingPage` pattern: localized state for inputs, `handleSubmit` for logic, and UI components for display.
+
+## 7. Shadcn & Component Library Rules
+The AI must strictly prioritize existing components over raw HTML.
+
+### A. The "No-Ghost" Policy
+Never create "ghost" styles that mimic existing components.
+- ❌ **Bad:** `<button className="bg-primary text-primary-foreground px-4 py-2 rounded">`
+- ✅ **Good:** `<Button variant="default">`
+- ❌ **Bad:** `<div className="border rounded-lg p-4 shadow-sm">`
+- ✅ **Good:** `<Card><CardContent>...</CardContent></Card>`
+
+### B. "Read Before Write" (CRITICAL)
+Because Shadcn components are local files, their API may differ from online documentation.
+- **Rule:** Before implementing a component (especially `Form`, `Input`, or `Select`), you MUST read the component's definition file in `@/components/ui/` to check for custom props (e.g., check if `FormField` expects a `control` prop or a `label` prop).
+
+### C. Common Patterns
+- **Buttons:** Always use the `variant` prop (`default`, `secondary`, `outline`, `ghost`, `destructive`) rather than overriding classes.
+- **Dialogs/Modals:** Use the `Dialog` primitive. Do not build custom overlays with `z-50`.
+- **Cards:** Always separate content into `<CardHeader>`, `<CardTitle>`, and `<CardContent>`. Never dump all content into the root `<Card>`.

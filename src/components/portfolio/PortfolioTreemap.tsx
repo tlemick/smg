@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 import { LessonButton } from '@/components/ui/LessonButton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface TreemapDataPoint {
   name: string;
@@ -221,22 +224,22 @@ export function PortfolioTreemap() {
           width={adjustedWidth}
           height={adjustedHeight}
           className={` ${fillClass}`}
-          rx={3}
+          rx={4}
         />
         
         {/* Asset ticker */}
         {showMainText && (
-          <text
-            x={adjustedX + adjustedWidth / 2}
-            y={adjustedY + adjustedHeight / 2 - (showSecondaryText ? 12 : 0)}
-            textAnchor="middle"
-            className="fill-neutral-900"
-            fontSize={14}
-            fontWeight="700"
-            style={{ pointerEvents: 'none' }}
-          >
-            {name}
-          </text>
+                <text
+                  x={adjustedX + adjustedWidth / 2}
+                  y={adjustedY + adjustedHeight / 2 - (showSecondaryText ? 12 : 0)}
+                  textAnchor="middle"
+                  className="fill-foreground"
+                  fontSize={14}
+                  fontWeight="700"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {name}
+                </text>
         )}
         
         {/* Performance percentage */}
@@ -245,7 +248,7 @@ export function PortfolioTreemap() {
             x={adjustedX + adjustedWidth / 2}
             y={adjustedY + adjustedHeight / 2 + 6}
             textAnchor="middle"
-            className="fill-neutral-900"
+            className="fill-foreground"
             fontSize={12}
             fontWeight="600"
             style={{ pointerEvents: 'none' }}
@@ -260,7 +263,7 @@ export function PortfolioTreemap() {
             x={adjustedX + adjustedWidth / 2}
             y={adjustedY + adjustedHeight / 2 + 24}
             textAnchor="middle"
-            className="fill-neutral-900"
+            className="fill-foreground"
             fontSize={11}
             style={{ pointerEvents: 'none' }}
           >
@@ -285,39 +288,43 @@ export function PortfolioTreemap() {
     const isParent = data.isParent || false;
 
     return (
-      <div className="bg-white border border-neutral-300 rounded-lg shadow-lg p-3 min-w-[220px]">
+      // Tooltip content
+      <div className="bg-popover min-w-[220px] p-4 rounded-lg shadow-lg border border-border">
         <div className="space-y-1">
-          <div className="font-semibold text-neutral-900 text-base">
+          <div className="font-semibold text-popover-foreground">
             {data.name}
             {isParent && (
-              <span className="ml-2 text-xs font-normal text-neutral-500">
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
                 ({data.assetCount} {data.assetCount === 1 ? 'asset' : 'assets'})
               </span>
             )}
           </div>
           {!isParent && (
-            <div className="text-xs text-neutral-600 truncate max-w-[200px]">
+            <div className="text-xs text-muted-foreground truncate max-w-[200px]">
               {data.fullName}
             </div>
           )}
-          <div className="pt-2 space-y-1.5 text-sm">
+          <div className="pt-2 space-y-2 text-sm">
             <div className="flex justify-between space-x-6">
-              <span className="text-neutral-600">Value:</span>
-              <span className="font-medium text-neutral-900">{formatCurrency(data.size)}</span>
+              <span className="text-muted-foreground">Value:</span>
+              <span className="font-medium text-popover-foreground">{formatCurrency(data.size)}</span>
             </div>
             <div className="flex justify-between space-x-6">
-              <span className="text-neutral-600">Allocation:</span>
-              <span className="font-medium text-neutral-900">{data.value.toFixed(2)}%</span>
+              <span className="text-muted-foreground">Allocation:</span>
+              <span className="font-medium text-popover-foreground">{data.value.toFixed(2)}%</span>
             </div>
-            <div className="flex justify-between space-x-6 pt-1 border-t border-neutral-200">
-              <span className="text-neutral-600">Performance:</span>
-              <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex justify-between space-x-6 pt-1 border-t border-border">
+              <span className="text-muted-foreground">Performance:</span>
+              <span className={cn(
+                "font-semibold",
+                isPositive ? "text-chart-positive" : "text-chart-negative"
+              )}>
                 {formatPercentage(data.pnlPercent)}
               </span>
             </div>
           </div>
           {!isParent && (
-            <div className="pt-2 text-xs text-neutral-500">
+            <div className="pt-2 text-xs text-muted-foreground">
               Click to view asset details
             </div>
           )}
@@ -329,99 +336,226 @@ export function PortfolioTreemap() {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg p-6">
-        <div className="mb-4">
-        <h4 className="text-base leading-none -mb-2 font-semibold text-neutral-900 dark:text-white">Asset Treemap</h4>
-        <p className="text-sm -mt-2 text-neutral-600 dark:text-neutral-400">
-          Holdings grouped by asset class • Color shows performance • Size shows allocation
-        </p>
-      </div>
-        <div className="h-80 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-400"></div>
-            <span className="text-neutral-400">Loading portfolio...</span>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="p-0">
+          <CardTitle>Asset Treemap</CardTitle>
+          <CardDescription>
+            Holdings grouped by asset class • Color shows performance • Size shows allocation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 mt-2">
+          <div className="h-[480px] relative flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="text-muted-foreground">Loading portfolio...</span>
+            </div>
           </div>
-        </div>
-      </div>
+          {/* Legend spacing placeholder */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2">
+                <div className="text-xs font-medium text-foreground">
+                  Performance Color Scale:
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <span className="text-xs text-muted-foreground">-10%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <span className="text-xs text-muted-foreground">-5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <span className="text-xs text-muted-foreground">-2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <span className="text-xs text-muted-foreground">±2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <span className="text-xs text-muted-foreground">+2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <span className="text-xs text-muted-foreground">+5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <span className="text-xs text-muted-foreground">+10%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg p-6">
-        <div className="mb-4">
-        <h4 className="text-base leading-none -mb-2 font-semibold text-neutral-900 dark:text-white">Asset Treemap</h4>
-        <p className="text-sm -mt-2 text-neutral-600 dark:text-neutral-400">
-          Holdings grouped by asset class • Color shows performance • Size shows allocation
-        </p>
-      </div>
-        <div className="h-80 flex flex-col items-center justify-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="p-0">
+          <CardTitle>Asset Treemap</CardTitle>
+          <CardDescription>
+            Holdings grouped by asset class • Color shows performance • Size shows allocation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 mt-2">
+          <div className="h-[480px] relative flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Failed to Load Portfolio
+            </h3>
+            <p className="text-muted-foreground mb-4 text-center max-w-md">
+              {error}
+            </p>
+            <Button 
+              onClick={refresh}
+              variant="default"
+            >
+              Try Again
+            </Button>
           </div>
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">
-            Failed to Load Portfolio
-          </h3>
-          <p className="text-neutral-600 mb-4 text-center max-w-md">
-            {error}
-          </p>
-          <button 
-            onClick={refresh}
-            className="bg-primary-400 text-white px-4 py-2 rounded hover:bg-primary-900 font-medium transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+          {/* Legend spacing placeholder */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2">
+                <div className="text-xs font-medium text-foreground">
+                  Performance Color Scale:
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <span className="text-xs text-muted-foreground">-10%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <span className="text-xs text-muted-foreground">-5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <span className="text-xs text-muted-foreground">-2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <span className="text-xs text-muted-foreground">±2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <span className="text-xs text-muted-foreground">+2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <span className="text-xs text-muted-foreground">+5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <span className="text-xs text-muted-foreground">+10%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   // Empty state
   if (treemapData.length === 0) {
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg p-6">
-        <div className="mb-4">
-        <h4 className="text-base leading-none -mb-2 font-semibold text-neutral-900 dark:text-white">Asset Treemap</h4>
-        <p className="text-sm -mt-2 text-neutral-600 dark:text-neutral-400">
-          Holdings grouped by asset class • Color shows performance • Size shows allocation
-        </p>
-      </div>
-        <div className="h-80 flex flex-col items-center justify-center">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="p-0">
+          <CardTitle>Asset Treemap</CardTitle>
+          <CardDescription>
+            Holdings grouped by asset class • Color shows performance • Size shows allocation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 mt-2">
+          <div className="h-[480px] relative flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              No Holdings Yet
+            </h3>
+            <p className="text-muted-foreground mb-4 text-center max-w-md">
+              Start investing to see your portfolio visualization. Make your first trade to see it displayed here.
+            </p>
+            <Button 
+              onClick={() => router.push('/dashboard/trade')}
+              variant="default"
+            >
+              Start Trading
+            </Button>
           </div>
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">
-            No Holdings Yet
-          </h3>
-          <p className="text-neutral-600 mb-4 text-center max-w-md">
-            Start investing to see your portfolio visualization. Make your first trade to see it displayed here.
-          </p>
-          <button 
-            onClick={() => router.push('/dashboard/trade')}
-            className="bg-primary-400 text-white px-4 py-2 rounded hover:bg-primary-900 font-medium transition-colors"
-          >
-            Start Trading
-          </button>
-        </div>
-      </div>
+          {/* Legend spacing placeholder */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2">
+                <div className="text-xs font-medium text-foreground">
+                  Performance Color Scale:
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <span className="text-xs text-muted-foreground">-10%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <span className="text-xs text-muted-foreground">-5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <span className="text-xs text-muted-foreground">-2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <span className="text-xs text-muted-foreground">±2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <span className="text-xs text-muted-foreground">+2%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <span className="text-xs text-muted-foreground">+5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <span className="text-xs text-muted-foreground">+10%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   // Render treemap
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-lg p-6">
-      <div className="mb-4">
-        <h4 className="text-base leading-none -mb-2 font-semibold text-neutral-900 dark:text-white">Asset Treemap</h4>
-        <p className="text-sm -mt-2 text-neutral-600 dark:text-neutral-400">
+    <Card className="border-0 shadow-none">
+      <CardHeader className="p-0">
+        <CardTitle>Asset Treemap</CardTitle>
+        <CardDescription>
           Holdings grouped by asset class • Color shows performance • Size shows allocation
-        </p>
-      </div>
-      <div className="h-120 relative">
+        </CardDescription>
+      </CardHeader>
+        <CardContent className="p-0 mt-2">
+      <div className="h-[480px] relative">
         <ResponsiveContainer width="100%" height="100%">
           <Treemap
             data={treemapData}
@@ -450,14 +584,14 @@ export function PortfolioTreemap() {
                   y={group.y + 8}
                   width={Math.min(group.name.length * 9 + 16, group.width - 16)}
                   height={26}
-                  className="fill-neutral-800 opacity-95"
+                  className="fill-foreground opacity-95"
                   rx={4}
                 />
                 {/* Label text */}
                 <text
                   x={group.x + 16}
                   y={group.y + 26}
-                  className="fill-white"
+                  className="fill-background"
                   fontSize={12}
                   fontWeight="700"
                   style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}
@@ -471,66 +605,66 @@ export function PortfolioTreemap() {
       </div>
       
       {/* Legend and Lesson Button */}
-      <div className="mt-4 pt-4">
+      <div className="mt-4 pt-4 border-t border-border">
         <div className="flex items-center justify-between">
           {/* Performance Color Scale Legend */}
-          <div className="flex flex-col space-y-2">
-            <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+          <div className="flex flex-col gap-2">
+            <div className="text-xs font-medium text-foreground">
               Performance Color Scale:
             </div>
-            <div className="flex items-center space-x-1">
-              <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-rose-500"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">-10%</span>
+                <span className="text-xs text-muted-foreground">-10%</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-rose-400"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">-5%</span>
+                <span className="text-xs text-muted-foreground">-5%</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-rose-300"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">-2%</span>
+                <span className="text-xs text-muted-foreground">-2%</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-6 h-4 rounded bg-neutral-500"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">±2%</span>
+              <div className="flex items-center gap-1">
+                <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                <span className="text-xs text-muted-foreground">±2%</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-emerald-300"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">+2%</span>
+                <span className="text-xs text-muted-foreground">+2%</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-emerald-400"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">+5%</span>
+                <span className="text-xs text-muted-foreground">+5%</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <div className="w-6 h-4 rounded bg-emerald-500"></div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-300">+10%</span>
+                <span className="text-xs text-muted-foreground">+10%</span>
               </div>
             </div>
           </div>
           
-          <LessonButton
+          {/* <LessonButton
             text="Portfolio Diversification"
             topics={['Portfolio Management', 'Diversification Strategy', 'Asset Allocation']}
             maxItems={3}
             modalLayout="dual"
             modalContent={
               <div className="flex flex-col gap-4 p-8">
-                <h4 className="text-lg font-semibold text-neutral-900">Understanding Your Portfolio Treemap</h4>
+                <h4 className="text-lg font-semibold text-foreground">Understanding Your Portfolio Treemap</h4>
                 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-neutral-900">What is a Portfolio Treemap?</h4>
-                    <p className="text-sm text-neutral-600">
+                    <h4 className="font-semibold text-foreground">What is a Portfolio Treemap?</h4>
+                    <p className="text-sm text-muted-foreground">
                       A treemap visualizes your portfolio allocation and performance at a glance. 
                       Larger rectangles mean bigger positions, while colors show which investments are winning or losing.
                     </p>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-neutral-900">How to Read It</h4>
-                    <ul className="text-sm text-neutral-600 space-y-1 ml-4 list-disc">
+                    <h4 className="font-semibold text-foreground">How to Read It</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
                       <li><strong>Size</strong> = Percentage of your portfolio (bigger = larger position)</li>
                       <li><strong>Groups</strong> = Asset classes (Stocks, ETFs, Bonds, etc.) with thick borders</li>
                       <li><strong>Color</strong> = Performance: Red (losses), Gray (flat), Green (gains)</li>
@@ -539,11 +673,11 @@ export function PortfolioTreemap() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-neutral-900">Why Asset Class Matters</h4>
-                    <p className="text-sm text-neutral-600 mb-2">
+                    <h4 className="font-semibold text-foreground">Why Asset Class Matters</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
                       Different asset classes behave differently in market conditions:
                     </p>
-                    <ul className="text-sm text-neutral-600 space-y-1 ml-4 list-disc">
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
                       <li><strong>Stocks:</strong> Higher growth potential, higher risk</li>
                       <li><strong>ETFs:</strong> Instant diversification across many holdings</li>
                       <li><strong>Bonds:</strong> Lower risk, stable income, cushion during downturns</li>
@@ -552,8 +686,8 @@ export function PortfolioTreemap() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-neutral-900">Healthy Portfolio Guidelines</h4>
-                    <ul className="text-sm text-neutral-600 space-y-1 ml-4 list-disc">
+                    <h4 className="font-semibold text-foreground">Healthy Portfolio Guidelines</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
                       <li><strong>Avoid over-concentration:</strong> No single asset should dominate (20-30% max)</li>
                       <li><strong>Diversify across classes:</strong> Mix stocks, ETFs, and bonds based on your risk tolerance</li>
                       <li><strong>Watch the colors:</strong> Too much red? Time to reassess; all green? Don't get overconfident</li>
@@ -561,9 +695,9 @@ export function PortfolioTreemap() {
                     </ul>
                   </div>
 
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-neutral-900 mb-2">⚠️ Warning Signs</h4>
-                    <ul className="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
+                  <div className="bg-accent border border-border rounded-lg p-4">
+                    <h4 className="font-semibold text-foreground mb-2">⚠️ Warning Signs</h4>
+                    <ul className="text-sm text-foreground space-y-1 ml-4 list-disc">
                       <li>One asset class = 80%+ of portfolio (over-concentrated!)</li>
                       <li>One individual asset = 50%+ (extremely risky)</li>
                       <li>All holdings in same sector or industry (lack of diversification)</li>
@@ -573,9 +707,10 @@ export function PortfolioTreemap() {
                 </div>
               </div>
             }
-          />
+          /> */}
         </div>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -294,8 +294,8 @@ export function Watchlists() {
       return 'text-muted-foreground';
     }
     return value > 0 
-      ? 'text-[hsl(var(--chart-positive))]' 
-      : 'text-[hsl(var(--chart-negative))]';
+      ? 'text-chart-positive' 
+      : 'text-chart-negative';
   };
 
   const filteredWatchlists = watchlists.filter(watchlist => 
@@ -350,7 +350,7 @@ export function Watchlists() {
     <div className="bg-card pt-16">
       {/* Header */}
      
-      <div className="flex-column justify-start gap-4">
+      <div className="flex flex-col justify-start gap-4">
         <h1 className="text-2xl font-mono text-foreground">Watchlists</h1>
         <div className='flex items-center gap-4'>
           <div className="flex items-center space-x-3">

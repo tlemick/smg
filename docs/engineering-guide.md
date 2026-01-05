@@ -21,11 +21,14 @@ This guide orients new contributors to the Stock Market Game (SMG) codebase. It 
 ### Layered responsibilities
 
 - API routes (`src/app/api/...`): HTTP endpoints, validation, and orchestration
-- Services (`src/lib/...`): Business logic and integrations (Yahoo Finance, trading, market state, cash)
+- Services (`src/lib/...`): Business logic and integrations - **CRITICAL: See Financial Math Standards below**
+  - `financial/`: Precision math, formatting, and calculations (uses Decimal.js)
+  - `api/`: Centralized HTTP client
+  - Domain services: cash-management, market-state, risk-metrics, etc.
 - Database models (`prisma/schema.prisma`): All persisted entities (users, assets, orders, etc.)
 - Frontend app (`src/app/...`): Pages and layouts using the Next.js App Router
-- Components (`src/components/...`): Reusable UI composed by feature area
-- Hooks (`src/hooks/...`): Data fetching and UI logic
+- Components (`src/components/...`): Reusable UI composed by feature area - **NO LOGIC OR FORMATTING**
+- Hooks (`src/hooks/...`): Data fetching and UI logic - calls services, provides data to components
 - Types (`src/types/...`): Shared request/response contracts and UI types
 
 ### Data flow (example: getting a quote)
@@ -334,12 +337,299 @@ Notes:
 
 ---
 
+## Financial Math Standards
+
+**CRITICAL:** JavaScript's native arithmetic is fundamentally flawed for financial calculations due to floating-point precision errors.
+
+### The Problem
+
+```javascript
+// JavaScript floating-point errors:
+0.1 + 0.2 = 0.30000000000000004  // NOT 0.3
+100 * 0.29 = 28.999999999999996  // NOT 29
+```
+
+### The Solution: Use FinancialMath Service
+
+**ALL financial calculations MUST use the FinancialMath service** which wraps Decimal.js for precision.
+
+```typescript
+import { FinancialMath } from '@/lib/financial';
+
+// ❌ WRONG
+const total = shares * price;
+const gain = currentValue - costBasis;
+
+// ✅ CORRECT
+const total = FinancialMath.multiply(shares, price);
+const gain = FinancialMath.subtract(currentValue, costBasis);
+```
+
+### Financial Services Overview
+
+1. **FinancialMath** (`src/lib/financial/financial-math.ts`)
+   - Precision arithmetic operations
+   - Financial calculations (ROI, P&L, cost basis)
+   - All operations use Decimal.js internally
+
+2. **Formatters** (`src/lib/financial/formatters.ts`)
+   - Display formatting for currency, percentages, numbers
+   - Consolidates all formatting logic
+   - Replaces inline `toFixed()`, `toLocaleString()`, etc.
+
+3. **FinancialCalculators** (`src/lib/financial/calculators.ts`)
+   - Complex calculations (portfolio metrics, position P&L)
+   - Order cost calculations with fees
+   - Allocation breakdowns
+
+### Rules
+
+1. **Never use native operators for money:** No `+`, `-`, `*`, `/` on currency values
+2. **Never format in components:** Use `Formatters` service
+3. **Backend handles complex math:** CAGR, Beta, moving averages stay in Python
+4. **Round consistently:** Currency = 2 decimals, Percentages = 2 decimals
+
+See [`.cursor/rules/financial-math.mdc`](/.cursor/rules/financial-math.mdc) for complete standards.
+
+---
+
+## Service Layer Architecture
+
+Services provide reusable business logic completely decoupled from UI. They are:
+- **Pure functions** or **static class methods**
+- **Never use React hooks**
+- **Unit testable** without mocking React
+
+### Service Directory Structure
+
+```
+src/lib/
+├── financial/               # Financial operations
+│   ├── financial-math.ts    # Precision math
+│   ├── formatters.ts        # Display formatting
+│   ├── calculators.ts       # Complex calculations
+│   └── index.ts             # Barrel export
+├── api/                     # HTTP communication
+│   └── api-client.ts        # Centralized fetch wrapper
+└── [domain services]        # cash-management, market-state, etc.
+```
+
+### Data Flow
+
+```
+API Route → Hook → Service → Hook → Component
+                   ↑
+            (Business Logic)
+```
+
+**Example:**
+```typescript
+// Hook calls service
+export function usePortfolioMetrics() {
+  const [data, setData] = useState(null);
+  
+  useEffect(async () => {
+    const raw = await ApiClient.get('/api/portfolio');
+    
+    // Service does calculations
+    const metrics = FinancialCalculators.calculatePortfolioMetrics(
+      raw.holdings,
+      raw.cash
+    );
+    
+    // Service does formatting
+    const formatted = {
+      total: Formatters.currency(metrics.totalValue),
+      return: Formatters.percentage(metrics.unrealizedPnLPercent, { showSign: true })
+    };
+    
+    setData({ raw: metrics, formatted });
+  }, []);
+  
+  return data;
+}
+
+// Component just displays
+export function PortfolioCard() {
+  const { formatted } = usePortfolioMetrics();
+  return <div>Total: {formatted.total}</div>;
+}
+```
+
+See [`.cursor/rules/service-layer.mdc`](/.cursor/rules/service-layer.mdc) and [`src/lib/README.md`](/src/lib/README.md) for complete architecture.
+
+---
+
+## Component Patterns
+
+**The Golden Rule:** Components are for UI rendering and user interaction ONLY.
+
+### What Components SHOULD Do
+- Render JSX
+- Handle user events (onClick, onChange)
+- Manage local UI state (modal open/closed, selected tab)
+- Call hooks to get data
+
+### What Components MUST NOT Do
+- Perform calculations (not even `value1 + value2`)
+- Format values (no `toFixed()`, `toLocaleString()`, etc.)
+- Fetch data directly (no `fetch()` calls)
+- Contain business logic
+
+### Example: Before & After
+
+**❌ BEFORE (Bad):**
+```typescript
+export function OrderModal({ shares, price }) {
+  // BAD: Calculation in component
+  const total = shares * price;
+  
+  // BAD: Inline formatting
+  const formatted = `$${total.toFixed(2)}`;
+  
+  return <div>Total: {formatted}</div>;
+}
+```
+
+**✅ AFTER (Good):**
+```typescript
+import { FinancialCalculators, Formatters } from '@/lib/financial';
+
+export function OrderModal({ shares, price }) {
+  // Service handles calculation
+  const cost = FinancialCalculators.calculateOrderCost(shares, price, 'BUY');
+  
+  // Service handles formatting
+  const formatted = Formatters.currency(cost.total);
+  
+  return <div>Total: {formatted}</div>;
+}
+```
+
+**✅ BEST (Hook provides everything):**
+```typescript
+// Hook
+export function useOrderCost(shares: number, price: number) {
+  return useMemo(() => {
+    const cost = FinancialCalculators.calculateOrderCost(shares, price, 'BUY');
+    return {
+      raw: cost.total,
+      formatted: Formatters.currency(cost.total)
+    };
+  }, [shares, price]);
+}
+
+// Component
+export function OrderModal({ shares, price }) {
+  const { formatted } = useOrderCost(shares, price);
+  return <div>Total: {formatted}</div>;
+}
+```
+
+See [`.cursor/rules/component-patterns.mdc`](/.cursor/rules/component-patterns.mdc) for complete guidelines.
+
+---
+
+## Common Pitfalls to Avoid
+
+### 1. JavaScript Floating-Point Math
+```typescript
+// ❌ WRONG - Accumulates errors
+let total = 0;
+holdings.forEach(h => total += h.shares * h.price);
+
+// ✅ CORRECT - Uses precision math
+let total = new Decimal(0);
+holdings.forEach(h => {
+  const value = FinancialMath.multiply(h.shares, h.price);
+  total = FinancialMath.add(total, value);
+});
+```
+
+### 2. Inline Formatters
+```typescript
+// ❌ WRONG - Duplicated across files
+const formatCurrency = (val) => `$${val.toFixed(2)}`;
+
+// ✅ CORRECT - Use service
+import { Formatters } from '@/lib/financial';
+Formatters.currency(val);
+```
+
+### 3. Business Logic in Components
+```typescript
+// ❌ WRONG
+export function Component({ data }) {
+  const isHighRisk = data.volatility > 0.2 ? 'high' : 'low';
+  return <Badge>{isHighRisk}</Badge>;
+}
+
+// ✅ CORRECT - Logic in service
+export class RiskCalculator {
+  static getRiskLevel(volatility: number): 'low' | 'medium' | 'high' {
+    if (volatility > 0.2) return 'high';
+    if (volatility > 0.1) return 'medium';
+    return 'low';
+  }
+}
+```
+
+### 4. Services Using Hooks
+```typescript
+// ❌ WRONG - Services can't use hooks
+export class BadService {
+  static doSomething() {
+    const user = useUser(); // ERROR!
+    return user.id;
+  }
+}
+
+// ✅ CORRECT - Pass data as parameters
+export class GoodService {
+  static doSomething(userId: string) {
+    return userId;
+  }
+}
+```
+
+---
+
+## Testing
+
+### Service Tests (Easy)
+```typescript
+// tests/financial-math.test.ts
+import { FinancialMath } from '@/lib/financial/financial-math';
+
+test('handles floating point precision', () => {
+  const result = FinancialMath.add(0.1, 0.2);
+  expect(result.toNumber()).toBe(0.3);
+});
+```
+
+### Component Tests (Focus on UI)
+```typescript
+// Don't test business logic in components
+// Test that they display data correctly
+
+test('displays formatted currency', () => {
+  render(<PortfolioCard formatted={{ total: '$1,234.56' }} />);
+  expect(screen.getByText('$1,234.56')).toBeInTheDocument();
+});
+```
+
+---
+
 ## Where to Read More
 
 - `docs/architecture.md`: deeper dive into data flows and caching
 - `src/lib/yahoo-finance-service.ts`: market data integration details
 - `src/lib/order-execution-service.ts`: queued and limit order processing
 - `src/types/index.ts`: API contracts and UI types
+- **`src/lib/README.md`**: Complete service layer documentation
+- **`.cursor/rules/financial-math.mdc`**: Financial math standards
+- **`.cursor/rules/service-layer.mdc`**: Service architecture patterns
+- **`.cursor/rules/component-patterns.mdc`**: Component best practices
 
 ---
 

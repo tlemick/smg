@@ -65,7 +65,7 @@ export function PortfolioCard() {
 
   return (
     <div>
-      <div className="">
+      <div>
         <h1 className="text-2xl font-mono text-foreground">
           Welcome back, {firstName}!
         </h1>
@@ -79,10 +79,10 @@ export function PortfolioCard() {
             <Table>
               <TableBody>
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableCell className=" text-sm text-muted-foreground pl-0 pr-8">
+                  <TableCell className="text-sm text-muted-foreground pl-0 pr-8">
                     Portfolio Value
                   </TableCell>
-                  <TableCell className=" font-mono text-sm px-0">
+                  <TableCell className="font-mono text-sm px-0">
                     {loading ? (
                       <Skeleton className="h-5 w-28" />
                     ) : (
@@ -111,10 +111,10 @@ export function PortfolioCard() {
                   </TableCell>
                 </TableRow>
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableCell className=" text-sm text-muted-foreground pl-0 pr-8">
+                  <TableCell className="text-sm text-muted-foreground pl-0 pr-8">
                     Buying Power
                   </TableCell>
-                  <TableCell className=" font-mono text-sm px-0">
+                  <TableCell className="font-mono text-sm px-0">
                     {loading ? (
                       <Skeleton className="h-5 w-28" />
                     ) : (
@@ -123,7 +123,7 @@ export function PortfolioCard() {
                   </TableCell>
                 </TableRow>
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableCell className=" text-sm text-muted-foreground pl-0 pr-8">
+                  <TableCell className="text-sm text-muted-foreground pl-0 pr-8">
                     Current Rank
                   </TableCell>
                   <TableCell className="font-mono text-sm px-0">
@@ -135,10 +135,10 @@ export function PortfolioCard() {
                   </TableCell>
                 </TableRow>
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableCell className=" text-sm text-muted-foreground pl-0 pr-8">
+                  <TableCell className="text-sm text-muted-foreground pl-0 pr-8">
                     Days Remaining
                   </TableCell>
-                  <TableCell className=" font-mono text-sm px-0">
+                  <TableCell className="font-mono text-sm px-0">
                     {loading ? (
                       <Skeleton className="h-5 w-12" />
                     ) : (

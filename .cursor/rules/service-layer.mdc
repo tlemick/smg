@@ -1,0 +1,401 @@
+---
+description: Service Layer Architecture - Structure, Patterns, and Best Practices
+globs: **/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Service Layer Architecture
+
+## Overview
+
+The service layer sits between React components/hooks and external systems (APIs, calculations, validations). It provides reusable, testable business logic that is completely decoupled from UI concerns.
+
+## Directory Structure
+
+```
+/src/lib/
+├── financial/               # Financial calculations & formatting
+│   ├── financial-math.ts    # Decimal.js wrapper, precision math
+│   ├── formatters.ts        # All display formatting (currency, %, numbers)
+│   ├── calculators.ts       # Complex financial calculations (ROI, P&L, portfolio)
+│   └── index.ts             # Barrel export
+├── api/                     # API communication
+│   ├── api-client.ts        # Centralized fetch wrapper with error handling
+│   └── transformers.ts      # API response → Frontend models
+├── validation/              # Business rules & form validation
+│   ├── trading-validation.ts
+│   ├── portfolio-validation.ts
+│   └── index.ts
+├── [existing services]      # Keep existing pattern
+│   ├── cash-management-service.ts
+│   ├── investment-calculator-service.ts
+│   ├── market-state-service.ts
+│   └── risk-metrics-service.ts
+└── README.md                # Service layer documentation
+```
+
+## Core Principles
+
+### 1. Services are Pure or Static
+```typescript
+// ✅ GOOD - Pure function
+export function calculateROI(invested: number, current: number): number {
+  return FinancialMath.divide(
+    FinancialMath.subtract(current, invested),
+    invested
+  ).toNumber();
+}
+
+// ✅ GOOD - Static class methods
+export class FinancialCalculators {
+  static calculatePortfolioMetrics(holdings: Holding[], cash: number) {
+    // ... implementation
+  }
+}
+
+// ❌ BAD - Service depends on React hooks
+export function useFinancialCalculator() {
+  const [result, setResult] = useState();
+  // Services should never use hooks
+}
+```
+
+### 2. Services Never Import Hooks
+```typescript
+// ❌ BAD
+import { useUser } from '@/hooks/useUser';
+
+export class MyService {
+  static doSomething() {
+    const user = useUser(); // NEVER DO THIS
+  }
+}
+
+// ✅ GOOD - Accept data as parameters
+export class MyService {
+  static doSomething(userId: string) {
+    // Pure logic, no React dependencies
+  }
+}
+```
+
+### 3. Single Responsibility Principle
+Each service handles ONE domain:
+- **FinancialMath**: Precision arithmetic operations
+- **Formatters**: Display formatting only
+- **FinancialCalculators**: Complex calculations
+- **ApiClient**: HTTP communication only
+- **Validators**: Validation rules only
+
+### 4. Unit Testable Without Mocking React
+```typescript
+// ✅ GOOD - Easy to test
+describe('FinancialCalculators', () => {
+  it('calculates portfolio total correctly', () => {
+    const holdings = [
+      { shares: 10, price: 100 },
+      { shares: 5, price: 50 }
+    ];
+    const total = FinancialCalculators.calculateTotal(holdings);
+    expect(total).toBe(1250);
+  });
+});
+```
+
+## Data Flow Architecture
+
+```
+┌─────────────┐
+│  API Route  │ ← Next.js API Routes
+└──────┬──────┘
+       │ Raw JSON
+       ↓
+┌─────────────┐
+│   Hook      │ ← usePortfolioOverview, useStockApi, etc.
+│             │   • Manages state (loading, error, data)
+│             │   • Calls services for transformation
+│             │   • Provides data to components
+└──────┬──────┘
+       │ Transformed Data
+       ↓
+┌─────────────┐
+│  Service    │ ← FinancialCalculators, Formatters, Validators
+│  Layer      │   • Pure business logic
+│             │   • Calculations, formatting, transformations
+│             │   • No React dependencies
+└──────┬──────┘
+       │ Computed Values
+       ↓
+┌─────────────┐
+│  Component  │ ← React Component
+│             │   • Render UI only
+│             │   • No logic, no formatting
+│             │   • Displays pre-computed values
+└─────────────┘
+```
+
+## Service Usage Patterns
+
+### Pattern 1: Hooks Call Services for Transformation
+```typescript
+// Hook: usePortfolioOverview.ts
+export function usePortfolioOverview() {
+  const [data, setData] = useState<PortfolioData | null>(null);
+  
+  useEffect(() => {
+    const rawData = await fetchPortfolio();
+    
+    // Call service to calculate metrics
+    const metrics = FinancialCalculators.calculatePortfolioMetrics(
+      rawData.holdings,
+      rawData.cash
+    );
+    
+    setData({
+      raw: rawData,
+      metrics,
+      formatted: {
+        totalValue: Formatters.currency(metrics.totalValue),
+        return: Formatters.percentage(metrics.returnPercent, { showSign: true })
+      }
+    });
+  }, []);
+  
+  return { data, loading, error };
+}
+```
+
+### Pattern 2: Components Use Formatted Data from Hooks
+```typescript
+// Component: PortfolioCard.tsx
+export function PortfolioCard() {
+  const { data, loading } = usePortfolioOverview();
+  
+  if (loading) return <Skeleton />;
+  
+  // ✅ Just display - no logic
+  return (
+    <div>
+      <p>Total: {data.formatted.totalValue}</p>
+      <p>Return: {data.formatted.return}</p>
+    </div>
+  );
+}
+```
+
+### Pattern 3: Services Chain Together
+```typescript
+// calculators.ts uses financial-math.ts
+import { FinancialMath } from './financial-math';
+
+export class FinancialCalculators {
+  static calculateUnrealizedPnL(
+    currentPrice: number,
+    costBasis: number,
+    shares: number
+  ): { pnl: number; pnlPercent: number } {
+    const currentValue = FinancialMath.multiply(currentPrice, shares);
+    const totalCost = FinancialMath.multiply(costBasis, shares);
+    const pnl = FinancialMath.subtract(currentValue, totalCost);
+    const pnlPercent = FinancialMath.divide(pnl, totalCost);
+    
+    return {
+      pnl: pnl.toNumber(),
+      pnlPercent: pnlPercent.toNumber()
+    };
+  }
+}
+```
+
+## API Client Pattern
+
+### Centralized HTTP Communication
+```typescript
+// api-client.ts
+export class ApiClient {
+  private static async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(endpoint, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Request failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`API Error [${endpoint}]:`, error);
+      throw error;
+    }
+  }
+  
+  static async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+  
+  static async post<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+}
+
+// Usage in hooks
+const data = await ApiClient.get<PortfolioData>('/api/portfolio');
+```
+
+## Validation Pattern
+
+### Business Rules in Services
+```typescript
+// trading-validation.ts
+export class TradingValidation {
+  static validateMarketOrder(
+    shares: number,
+    price: number,
+    cashAvailable: number,
+    marketState: string
+  ): ValidationResult {
+    const errors: string[] = [];
+    
+    if (marketState !== 'REGULAR') {
+      errors.push('Market is closed. Use limit orders instead.');
+    }
+    
+    const cost = FinancialMath.multiply(shares, price);
+    if (cost.greaterThan(cashAvailable)) {
+      errors.push('Insufficient funds');
+    }
+    
+    if (shares <= 0) {
+      errors.push('Shares must be positive');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+}
+```
+
+## Anti-Patterns (What NOT to Do)
+
+### ❌ Anti-Pattern 1: Services That Use Hooks
+```typescript
+// BAD - Service importing hooks
+export class BadService {
+  static doSomething() {
+    const user = useUser(); // WRONG - Services can't use hooks
+    return user.id;
+  }
+}
+```
+
+### ❌ Anti-Pattern 2: UI Logic in Services
+```typescript
+// BAD - Service knows about UI
+export class BadService {
+  static formatForTable(data: Data) {
+    return <tr><td>{data.value}</td></tr>; // WRONG - Services return data, not JSX
+  }
+}
+```
+
+### ❌ Anti-Pattern 3: Services with Side Effects
+```typescript
+// BAD - Service mutates global state
+let cachedData: any;
+
+export class BadService {
+  static getData() {
+    if (!cachedData) {
+      cachedData = fetchSomething(); // WRONG - Use proper caching patterns
+    }
+    return cachedData;
+  }
+}
+```
+
+### ❌ Anti-Pattern 4: God Service (Does Everything)
+```typescript
+// BAD - One service doing too much
+export class EverythingService {
+  static calculateROI() { }
+  static formatCurrency() { }
+  static validateOrder() { }
+  static fetchData() { }
+  // Split into separate services!
+}
+```
+
+## When to Create a New Service
+
+Create a new service when:
+1. **Logic is used in multiple places** (DRY principle)
+2. **Logic is complex enough to need testing** (calculation, validation)
+3. **Logic has no UI concerns** (pure business logic)
+4. **Logic is a cohesive unit** (single responsibility)
+
+Don't create a service when:
+1. Logic is used in only one place (keep it in hook/component)
+2. Logic is trivial (e.g., `items.length > 0`)
+3. Logic is UI-specific (e.g., "show/hide modal")
+
+## Service Testing Guidelines
+
+Every service should have:
+1. **Unit tests** (test logic in isolation)
+2. **Edge case coverage** (null, zero, negative, very large numbers)
+3. **No mocking required** (pure functions are easy to test)
+
+```typescript
+// Example test suite
+describe('FinancialCalculators', () => {
+  describe('calculatePortfolioMetrics', () => {
+    it('calculates total value correctly', () => { });
+    it('handles empty portfolio', () => { });
+    it('handles negative P&L', () => { });
+    it('handles fractional shares', () => { });
+  });
+});
+```
+
+## Migration Strategy
+
+When refactoring existing code:
+1. **Identify duplicated logic** across components
+2. **Extract to appropriate service** (formatters, calculators, validators)
+3. **Update components** to use service
+4. **Write unit tests** for extracted logic
+5. **Remove old inline code**
+6. **Verify no regressions**
+
+## Quick Decision Tree
+
+**Where should this logic go?**
+
+```
+Is it a calculation or formatting?
+├─ YES → Service Layer
+│  ├─ Formatting? → Formatters
+│  ├─ Math? → FinancialMath
+│  ├─ Complex calc? → FinancialCalculators
+│  └─ Validation? → Validators
+└─ NO → Is it data fetching or state management?
+   ├─ YES → Custom Hook
+   └─ NO → Is it UI rendering or interaction?
+      ├─ YES → Component
+      └─ NO → Probably a Service
+```

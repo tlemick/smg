@@ -10,14 +10,14 @@ interface Props {
   assetType: string;
 }
 
+import { Formatters } from '@/lib/financial';
+
 function formatPct(value: number | null | undefined, digits = 2): string {
-  if (value == null || Number.isNaN(value)) return 'N/A';
-  return `${(value * 100).toFixed(digits)}%`;
+  return Formatters.percentage(value, { decimals: digits });
 }
 
 function formatNumber(value: number | null | undefined, digits = 2): string {
-  if (value == null || Number.isNaN(value)) return 'N/A';
-  return value.toFixed(digits);
+  return Formatters.number(value, { decimals: digits });
 }
 
 export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {

@@ -4,25 +4,22 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 import { usePortfolioPerformanceSeries } from '@/hooks/usePortfolioPerformanceSeries';
 import { Highlight, Sparkline } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { PortfolioAllocation } from '@/types';
 
+import { Formatters } from '@/lib/financial';
+
 function formatPercent(value: number) {
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
+  return Formatters.percentage(value / 100, { showSign: true, decimals: 2 });
 }
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+  return Formatters.currency(value);
 }
 
 function formatQuantity(value: number) {
-  // Show decimals only if it's a fractional share
-  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  return Formatters.shares(value);
 }
 
 function useSessionDataFreshness() {
@@ -73,10 +70,10 @@ function StockItem({ allocation, sparklineData, colorScheme = 'green' }: StockIt
     <div className="space-y-4">
       {/* Logo and Name - Above the card */}
       <div className="flex items-center gap-3 mb-2">
-        <div className="flex-shrink-0 w-14 h-8 bg-black dark:bg-neutral-200 rounded flex items-center justify-center">
-          <span className="text-sm font-bold text-white dark:text-neutral-900">{asset.ticker.slice(0, 2)}</span>
+        <div className="flex-shrink-0 w-14 h-8 bg-foreground rounded flex items-center justify-center">
+          <span className="text-sm font-bold text-background">{asset.ticker.slice(0, 2)}</span>
         </div>
-        <div className="text-lg no-wrap truncate text-neutral-900 dark:text-white">{asset.name}</div>
+        <div className="text-lg no-wrap truncate text-foreground">{asset.name}</div>
       </div>
 
       {/* Info Stack - 4 distinct divs stacked vertically */}
@@ -140,9 +137,11 @@ function RankedStockViewer({ allocations, sparklineDataMap, colorScheme }: Omit<
   
   if (allocations.length === 0) {
     return (
-      <div className="p-6 bg-white dark:bg-neutral-800 border border-neutral-200 rounded-lg text-neutral-600 dark:text-neutral-300">
-        No stock positions yet.
-      </div>
+      <Card>
+        <CardContent className="p-6 text-muted-foreground">
+          No stock positions yet.
+        </CardContent>
+      </Card>
     );
   }
 
@@ -154,14 +153,12 @@ function RankedStockViewer({ allocations, sparklineDataMap, colorScheme }: Omit<
           <button
             key={index}
             onClick={() => setSelectedIndex(index)}
-            className={`
-              font-mono font-light
-              transition-all duration-200
-              ${selectedIndex === index 
-                ? 'text-neutral-900 dark:text-white' 
-                : 'text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400'
-              }
-            `}
+            className={cn(
+              "font-mono font-light transition-all duration-200",
+              selectedIndex === index 
+                ? 'text-foreground' 
+                : 'text-muted-foreground hover:text-foreground'
+            )}
           >
             <span className="text-6xl">{rankData[index].numeral}</span>
             <span className="text-sm">{rankData[index].suffix}</span>
@@ -282,29 +279,35 @@ export function PerformanceHighlights() {
   }, [hasHoldings, tickersString, stockAllocations]);
 
   return (
-    <div className="rounded-lg p-8">
+    <div className="mt-24">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold font-mono text-neutral-900 dark:text-white mb-2">How to manage winners & losers</h2>
-        <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-prose">
+        <h1 className="text-2xl font-mono text-foreground">
+            Managing Winners & Losers
+        </h1>
+        <p className="text-muted-foreground leading-relaxed max-w-prose">
           Let's take a look at your assets that are performing well and those that aren't performing as well. 
           It can be hard to know when to buy, hold, or sell an asset, but we'll give you some general guidance!
         </p>
       </div>
 
       {!hasHoldings && !loading && (
-        <div className="mt-6 p-6 bg-white dark:bg-neutral-800 border border-neutral-200 rounded-lg text-neutral-600 dark:text-neutral-300">
-          You don't have any stock holdings yet. Make some trades to see highlights here.
-        </div>
+        <Card className="mt-6">
+          <CardContent className="p-6 text-muted-foreground">
+            You don't have any stock holdings yet. Make some trades to see highlights here.
+          </CardContent>
+        </Card>
       )}
 
       {hasHoldings && (daysSinceStart !== undefined && daysSinceStart < 14) && (
-        <div className="mt-6 p-4 border border-yellow-200 bg-yellow-50 rounded-lg">
-          <div className="text-sm text-yellow-800 font-semibold mb-1">Not enough data yet</div>
-          <div className="text-sm text-yellow-700">
-            It's the first couple of weeks of your game session. Performance guidance improves after two weeks of trading history.
-          </div>
-        </div>
+        <Card className="mt-6 border-accent bg-accent/50">
+          <CardContent className="p-4">
+            <div className="text-sm text-foreground font-semibold mb-1">Not enough data yet</div>
+            <div className="text-sm text-muted-foreground">
+              It's the first couple of weeks of your game session. Performance guidance improves after two weeks of trading history.
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {hasHoldings && (
@@ -319,8 +322,8 @@ export function PerformanceHighlights() {
             />
 
             {/* Right: Educational Content */}
-            <div className="space-y-4 text-neutral-900 dark:text-white leading-relaxed max-w-prose mt-20">
-              <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">Your best performers!</h3>
+            <div className="space-y-4 text-foreground leading-relaxed max-w-prose mt-20">
+              <h3 className="text-2xl font-bold text-foreground">Your best performers!</h3>
               <p>
                 It's exciting to see your stocks doing well, and now is the perfect time to learn a key investing skill: managing your winners.
               </p>
@@ -346,8 +349,8 @@ export function PerformanceHighlights() {
             />
 
             {/* Right: Educational Content */}
-            <div className="space-y-4 text-neutral-900 dark:text-white leading-relaxed max-w-prose mt-20">
-              <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">Your biggest losers.</h3>
+            <div className="space-y-4 text-foreground leading-relaxed max-w-prose mt-20">
+              <h3 className="text-2xl font-bold text-foreground">Your biggest losers.</h3>
               <p>
                 Dealing with poorly performing stocks is one of the toughest but most valuable lessons in investing.
               </p>

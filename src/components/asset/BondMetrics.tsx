@@ -1,5 +1,6 @@
 import { AssetDetailQuote } from '@/types';
 import { TikTokEmbed } from '@/components/ui/TikTokEmbed';
+import { Formatters } from '@/lib/financial';
 
 interface BondMetricsProps {
   bond: {
@@ -18,33 +19,6 @@ interface BondMetricsProps {
 }
 
 export function BondMetrics({ bond, quote }: BondMetricsProps) {
-  const formatNumber = (num: number | undefined | null, decimals = 2) => {
-    if (num === undefined || num === null) return 'N/A';
-    return num.toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  };
-
-  const formatCurrency = (num: number | undefined | null) => {
-    if (num === undefined || num === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: quote.currency || 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
-
-  const formatPercentage = (num: number | undefined | null) => {
-    if (num === undefined || num === null) return 'N/A';
-    return `${num.toFixed(2)}%`;
-  };
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString();
-  };
 
   const getCreditRatingColor = (rating: string | null) => {
     if (!rating) return 'bg-gray-100 text-gray-800';
@@ -114,15 +88,15 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Current Yield:</span>
-            <span className="font-medium">{formatPercentage(quote.dividendYield)}</span>
+            <span className="font-medium">{Formatters.percentage(quote.dividendYield, { multiplier: 1 })}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Yield to Maturity:</span>
-            <span className="font-medium">{formatPercentage(bond.yieldToMaturity)}</span>
+            <span className="font-medium">{Formatters.percentage(bond.yieldToMaturity, { multiplier: 1 })}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Coupon Rate:</span>
-            <span className="font-medium">{formatPercentage(bond.couponRate)}</span>
+            <span className="font-medium">{Formatters.percentage(bond.couponRate, { multiplier: 1 })}</span>
           </div>
         </div>
       </div>
@@ -133,7 +107,7 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Maturity Date:</span>
-            <span className="font-medium">{formatDate(bond.maturityDate)}</span>
+            <span className="font-medium">{Formatters.date(bond.maturityDate)}</span>
           </div>
           {yearsToMaturity !== null && (
             <div className="flex justify-between">
@@ -143,7 +117,7 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
           )}
           <div className="flex justify-between">
             <span className="text-gray-600">Duration:</span>
-            <span className="font-medium">{formatNumber(bond.duration, 1)} years</span>
+            <span className="font-medium">{Formatters.number(bond.duration, { decimals: 1 })} years</span>
           </div>
         </div>
       </div>
@@ -154,15 +128,15 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Current Price:</span>
-            <span className="font-medium">{formatCurrency(quote.regularMarketPrice)}</span>
+            <span className="font-medium">{Formatters.price(quote.regularMarketPrice, quote.currency || 'USD')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">52W High:</span>
-            <span className="font-medium">{formatCurrency(quote.fiftyTwoWeekHigh)}</span>
+            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekHigh, quote.currency || 'USD')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">52W Low:</span>
-            <span className="font-medium">{formatCurrency(quote.fiftyTwoWeekLow)}</span>
+            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekLow, quote.currency || 'USD')}</span>
           </div>
         </div>
       </div>

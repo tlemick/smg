@@ -22,7 +22,7 @@ export function TransactionSection({
   loading = false 
 }: TransactionSectionProps) {
   return (
-    <div className="">
+    <div>
       {/* Section Header */}
       <div className="flex items-center">
         <Badge variant="default" className="gap-2 rounded-full">

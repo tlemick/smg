@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "CallExpression[callee.property.name='toFixed'] MemberExpression[object.type!='Literal']",
+        "message": "Use Formatters service instead of toFixed(). Import from '@/lib/financial'"
+      },
+      {
+        "selector": "CallExpression[callee.property.name='toLocaleString'][arguments.length>0]",
+        "message": "Use Formatters service instead of toLocaleString(). Import from '@/lib/financial'"
+      },
+      {
+        "selector": "NewExpression[callee.object.name='Intl'][callee.property.name='NumberFormat']",
+        "message": "Use Formatters service instead of Intl.NumberFormat. Import from '@/lib/financial'"
+      }
+    ],
+    "no-restricted-properties": [
+      "warn",
+      {
+        "property": "toFixed",
+        "message": "Use Formatters.currency() or Formatters.number() instead of toFixed()"
+      }
+    ]
+  }
+}
