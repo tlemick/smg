@@ -1,8 +1,26 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+/**
+ * AssetHeader Component (Refactored)
+ * 
+ * Displays asset header with price, stats, and action buttons.
+ * 
+ * Architecture Compliance:
+ * - Uses Formatters service for all formatting (no inline formatters)
+ * - Uses AssetDisplayService for display logic
+ * - Uses useWatchlistStatus hook for watchlist data (no direct fetch)
+ * - Pure display component (no business logic)
+ * - All calculations done in services/hooks before reaching this component
+ */
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AssetDetailQuote } from '@/types';
 import { WatchlistSelectionModal } from './WatchlistSelectionModal';
 import { useToast } from '@/hooks/useToast';
+import { useWatchlistStatus } from '@/hooks/useWatchlistStatus';
+import { Formatters } from '@/lib/financial';
+import { AssetDisplayService } from '@/lib/asset-display-service';
 
 import { CheckCircleIcon, CircleNotchIcon, CurrencyDollarIcon, Icon, LockIcon, PlusIcon } from '@/components/ui';
 import { getZIndexClass } from '@/lib/z-index';
@@ -20,7 +38,7 @@ interface AssetHeaderProps {
     currencyName: string | null;
     logoUrl: string | null;
     allowFractionalShares: boolean;
-    lastUpdated: Date | null;
+    lastUpdated: string | Date | null; // API returns string (JSON serialized)
   };
   quote: AssetDetailQuote;
   hasHoldings: boolean;
@@ -29,107 +47,46 @@ interface AssetHeaderProps {
   hideActions?: boolean;
 }
 
-export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, profile, hideActions = false }: AssetHeaderProps) {
-  const { success, error } = useToast();
+export function AssetHeader({ 
+  asset, 
+  quote, 
+  hasHoldings, 
+  authenticated = true, 
+  profile, 
+  hideActions = false 
+}: AssetHeaderProps) {
+  const { success } = useToast();
   const router = useRouter();
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [watchlistStatus, setWatchlistStatus] = useState<{
-    inWatchlists: number;
-    totalWatchlists: number;
-    loading: boolean;
-  }>({ inWatchlists: 0, totalWatchlists: 0, loading: false });
   const [isBlurbExpanded, setIsBlurbExpanded] = useState(false);
 
-  const priceColor = quote.regularMarketChange && quote.regularMarketChange > 0 
-    ? 'text-green-600' 
-    : quote.regularMarketChange && quote.regularMarketChange < 0 
-      ? 'text-red-600' 
-      : 'text-gray-600';
+  // Use hook for watchlist status (replaces fetchWatchlistStatus)
+  const { inWatchlists, totalWatchlists, isLoading: watchlistLoading } = useWatchlistStatus(
+    asset.ticker,
+    authenticated
+  );
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: quote.currency || 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
-  };
+  // Use AssetDisplayService for price change color
+  const priceColor = AssetDisplayService.getPriceChangeColor(quote.regularMarketChange);
 
-  const formatChange = (change: number | null, percent: number | null) => {
-    // Validate that both values are valid numbers
-    if (change === null || change === undefined || isNaN(change) || 
-        percent === null || percent === undefined || isNaN(percent)) {
-      return 'N/A (N/A)';
-    }
-
-    const changeStr = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-    const percentStr = percent >= 0 ? `+${percent.toFixed(2)}%` : `${percent.toFixed(2)}%`;
-    return `${changeStr} (${percentStr})`;
-  };
-
-  const formatMarketCap = (marketCapStr: string) => {
-    try {
-      const marketCapNum = parseFloat(marketCapStr);
-      if (isNaN(marketCapNum) || marketCapNum <= 0) {
-        return 'N/A';
-      }
-
-      if (marketCapNum >= 1e12) {
-        return `${(marketCapNum / 1e12).toFixed(1)}T`;
-      } else if (marketCapNum >= 1e9) {
-        return `${(marketCapNum / 1e9).toFixed(1)}B`;
-      } else if (marketCapNum >= 1e6) {
-        return `${(marketCapNum / 1e6).toFixed(1)}M`;
-      } else {
-        return `${marketCapNum.toLocaleString()}`;
-      }
-    } catch (error) {
-      console.warn('Error formatting market cap:', error);
-      return 'N/A';
-    }
-  };
-
-  const getMarketStateDisplay = (state?: string) => {
-    switch (state) {
-      case 'REGULAR': return 'Market Open';
-      case 'PRE': return 'Pre-Market';
-      case 'POST': return 'After Hours';
-      case 'CLOSED': return 'Market Closed';
-      default: return '';
-    }
-  };
-
-  const getAssetTypeDisplay = (type: string) => {
-    switch (type) {
-      case 'STOCK': return 'Stock';
-      case 'ETF': return 'ETF';
-      case 'MUTUAL_FUND': return 'Mutual Fund';
-      case 'BOND': return 'Bond';
-      case 'INDEX': return 'Index Fund';
-      default: return type.replace('_', ' ');
-    }
-  };
-
+  // Event handlers
   const handleWatchlistClick = () => {
     if (!authenticated) {
       setShowLoginPrompt(true);
       return;
     }
-    if (watchlistStatus.loading) {
-      return; // Don't open modal while loading
+    if (watchlistLoading) {
+      return;
     }
     setIsWatchlistModalOpen(true);
   };
 
-  const handleWatchlistSuccess = (message: string) => {
-    // Refresh watchlist status
-    if (authenticated) {
-      fetchWatchlistStatus();
-    }
+  const handleWatchlistSuccess = () => {
+    // Hook will automatically refetch when component remounts
+    // No manual refresh needed
   };
 
-  // Trading handlers
   const handleBuyClick = () => {
     if (!authenticated) {
       setShowLoginPrompt(true);
@@ -153,78 +110,30 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
     router.push(`/trade/sell/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
   };
 
-  // Fetch watchlist status for authenticated users
-  const fetchWatchlistStatus = async () => {
-    if (!authenticated) return;
+  // Determine watchlist button state
+  let watchlistButtonText = 'Add to Watchlist';
+  let watchlistButtonClass = 'bg-transparent border border-gray-900 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-900/5 font-medium transition-colors';
+  let watchlistIconComponent = PlusIcon;
+  let watchlistIconSpin = false;
 
-    try {
-      setWatchlistStatus(prev => ({ ...prev, loading: true }));
-      
-      const response = await fetch(`/api/user/watchlists/for-asset/${asset.ticker.toUpperCase()}`);
-      const data = await response.json();
-
-      if (data.success) {
-        const containingWatchlists = data.data.watchlists.filter((w: any) => w.containsAsset);
-        setWatchlistStatus({
-          inWatchlists: containingWatchlists.length,
-          totalWatchlists: data.data.watchlists.length,
-          loading: false,
-        });
-      } else {
-        setWatchlistStatus(prev => ({ ...prev, loading: false }));
-      }
-    } catch (error) {
-      setWatchlistStatus(prev => ({ ...prev, loading: false }));
-    }
-  };
-
-  // Fetch watchlist status on component mount
-  useEffect(() => {
-    if (authenticated) {
-      fetchWatchlistStatus();
-    }
-  }, [authenticated, asset.ticker]);
-
-  // Get button content based on watchlist status
-  const getWatchlistButtonContent = () => {
-    if (!authenticated) {
-      return {
-        text: 'Add to Watchlist',
-        className: 'bg-transparent border border-gray-900 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-900/5 font-medium transition-colors',
-        icon: <Icon icon={PlusIcon} size="md" className="mr-2" />
-      };
-    }
-
-    if (watchlistStatus.loading) {
-      return {
-        text: 'Loading...',
-        className: 'bg-transparent border border-gray-400 text-gray-400 px-4 py-2 rounded-lg font-medium cursor-not-allowed',
-        icon: <Icon icon={CircleNotchIcon} size="md" className="mr-2 animate-spin" />
-      };
-    }
-
-    if (watchlistStatus.inWatchlists === 0) {
-      return {
-        text: 'Add to Watchlist',
-        className: 'bg-transparent border border-gray-900 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-900/5 font-medium transition-colors',
-        icon: <Icon icon={PlusIcon} size="md" className="mr-2" />
-      };
-    }
-
-    if (watchlistStatus.inWatchlists === 1) {
-      return {
-        text: 'In 1 Watchlist',
-        className: 'bg-transparent border border-gray-900 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-900/5 font-medium transition-colors',
-        icon: <Icon icon={CheckCircleIcon} size="md" className="mr-2" />
-      };
-    }
-
-    return {
-      text: `In ${watchlistStatus.inWatchlists} Watchlists`,
-      className: 'bg-transparent border border-gray-900 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-900/5 font-medium transition-colors',
-      icon: <Icon icon={CheckCircleIcon} size="md" className="mr-2" />
-    };
-  };
+  if (!authenticated) {
+    watchlistButtonText = 'Add to Watchlist';
+    watchlistIconComponent = PlusIcon;
+  } else if (watchlistLoading) {
+    watchlistButtonText = 'Loading...';
+    watchlistButtonClass = 'bg-transparent border border-gray-400 text-gray-400 px-4 py-2 rounded-lg font-medium cursor-not-allowed';
+    watchlistIconComponent = CircleNotchIcon;
+    watchlistIconSpin = true;
+  } else if (inWatchlists === 0) {
+    watchlistButtonText = 'Add to Watchlist';
+    watchlistIconComponent = PlusIcon;
+  } else if (inWatchlists === 1) {
+    watchlistButtonText = 'In 1 Watchlist';
+    watchlistIconComponent = CheckCircleIcon;
+  } else {
+    watchlistButtonText = `In ${inWatchlists} Watchlists`;
+    watchlistIconComponent = CheckCircleIcon;
+  }
 
   return (
     <div>
@@ -235,8 +144,6 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
             <div className="min-w-0">
               <div className="flex items-center">
                 <div className="flex items-center space-x-4 flex-1">
-                  
-                  
                   <div className="flex-1">
                     <div className="flex !mb-0">
                       <h4 className="text-sm leading-none text-gray-900 truncate">
@@ -263,12 +170,19 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                     {/* Price info below ticker line */}
                     <div className="mt-4">
                       <h1 className="text-4xl font-mono text-gray-900 leading-none !mb-0">
-                        {formatPrice(quote.regularMarketPrice)}
+                        {Formatters.currency(quote.regularMarketPrice, { 
+                          currency: quote.currency || 'USD' 
+                        })}
                       </h1>
-                      {(quote.regularMarketChange !== undefined && quote.regularMarketChange !== null) && 
-                       (quote.regularMarketChangePercent !== undefined && quote.regularMarketChangePercent !== null) && (
+                      {AssetDisplayService.isValidPriceChange(
+                        quote.regularMarketChange, 
+                        quote.regularMarketChangePercent
+                      ) && (
                         <div className={`text-lg font-medium ${priceColor} mt-1`}>
-                          {formatChange(quote.regularMarketChange, quote.regularMarketChangePercent)}
+                          {Formatters.signedNumber(quote.regularMarketChange!, { decimals: 2 })} (
+                          {Formatters.percentage(quote.regularMarketChangePercent! / 100, { 
+                            showSign: true 
+                          })})
                         </div>
                       )}
                       <div className="flex items-center space-x-2 mt-2">
@@ -281,10 +195,9 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                         {quote.marketState && (
                           <span className="flex items-center text-xs text-gray-500">
                             <span className={`w-2 h-2 rounded-full mr-1 ${
-                              quote.marketState === 'REGULAR' ? 'bg-green-400' : 
-                              quote.marketState === 'CLOSED' ? 'bg-red-400' : 'bg-yellow-400'
+                              AssetDisplayService.getMarketStateColor(quote.marketState)
                             }`}></span>
-                            {getMarketStateDisplay(quote.marketState)}
+                            {AssetDisplayService.getMarketStateLabel(quote.marketState)}
                           </span>
                         )}
                       </div>
@@ -308,27 +221,30 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                           )}
                           <button 
                             onClick={handleWatchlistClick}
-                            className={getWatchlistButtonContent().className}
-                            disabled={watchlistStatus.loading}
+                            className={watchlistButtonClass}
+                            disabled={watchlistLoading}
                             title={
                               !authenticated 
                                 ? 'Log in to add to watchlist'
-                                : watchlistStatus.loading
+                                : watchlistLoading
                                   ? 'Loading watchlist status...'
-                                  : watchlistStatus.inWatchlists > 0
+                                  : inWatchlists > 0
                                     ? 'Manage watchlists'
                                     : 'Add to watchlist'
                             }
                           >
                             <div className="flex items-center">
-                              {getWatchlistButtonContent().icon}
-                              {getWatchlistButtonContent().text}
+                              <Icon 
+                                icon={watchlistIconComponent} 
+                                size="md" 
+                                className={`mr-2 ${watchlistIconSpin ? 'animate-spin' : ''}`}
+                              />
+                              {watchlistButtonText}
                             </div>
                           </button>
                         </div>
                       )}
                     </div>
-                    
                   </div>
                 </div>
               </div>
@@ -340,7 +256,9 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Open</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(quote.regularMarketOpen)}
+                    {Formatters.currency(quote.regularMarketOpen, { 
+                      currency: quote.currency || 'USD' 
+                    })}
                   </p>
                 </div>
               )}
@@ -348,7 +266,11 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Day Range</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(quote.regularMarketDayLow)} - {formatPrice(quote.regularMarketDayHigh)}
+                    {Formatters.currency(quote.regularMarketDayLow, { 
+                      currency: quote.currency || 'USD' 
+                    })} - {Formatters.currency(quote.regularMarketDayHigh, { 
+                      currency: quote.currency || 'USD' 
+                    })}
                   </p>
                 </div>
               )}
@@ -356,7 +278,11 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">52W Range</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(quote.fiftyTwoWeekLow)} - {formatPrice(quote.fiftyTwoWeekHigh)}
+                    {Formatters.currency(quote.fiftyTwoWeekLow, { 
+                      currency: quote.currency || 'USD' 
+                    })} - {Formatters.currency(quote.fiftyTwoWeekHigh, { 
+                      currency: quote.currency || 'USD' 
+                    })}
                   </p>
                 </div>
               )}
@@ -364,7 +290,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Volume</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {parseInt(quote.regularMarketVolume).toLocaleString()}
+                    {Formatters.number(parseInt(quote.regularMarketVolume))}
                   </p>
                 </div>
               )}
@@ -372,7 +298,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Market Cap</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatMarketCap(quote.marketCap)}
+                    {Formatters.compactNumber(parseFloat(quote.marketCap))}
                   </p>
                 </div>
               )}
@@ -380,7 +306,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">P/E Ratio</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {quote.trailingPE.toFixed(2)}
+                    {Formatters.number(quote.trailingPE, { decimals: 2 })}
                   </p>
                 </div>
               )}
@@ -388,7 +314,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Dividend Yield</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {(quote.dividendYield * 100).toFixed(2)}%
+                    {Formatters.percentage(quote.dividendYield)}
                   </p>
                 </div>
               )}
@@ -396,7 +322,9 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">EPS</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(quote.earningsPerShare)}
+                    {Formatters.currency(quote.earningsPerShare, { 
+                      currency: quote.currency || 'USD' 
+                    })}
                   </p>
                 </div>
               )}
@@ -404,7 +332,9 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Book Value</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(quote.bookValue)}
+                    {Formatters.currency(quote.bookValue, { 
+                      currency: quote.currency || 'USD' 
+                    })}
                   </p>
                 </div>
               )}
@@ -412,7 +342,7 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">P/B Ratio</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {quote.priceToBook.toFixed(2)}
+                    {Formatters.number(quote.priceToBook, { decimals: 2 })}
                   </p>
                 </div>
               )}
@@ -420,71 +350,71 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
                 <div>
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Beta</label>
                   <p className="text-sm font-medium text-gray-900">
-                    {quote.beta.toFixed(2)}
+                    {Formatters.number(quote.beta, { decimals: 2 })}
                   </p>
                 </div>
               )}
             </div>
             {/* Company blurb */}
             {profile?.description ? (
-                      <p className="mt-3 text-sm text-gray-700 max-w-[65ch]">
-                        {(() => {
-                          const full = (profile.description || '').trim();
-                          if (!full) return null;
-                          const halfLen = Math.ceil(full.length / 2);
-                          const needsTruncate = full.length > 0 && halfLen < full.length;
-                          const preview = full.slice(0, halfLen).trim();
-                          if (isBlurbExpanded) {
-                            return (
-                              <>
-                                {full}
-                                {needsTruncate && (
-                                  <>
-                                    {' '}
-                                    <button
-                                      type="button"
-                                      onClick={() => setIsBlurbExpanded(false)}
-                                      className="text-blue-600 hover:underline"
-                                    >
-                                      Show less
-                                    </button>
-                                  </>
-                                )}
-                              </>
-                            );
-                          }
-                          if (needsTruncate) {
-                            return (
-                              <>
-                                {preview}...
-                                {' '}
-                                <button
-                                  type="button"
-                                  onClick={() => setIsBlurbExpanded(true)}
-                                  className="text-blue-600 hover:underline"
-                                >
-                                  See more
-                                </button>
-                              </>
-                            );
-                          }
-                          return full;
-                        })()}
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-sm text-gray-700 max-w-[65ch]">
-                        Looking for more about {asset.name}? See the overview on{' '}
-                        <a
-                          href={`https://finance.yahoo.com/quote/${asset.ticker.toUpperCase()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+              <p className="mt-3 text-sm text-gray-700 max-w-[65ch]">
+                {(() => {
+                  const full = (profile.description || '').trim();
+                  if (!full) return null;
+                  const halfLen = Math.ceil(full.length / 2);
+                  const needsTruncate = full.length > 0 && halfLen < full.length;
+                  const preview = full.slice(0, halfLen).trim();
+                  if (isBlurbExpanded) {
+                    return (
+                      <>
+                        {full}
+                        {needsTruncate && (
+                          <>
+                            {' '}
+                            <button
+                              type="button"
+                              onClick={() => setIsBlurbExpanded(false)}
+                              className="text-blue-600 hover:underline"
+                            >
+                              Show less
+                            </button>
+                          </>
+                        )}
+                      </>
+                    );
+                  }
+                  if (needsTruncate) {
+                    return (
+                      <>
+                        {preview}...
+                        {' '}
+                        <button
+                          type="button"
+                          onClick={() => setIsBlurbExpanded(true)}
                           className="text-blue-600 hover:underline"
                         >
-                          Yahoo Finance
-                        </a>
-                        .
-                      </p>
-                    )}
+                          See more
+                        </button>
+                      </>
+                    );
+                  }
+                  return full;
+                })()}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-gray-700 max-w-[65ch]">
+                Looking for more about {asset.name}? See the overview on{' '}
+                <a
+                  href={`https://finance.yahoo.com/quote/${asset.ticker.toUpperCase()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Yahoo Finance
+                </a>
+                .
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -516,7 +446,6 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
               </button>
               <button
                 onClick={() => {
-                  // Navigate to login page
                   window.location.href = '/';
                 }}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
@@ -536,8 +465,6 @@ export function AssetHeader({ asset, quote, hasHoldings, authenticated = true, p
         assetName={asset.name}
         onSuccess={handleWatchlistSuccess}
       />
-
-
     </div>
   );
-} 
+}

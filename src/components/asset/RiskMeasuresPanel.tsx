@@ -4,13 +4,13 @@ import React from 'react';
 import { InfoIcon } from '@/components/ui/Icon';
 import type { RiskMeasures } from '@/types';
 import { LessonButton } from '@/components/ui/LessonButton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Formatters } from '@/lib/financial';
 
 interface Props {
   riskMeasures?: RiskMeasures;
   assetType: string;
 }
-
-import { Formatters } from '@/lib/financial';
 
 function formatPct(value: number | null | undefined, digits = 2): string {
   return Formatters.percentage(value, { decimals: digits });
@@ -49,20 +49,20 @@ export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-0">
-        <h4 className="text-sm font-normal text-neutral-900 dark:text-white">Risk Factors</h4>
-      </div>
+    <Card className="shadow-none h-full flex flex-col">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-sm font-normal">Risk Factors</CardTitle>
+      </CardHeader>
 
-      <div className="flex-1">
+      <CardContent className="flex-1 pt-0">
         {!common ? (
-          <p className="text-sm text-gray-600 dark:text-white">Risk data unavailable.</p>
+          <p className="text-sm text-muted-foreground">Risk data unavailable.</p>
         ) : (
-          <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
+          <div className="divide-y divide-border">
             {/* Beta (stocks only) */}
             {assetType === 'STOCK' && (
               <div className="py-3 flex items-center justify-between" title="Sensitivity vs the market (≈ SPY). 1.0 moves with market, 1.2 moves 20% more.">
-                <span className="text-neutral-700 dark:text-white text-sm">Beta</span>
+                <span className="text-muted-foreground text-sm">Beta</span>
                 <div className="flex items-center gap-3">
                   {/* <span className="text-sm text-gray-900">{formatNumber(riskMeasures?.stock?.beta)}</span> */}
                   {(() => {
@@ -80,7 +80,7 @@ export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
 
             {/* Volatility (90D preferred for badge), show both */}
             <div className="py-3 flex items-center justify-between" title="Annualized from daily returns (last 90 sessions).">
-              <span className="text-gray-700 dark:text-white text-sm">Standard Deviation (Total Volatility)</span>
+              <span className="text-muted-foreground text-sm">Standard Deviation (Total Volatility)</span>
               <div className="flex items-center gap-3">
                 {/* <span className="text-sm text-gray-900">{formatPct(common.volatility90d)}</span> */}
                 {(() => {
@@ -96,59 +96,59 @@ export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
             </div>
 
             <div className="py-3 flex items-center justify-between" title="Return per unit of risk using a simple risk-free assumption.">
-              <span className="text-neutral-700 dark:text-white text-sm">Sharpe Ratio (90D)</span>
-              <span className="text-sm text-neutral-900 dark:text-white">{formatNumber(common.sharpe90d)}</span>
+              <span className="text-muted-foreground text-sm">Sharpe Ratio (90D)</span>
+              <span className="text-sm text-foreground">{formatNumber(common.sharpe90d)}</span>
             </div>
 
             <div className="py-3 flex items-center justify-between" title="Worst peak-to-trough drop over the last year.">
-              <span className="text-neutral-700 dark:text-white text-sm">Max Drawdown (1Y)</span>
-              <span className="text-sm text-neutral-900 dark:text-white">{formatPct(common.maxDrawdown1y)}</span>
+              <span className="text-muted-foreground text-sm">Max Drawdown (1Y)</span>
+              <span className="text-sm text-foreground">{formatPct(common.maxDrawdown1y)}</span>
             </div>
 
             <div className="py-3 flex items-center justify-between" title="Where today's price sits between 52-week low and high.">
-              <span className="text-neutral-700 dark:text-white text-sm">52W Range Position</span>
-              <span className="text-sm text-neutral-900 dark:text-white">{formatPct(common.range52wPosition)}</span>
+              <span className="text-muted-foreground text-sm">52W Range Position</span>
+              <span className="text-sm text-foreground">{formatPct(common.range52wPosition)}</span>
             </div>
 
             <div className="py-3 flex items-center justify-between" title="Percent of days with negative returns in last 90 trading days.">
-              <span className="ttext-neutral-700 dark:text-white text-sm">Downside Days (90D)</span>
-              <span className="text-sm text-neutral-900 dark:text-white">{formatPct(common.downsideDays90dPct)}</span>
+              <span className="text-muted-foreground text-sm">Downside Days (90D)</span>
+              <span className="text-sm text-foreground">{formatPct(common.downsideDays90dPct)}</span>
             </div>
 
             {assetType === 'BOND' && riskMeasures?.bond && (
               <>
                 <div className="py-3 flex items-center justify-between" title="Rate sensitivity: ≈ duration% price move for a 1% rate change.">
-                  <span className="text-neutral-700 dark:text-white text-sm">Duration (approx)</span>
-                  <span className="text-sm text-neutral-900 dark:text-white">{formatNumber(riskMeasures.bond.durationApprox)}</span>
+                  <span className="text-muted-foreground text-sm">Duration (approx)</span>
+                  <span className="text-sm text-foreground">{formatNumber(riskMeasures.bond.durationApprox)}</span>
                 </div>
                 <div className="py-3 flex items-center justify-between" title="Total return if held to maturity, annualized.">
-                  <span className="text-neutral-700 dark:text-white text-sm">Yield to Maturity</span>
-                  <span className="text-sm text-neutral-900 dark:text-white">{formatPct(bondYtmPct)}</span>
+                  <span className="text-muted-foreground text-sm">Yield to Maturity</span>
+                  <span className="text-sm text-foreground">{formatPct(bondYtmPct)}</span>
                 </div>
               </>
             )}
           </div>
         )}
-      </div>
+      </CardContent>
 
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end px-6 pb-6">
         <LessonButton
           text="Kelly Talks about Risk"
           topics={["Risk Management"]}
           maxItems={1}
           modalLayout="dual"
-          modalContent={
-            <div className="flex flex-col gap-2 p-8">
-              <h3 className="text-lg font-semibold text-gray-900">Understanding Risk</h3>
-              <p className="mt-2 text-sm text-gray-600 max-w-prose">
-                Beta and volatility help you compare how bumpy a ride an asset can be. Higher numbers mean larger ups and downs.
-              </p>
-            </div>
-          }
-        />
-      </div>
-    </div>
-  );
-}
+            modalContent={
+              <div className="flex flex-col gap-2 p-8">
+                <h3 className="text-lg font-semibold text-foreground">Understanding Risk</h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-prose">
+                  Beta and volatility help you compare how bumpy a ride an asset can be. Higher numbers mean larger ups and downs.
+                </p>
+              </div>
+            }
+          />
+        </div>
+      </Card>
+    );
+  }
 
 

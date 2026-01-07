@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ApiClient, ApiError } from '@/lib/api';
 
 export interface UserRankingData {
   currentUser: {
@@ -34,29 +35,29 @@ export interface UserRankingResponse {
 
 export function useUserRanking() {
   const [data, setData] = useState<UserRankingData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
   const fetchRankingData = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/user/ranking');
-      const result: UserRankingResponse = await response.json();
+      const result = await ApiClient.get<UserRankingData>('/api/user/ranking');
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch ranking data');
       }
 
-      setData(result.data);
+      setData(result.data!);
       setLastFetch(new Date());
     } catch (err) {
       console.error('Error fetching ranking data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load ranking data');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to load ranking data';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
@@ -77,7 +78,7 @@ export function useUserRanking() {
 
   return {
     data,
-    loading,
+    isLoading,
     error,
     refresh,
     lastFetch,

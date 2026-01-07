@@ -13,8 +13,8 @@ import {
   ReferenceLine
 } from 'recharts';
 import { AssetTopActions } from '@/components/asset';
-import { getZIndexClass } from '@/lib/z-index';
 import { useChartColors } from '@/hooks/useChartColors';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AssetChartProps {
   ticker: string;
@@ -68,11 +68,12 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
   ];
   
   const chartColors = useMemo(() => ({
-    positive: resolvedColors['chart-positive'] || '#10b981',
-    negative: resolvedColors['chart-negative'] || '#ef4444',
-    foreground: resolvedColors['foreground'] || '#000',
-    muted: resolvedColors['muted'] || '#ccc',
-    mutedForeground: resolvedColors['muted-foreground'] || '#666',
+    positive: resolvedColors['chart-3'] || 'hsl(var(--chart-3))', // Emerald for positive
+    negative: resolvedColors['chart-5'] || 'hsl(var(--chart-5))', // Red for negative
+    foreground: resolvedColors['foreground'] || 'hsl(var(--foreground))',
+    muted: resolvedColors['muted'] || 'hsl(var(--muted))',
+    mutedForeground: resolvedColors['muted-foreground'] || 'hsl(var(--muted-foreground))',
+    border: resolvedColors['border'] || 'hsl(var(--border))',
   }), [resolvedColors]);
 
   useEffect(() => {
@@ -304,13 +305,11 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
 
        {/* Chart Area - Only This Section Updates */}
        <div className="relative">
-         {chartLoading && (
-           <div className={`absolute inset-0 bg-background/70 ${getZIndexClass('overlay')} flex items-center justify-center`}>
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+         {chartLoading ? (
+           <div className="h-80">
+             <Skeleton className="h-full w-full" />
            </div>
-         )}
-         
-         {error ? (
+         ) : error ? (
            <div className="h-80 flex items-center justify-center">
              <div className="text-center">
                <p className="text-destructive mb-2">Failed to load chart data</p>
@@ -323,7 +322,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                </button>
              </div>
            </div>
-         ) : transformedData.length === 0 && !chartLoading ? (
+         ) : transformedData.length === 0 ? (
            <div className="h-80 flex items-center justify-center">
              <p className="text-muted-foreground">No chart data available for {ticker}</p>
            </div>
@@ -346,7 +345,7 @@ export function AssetChart({ ticker, currentPrice, currency, assetName, overlayA
                 </linearGradient>
               </defs>
                
-               <CartesianGrid strokeDasharray="3 3" stroke={resolvedColors['border'] || '#e5e7eb'} />
+               <CartesianGrid strokeDasharray="3 3" stroke={chartColors.border} />
                
                <XAxis 
                  dataKey="formattedDate"

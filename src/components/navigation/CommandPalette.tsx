@@ -130,7 +130,7 @@ export function CommandPalette() {
             {results.map((asset) => (
               <CommandItem
                 key={asset.id}
-                onSelect={() => handleSelect(() => router.push(`/dashboard/asset/${asset.ticker}`))}
+                onSelect={() => handleSelect(() => router.push(`/asset/${asset.ticker}`))}
                 className="flex items-center gap-3"
               >
                 <div className="h-8 w-8 rounded flex items-center justify-center flex-shrink-0 bg-muted">

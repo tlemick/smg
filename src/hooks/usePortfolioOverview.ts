@@ -1,31 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PortfolioOverviewResponse } from '@/types';
+import { ApiClient, ApiError } from '@/lib/api';
 
 export function usePortfolioOverview() {
   const [data, setData] = useState<PortfolioOverviewResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
   const fetchPortfolioData = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/user/portfolio/overview');
-      const result: PortfolioOverviewResponse = await response.json();
+      const result = await ApiClient.get<PortfolioOverviewResponse['data']>('/api/user/portfolio/overview');
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch portfolio data');
       }
 
-      setData(result);
+      setData(result as PortfolioOverviewResponse);
       setLastFetch(new Date());
     } catch (err) {
       console.error('Error fetching portfolio data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load portfolio data');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to load portfolio data';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
@@ -46,7 +47,7 @@ export function usePortfolioOverview() {
 
   return {
     data,
-    loading,
+    isLoading,
     error,
     refresh,
     lastFetch,

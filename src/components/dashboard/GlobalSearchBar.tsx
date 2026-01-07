@@ -65,7 +65,7 @@ export function GlobalSearchBar() {
 
   const handleSelect = (ticker: string) => {
     if (ticker) {
-      router.push(`/dashboard/asset/${ticker}`);
+      router.push(`/asset/${ticker}`);
       setIsOpen(false);
       clearSearch();
       inputRef.current?.blur();

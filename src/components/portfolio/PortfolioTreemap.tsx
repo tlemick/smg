@@ -213,7 +213,7 @@ export function PortfolioTreemap() {
       <g
         onClick={() => {
           if (dataPoint.ticker && dataPoint.ticker !== dataPoint.type) {
-            router.push(`/dashboard/asset/${dataPoint.ticker}`);
+            router.push(`/asset/${dataPoint.ticker}`);
           }
         }}
         style={{ cursor: 'pointer' }}

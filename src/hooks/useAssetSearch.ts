@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ApiClient, ApiError } from '@/lib/api';
 
 interface SearchResult {
   id: string;
@@ -30,31 +31,23 @@ export function useAssetSearch(): UseAssetSearchReturn {
     try {
       setIsSearching(true);
 
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: searchQuery.trim(),
-          quotesCount: 5,
-          newsCount: 0
-        }),
+      const result = await ApiClient.post<any>('/api/search', {
+        query: searchQuery.trim(),
+        quotesCount: 5,
+        newsCount: 0
       });
 
-      const data = await response.json();
-
-      if (data.success && data.data.quotes) {
-        const validResults = data.data.quotes
-          .filter((result: any) => 
-            result && result.symbol && (result.longname || result.shortname)
+      if (result.success && result.data?.quotes) {
+        const validResults = result.data.quotes
+          .filter((item: any) => 
+            item && item.symbol && (item.longname || item.shortname)
           )
-          .map((result: any) => ({
-            id: result.symbol, // Use symbol as unique ID
-            ticker: result.symbol,
-            name: result.longname || result.shortname || result.symbol,
-            type: result.quoteType || 'EQUITY',
-            exchange: result.exchange
+          .map((item: any) => ({
+            id: item.symbol, // Use symbol as unique ID
+            ticker: item.symbol,
+            name: item.longname || item.shortname || item.symbol,
+            type: item.quoteType || 'EQUITY',
+            exchange: item.exchange
           }));
         setResults(validResults);
       } else {

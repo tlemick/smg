@@ -1,10 +1,12 @@
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
 import { prisma } from '../../prisma/client';
 import { getCompanyLogoUrl } from './logo-service';
 import type { AnalystConsensus } from '@/types';
 
-// Suppress deprecated historical API notices
-yahooFinance.suppressNotices(['ripHistorical']);
+// Initialize Yahoo Finance v3 with suppressed notices
+const yahooFinance = new YahooFinance({
+  suppressNotices: ['ripHistorical', 'yahooSurvey']
+});
 
 // Cache TTL constants
 const QUOTE_CACHE_TTL = 10 * 1000;
@@ -477,11 +479,17 @@ export async function getWatchlistQuotes(watchlistId: string) {
 /**
  * Store historical price data for an asset using existing DailyAggregate model
  * Uses Yahoo Finance chart() API (migrated from deprecated historical() API)
+ * 
+ * @param assetId - Asset ID to sync
+ * @param startDate - Start date for sync
+ * @param endDate - End date for sync
+ * @param forceFullSync - If true, sync entire range even if data exists
  */
 export async function syncAssetHistoricalData(
   assetId: number,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  forceFullSync: boolean = false
 ) {
   const asset = await prisma.asset.findUnique({
     where: { id: assetId }
@@ -492,9 +500,37 @@ export async function syncAssetHistoricalData(
   }
 
   try {
+    let actualStartDate = startDate;
+    
+    // Incremental sync: Check if we already have recent data
+    if (!forceFullSync) {
+      const lastKnownData = await prisma.dailyAggregate.findFirst({
+        where: { 
+          assetId,
+          date: { gte: startDate, lte: endDate }
+        },
+        orderBy: { date: 'desc' },
+        select: { date: true }
+      });
+      
+      if (lastKnownData) {
+        const lastDate = new Date(lastKnownData.date);
+        const daysSinceLastData = Math.floor((endDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // If we have data from yesterday or today, no need to sync
+        if (daysSinceLastData < 1) {
+          return { success: true, recordsUpdated: 0, cached: true, asset: asset.ticker };
+        }
+        
+        // Only sync from day after last known data
+        actualStartDate = new Date(lastDate);
+        actualStartDate.setDate(actualStartDate.getDate() + 1);
+      }
+    }
+    
     // Fetch chart data from Yahoo Finance using the new chart() API
     const chartData = await yahooFinance.chart(asset.ticker, {
-      period1: startDate,
+      period1: actualStartDate,
       period2: endDate,
       interval: '1d'
     });
@@ -537,7 +573,7 @@ export async function syncAssetHistoricalData(
       recordsUpdated++;
     }
 
-    return { success: true, recordsUpdated, asset: asset.ticker };
+    return { success: true, recordsUpdated, cached: false, asset: asset.ticker };
   } catch (error) {
     console.error(`Failed to sync chart data for ${asset.ticker}:`, error);
     throw error;

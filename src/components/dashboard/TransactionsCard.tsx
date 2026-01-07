@@ -1,21 +1,28 @@
 'use client';
 
-import { TransactionsFeedProps } from '@/types';
 import { useTransactionsFeed } from '@/hooks/useTransactionsFeed';
 import { TransactionSection } from './TransactionSection';
 import { ClockIcon, WarningCircleIcon, Icon, CircleNotchIcon } from '@/components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// ✅ Component props defined inline (not in shared types)
+interface TransactionsCardProps {
+  className?: string;
+  showHeader?: boolean;
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+}
 
 export function TransactionsCard({
   className = '',
   showHeader = true,
   autoRefresh = false,
   refreshInterval = 30000,
-}: TransactionsFeedProps) {
+}: TransactionsCardProps) {
   const { 
     pendingOrders,
     completedOrders, 
-    loading, 
+    isLoading, 
     error, 
     hasTransactions,
     hasPending,
@@ -38,7 +45,7 @@ export function TransactionsCard({
       {/* Content */}
       <div>
         {/* Loading State */}
-        {loading && (
+        {isLoading && (
           <div className="space-y-6">
             <div className="space-y-3">
               <Skeleton className="h-6 w-24" />
@@ -55,7 +62,7 @@ export function TransactionsCard({
         )}
 
         {/* Error State */}
-        {!loading && error && (
+        {!isLoading && error && (
           <div className="text-center py-12">
             <Icon icon={WarningCircleIcon} size="xl" className="mx-auto text-destructive mb-3" />
             <h5 className="text-sm font-medium text-foreground mb-1">Failed to load transactions</h5>
@@ -64,7 +71,7 @@ export function TransactionsCard({
         )}
 
         {/* Empty State */}
-        {!loading && !error && !hasTransactions && (
+        {!isLoading && !error && !hasTransactions && (
           <div className="text-center py-12">
             <Icon icon={ClockIcon} size="xl" className="mx-auto text-muted-foreground mb-3" />
             <h5 className="text-sm font-medium text-foreground mb-1">No transactions yet</h5>
@@ -75,7 +82,7 @@ export function TransactionsCard({
         )}
 
         {/* Transactions Sections */}
-        {!error && !loading && hasTransactions && (
+        {!error && !isLoading && hasTransactions && (
           <div className="space-y-6">
             {/* Pending Section */}
             {hasPending && pendingOrders.length > 0 && (

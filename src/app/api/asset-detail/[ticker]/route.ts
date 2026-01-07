@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import Decimal from 'decimal.js';
+import { FinancialMath } from '@/lib/financial';
 import { getAssetQuoteWithCache, createAssetFromTicker, syncAssetProfile, getChartDataDirect, getAnalystConsensus } from '@/lib/yahoo-finance-service';
 import {
   getBenchmarkTickerForAsset,
@@ -132,29 +134,50 @@ export async function GET(
       });
 
       if (holdings.length > 0) {
-        const totalQuantity = holdings.reduce((sum, h) => sum + h.quantity, 0);
-        const totalCostBasis = holdings.reduce((sum, h) => sum + (h.quantity * h.averagePrice), 0);
-        const avgCostBasis = totalCostBasis / totalQuantity;
-        const currentValue = totalQuantity * quoteData.regularMarketPrice;
-        const unrealizedPnL = currentValue - totalCostBasis;
-        const unrealizedPnLPercent = (unrealizedPnL / totalCostBasis) * 100;
+        // Use FinancialMath for all money calculations to ensure precision
+        const totalQuantity = holdings.reduce(
+          (sum, h) => FinancialMath.add(sum, h.quantity),
+          new Decimal(0)
+        );
+        
+        const totalCostBasis = holdings.reduce(
+          (sum, h) => FinancialMath.add(
+            sum,
+            FinancialMath.multiply(h.quantity, h.averagePrice)
+          ),
+          new Decimal(0)
+        );
+        
+        const avgCostBasis = FinancialMath.divide(totalCostBasis, totalQuantity);
+        const currentValue = FinancialMath.multiply(totalQuantity, quoteData.regularMarketPrice);
+        const unrealizedPnL = FinancialMath.subtract(currentValue, totalCostBasis);
+        const unrealizedPnLPercent = FinancialMath.multiply(
+          FinancialMath.divide(unrealizedPnL, totalCostBasis),
+          100
+        );
 
         userHoldings = {
-          totalQuantity,
-          avgCostBasis,
-          totalCostBasis,
-          currentValue,
-          unrealizedPnL,
-          unrealizedPnLPercent,
-          holdings: holdings.map(h => ({
-            id: h.id,
-            quantity: h.quantity,
-            averagePrice: h.averagePrice,
-            costBasis: h.quantity * h.averagePrice,
-            currentValue: h.quantity * quoteData.regularMarketPrice,
-            unrealizedPnL: (h.quantity * quoteData.regularMarketPrice) - (h.quantity * h.averagePrice),
-            portfolio: h.portfolio
-          }))
+          totalQuantity: totalQuantity.toNumber(),
+          avgCostBasis: avgCostBasis.toNumber(),
+          totalCostBasis: totalCostBasis.toNumber(),
+          currentValue: currentValue.toNumber(),
+          unrealizedPnL: unrealizedPnL.toNumber(),
+          unrealizedPnLPercent: unrealizedPnLPercent.toNumber(),
+          holdings: holdings.map(h => {
+            const holdingCostBasis = FinancialMath.multiply(h.quantity, h.averagePrice);
+            const holdingCurrentValue = FinancialMath.multiply(h.quantity, quoteData.regularMarketPrice);
+            const holdingUnrealizedPnL = FinancialMath.subtract(holdingCurrentValue, holdingCostBasis);
+            
+            return {
+              id: h.id,
+              quantity: h.quantity,
+              averagePrice: h.averagePrice,
+              costBasis: holdingCostBasis.toNumber(),
+              currentValue: holdingCurrentValue.toNumber(),
+              unrealizedPnL: holdingUnrealizedPnL.toNumber(),
+              portfolio: h.portfolio
+            };
+          })
         };
       }
     }

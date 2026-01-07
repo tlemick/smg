@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ActivityFeedResponse, ActivityFeedOptions, UserActivity, ActivityCategory } from '@/types';
+import { ApiClient, ApiError } from '@/lib/api';
 
 export function useActivityFeed(options: ActivityFeedOptions = {}) {
   const {
@@ -11,55 +12,46 @@ export function useActivityFeed(options: ActivityFeedOptions = {}) {
   } = options;
 
   const [data, setData] = useState<ActivityFeedResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchActivities = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
       // Build query parameters
-      const params = new URLSearchParams();
-      params.set('limit', limit.toString());
-      
+      const queryParams: Record<string, any> = { limit };
       if (categories && categories.length > 0) {
-        params.set('categories', categories.join(','));
+        queryParams.categories = categories.join(',');
       }
 
-      const response = await fetch(`/api/user/activity?${params.toString()}`);
-      const result: ActivityFeedResponse = await response.json();
+      const queryString = ApiClient.buildQueryString(queryParams);
+      const result = await ApiClient.get<ActivityFeedResponse['data']>(`/api/user/activity${queryString}`);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch activities');
       }
 
-      setData(result);
+      setData(result as ActivityFeedResponse);
       setLastFetch(new Date());
     } catch (err) {
       console.error('Error fetching activities:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load activities');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to load activities';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [limit, categories]);
 
   const markAsRead = useCallback(async (activityIds: string[]) => {
     try {
-      const response = await fetch('/api/user/activity', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'mark_read',
-          activityIds
-        })
+      const result = await ApiClient.post('/api/user/activity', {
+        action: 'mark_read',
+        activityIds
       });
-
-      const result = await response.json();
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to mark activities as read');
@@ -144,7 +136,7 @@ export function useActivityFeed(options: ActivityFeedOptions = {}) {
     // Core data
     data,
     activities: data?.data?.activities || [],
-    loading,
+    isLoading,
     error,
     lastFetch,
 

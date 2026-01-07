@@ -4,14 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Icon, PlayIcon } from '@/components/ui';
-
-interface TikTokLesson {
-  id: string;
-  title: string;
-  topic: string;
-  image: string;
-  duration?: string;
-}
+import { TikTokLesson, TikTokLessonCardProps } from '@/types';
 
 // Educational financial topics for the TikTok-style lessons
 const lessons: TikTokLesson[] = [
@@ -51,11 +44,6 @@ const lessons: TikTokLesson[] = [
     duration: '2:33'
   }
 ];
-
-interface TikTokLessonCardProps {
-  lesson: TikTokLesson;
-  onClick: () => void;
-}
 
 function TikTokLessonCard({ lesson, onClick }: TikTokLessonCardProps) {
   return (

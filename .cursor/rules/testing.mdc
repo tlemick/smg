@@ -1,0 +1,874 @@
+---
+description: Testing Standards and Best Practices
+globs: **/*.{test,spec}.{ts,tsx}
+alwaysApply: false
+---
+
+# Testing Standards
+
+## Overview
+
+Testing ensures our code works correctly, especially financial calculations where precision errors can cost users money. This document defines what to test, how to test, and what standards to follow.
+
+---
+
+## 1. Testing Philosophy
+
+### Core Principles
+
+**Test business logic, not implementation details.**
+
+- ✅ Test what the code does (outcomes)
+- ❌ Don't test how it does it (internals)
+
+**Focus on value.**
+
+- Services: MUST be tested (critical business logic)
+- Financial calculations: 100% coverage (money is involved)
+- API routes: Important to test (user-facing)
+- Hooks: Nice to test (integration points)
+- Components: Optional (mostly rendering)
+
+**Tests should be:**
+
+- **Fast** - Run in milliseconds, not seconds
+- **Isolated** - No dependencies between tests
+- **Repeatable** - Same result every time
+- **Readable** - Clear what's being tested
+- **Maintainable** - Easy to update when code changes
+
+---
+
+## 2. Test Structure
+
+### File Naming and Location
+
+```
+tests/
+├── financial-math.test.ts        ✅ Service tests
+├── formatters.test.ts            ✅ Service tests
+├── calculators.test.ts           ✅ Service tests
+├── trading-validation.test.ts    ✅ Service tests
+├── order-execution.test.ts       ✅ Service tests
+└── api/
+    ├── portfolio-overview.test.ts  ✅ API route tests
+    └── trade.test.ts               ✅ API route tests
+```
+
+**Pattern:** `*.test.ts` or `*.test.tsx`
+
+**Location:** `tests/` directory (project root)
+
+### Test File Structure
+
+```typescript
+/**
+ * Brief description of what this file tests
+ * 
+ * Run with: npm test
+ */
+
+import { ServiceName } from '@/lib/service-name';
+
+describe('ServiceName - High Level Category', () => {
+  describe('methodName', () => {
+    test('should handle normal case', () => {
+      // Arrange
+      const input = { ... };
+      
+      // Act
+      const result = ServiceName.methodName(input);
+      
+      // Assert
+      expect(result).toBe(expected);
+    });
+    
+    test('should handle edge case', () => {
+      // ...
+    });
+    
+    test('should throw error on invalid input', () => {
+      expect(() => ServiceName.methodName(invalid)).toThrow('Error message');
+    });
+  });
+  
+  describe('anotherMethod', () => {
+    // More tests...
+  });
+});
+```
+
+### Arrange-Act-Assert Pattern
+
+```typescript
+test('calculates order cost correctly', () => {
+  // Arrange - Set up test data
+  const shares = 100;
+  const price = 29.99;
+  
+  // Act - Execute the code being tested
+  const cost = FinancialMath.calculateCost(shares, price);
+  
+  // Assert - Verify the result
+  expect(cost.toNumber()).toBe(2999.00);
+});
+```
+
+---
+
+## 3. What to Test
+
+### Priority 1: Services (HIGH - MUST TEST)
+
+**All service methods MUST be tested:**
+
+- ✅ `FinancialMath` - All arithmetic operations
+- ✅ `Formatters` - All formatting methods
+- ✅ `FinancialCalculators` - All calculation methods
+- ✅ `TradingValidation` - All validation rules
+- ✅ `OrderExecutionService` - Order processing logic
+- ✅ `MarketStateService` - Market state detection
+- ✅ `CashManagementService` - Cash operations
+
+**Why:** Services contain business logic and are easy to test (pure functions, no dependencies).
+
+**Example:**
+
+```typescript
+// tests/financial-math.test.ts
+import { FinancialMath } from '@/lib/financial/financial-math';
+
+describe('FinancialMath - Core Arithmetic', () => {
+  describe('add', () => {
+    test('handles floating point precision', () => {
+      const result = FinancialMath.add(0.1, 0.2);
+      expect(result.toNumber()).toBe(0.3);
+    });
+    
+    test('adds integers correctly', () => {
+      const result = FinancialMath.add(10, 20);
+      expect(result.toNumber()).toBe(30);
+    });
+    
+    test('adds negative numbers', () => {
+      const result = FinancialMath.add(-10, 5);
+      expect(result.toNumber()).toBe(-5);
+    });
+  });
+  
+  describe('multiply', () => {
+    test('handles floating point precision', () => {
+      const result = FinancialMath.multiply(100, 0.29);
+      expect(result.toNumber()).toBe(29);
+    });
+  });
+});
+```
+
+### Priority 2: API Routes (MEDIUM - IMPORTANT)
+
+**Test critical endpoints:**
+
+- ✅ Success cases (happy path)
+- ✅ Error cases (invalid input, auth failures)
+- ✅ Authentication checks
+- ✅ Authorization checks
+- ✅ Input validation
+
+**Example:**
+
+```typescript
+// tests/api/portfolio-overview.test.ts
+import { GET } from '@/app/api/user/portfolio/overview/route';
+import { NextRequest } from 'next/server';
+
+// Mock Prisma
+jest.mock('@/prisma/client', () => ({
+  prisma: {
+    holding: {
+      findMany: jest.fn()
+    }
+  }
+}));
+
+describe('GET /api/user/portfolio/overview', () => {
+  test('returns 401 when not authenticated', async () => {
+    const request = new NextRequest('http://localhost/api/user/portfolio/overview');
+    const response = await GET(request);
+    const data = await response.json();
+    
+    expect(response.status).toBe(401);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Authentication required');
+  });
+  
+  test('returns portfolio overview when authenticated', async () => {
+    // Mock authenticated user
+    // Mock Prisma data
+    // Test response
+  });
+});
+```
+
+### Priority 3: Hooks (LOW - NICE TO HAVE)
+
+**Test data transformation and state management:**
+
+```typescript
+// tests/hooks/usePortfolioOverview.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
+
+// Mock ApiClient
+jest.mock('@/lib/api/api-client');
+
+describe('usePortfolioOverview', () => {
+  test('returns loading state initially', () => {
+    const { result } = renderHook(() => usePortfolioOverview());
+    
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.data).toBe(null);
+    expect(result.current.error).toBe(null);
+  });
+  
+  test('fetches and returns portfolio data', async () => {
+    const mockData = { /* ... */ };
+    ApiClient.get.mockResolvedValue({ success: true, data: mockData });
+    
+    const { result } = renderHook(() => usePortfolioOverview());
+    
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.data).toEqual(mockData);
+    });
+  });
+});
+```
+
+### Priority 4: Components (OPTIONAL)
+
+**Only test complex logic:**
+
+- ✅ Complex conditional rendering
+- ✅ Complex state management
+- ❌ Simple display components (waste of time)
+
+**Example:**
+
+```typescript
+// tests/components/OrderForm.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { OrderForm } from '@/components/trading/OrderForm';
+
+describe('OrderForm', () => {
+  test('validates shares input', () => {
+    render(<OrderForm />);
+    
+    const sharesInput = screen.getByLabelText('Shares');
+    const submitButton = screen.getByText('Submit');
+    
+    fireEvent.change(sharesInput, { target: { value: '-1' } });
+    fireEvent.click(submitButton);
+    
+    expect(screen.getByText('Shares must be positive')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## 4. Financial Calculation Testing Requirements
+
+### CRITICAL: Test Precision
+
+**JavaScript floating-point errors MUST be caught:**
+
+```typescript
+describe('FinancialMath - Precision', () => {
+  test('handles floating point precision in addition', () => {
+    // JavaScript: 0.1 + 0.2 = 0.30000000000000004
+    const result = FinancialMath.add(0.1, 0.2);
+    expect(result.toNumber()).toBe(0.3); // EXACT
+  });
+  
+  test('handles floating point precision in multiplication', () => {
+    // JavaScript: 100 * 0.29 = 28.999999999999996
+    const result = FinancialMath.multiply(100, 0.29);
+    expect(result.toNumber()).toBe(29); // EXACT
+  });
+  
+  test('handles floating point precision in subtraction', () => {
+    // JavaScript: 1.0 - 0.9 = 0.09999999999999998
+    const result = FinancialMath.subtract(1.0, 0.9);
+    expect(result.toNumber()).toBe(0.1); // EXACT
+  });
+});
+```
+
+### Test Edge Cases
+
+**Every financial method must test:**
+
+```typescript
+describe('FinancialMath - Edge Cases', () => {
+  describe('zero values', () => {
+    test('adds zero correctly', () => {
+      expect(FinancialMath.add(10, 0).toNumber()).toBe(10);
+      expect(FinancialMath.add(0, 10).toNumber()).toBe(10);
+      expect(FinancialMath.add(0, 0).toNumber()).toBe(0);
+    });
+    
+    test('multiplies by zero', () => {
+      expect(FinancialMath.multiply(10, 0).toNumber()).toBe(0);
+      expect(FinancialMath.multiply(0, 10).toNumber()).toBe(0);
+    });
+    
+    test('handles division by zero', () => {
+      expect(() => FinancialMath.divide(10, 0)).toThrow('Division by zero');
+    });
+  });
+  
+  describe('negative numbers', () => {
+    test('adds negative numbers', () => {
+      expect(FinancialMath.add(-10, -5).toNumber()).toBe(-15);
+      expect(FinancialMath.add(-10, 5).toNumber()).toBe(-5);
+    });
+    
+    test('multiplies negative numbers', () => {
+      expect(FinancialMath.multiply(-10, 5).toNumber()).toBe(-50);
+      expect(FinancialMath.multiply(-10, -5).toNumber()).toBe(50);
+    });
+  });
+  
+  describe('very large numbers', () => {
+    test('handles millions', () => {
+      const result = FinancialMath.multiply(1000000, 1000);
+      expect(result.toNumber()).toBe(1000000000);
+    });
+  });
+  
+  describe('very small numbers', () => {
+    test('handles penny stocks', () => {
+      const result = FinancialMath.multiply(1000, 0.0001);
+      expect(result.toNumber()).toBe(0.1);
+    });
+  });
+});
+```
+
+### Test Rounding Behavior
+
+```typescript
+describe('FinancialMath - Rounding', () => {
+  test('rounds currency to 2 decimal places', () => {
+    const result = FinancialMath.toCurrency(1234.567);
+    expect(result).toBe('1234.57');
+  });
+  
+  test('rounds percentage to 2 decimal places', () => {
+    const result = FinancialMath.toPercentage(0.12345);
+    expect(result).toBe('12.35');
+  });
+  
+  test('uses banker\'s rounding', () => {
+    // 0.5 rounds to nearest even
+    expect(FinancialMath.toCurrency(1.5)).toBe('2.00');
+    expect(FinancialMath.toCurrency(2.5)).toBe('2.00'); // Banker's rounding
+  });
+});
+```
+
+### Test Chained Operations
+
+```typescript
+describe('FinancialMath - Complex Calculations', () => {
+  test('maintains precision in chained operations', () => {
+    // ((100 * 0.29) + 0.1) / 3
+    const step1 = FinancialMath.multiply(100, 0.29);
+    const step2 = FinancialMath.add(step1, 0.1);
+    const result = FinancialMath.divide(step2, 3);
+    
+    expect(result.toFixed(2)).toBe('9.70');
+  });
+  
+  test('calculates portfolio total correctly', () => {
+    // (100 shares * $50.25) + (50 shares * $75.50) + $1000 cash
+    const position1 = FinancialMath.multiply(100, 50.25);
+    const position2 = FinancialMath.multiply(50, 75.5);
+    const investments = FinancialMath.add(position1, position2);
+    const total = FinancialMath.add(investments, 1000);
+    
+    expect(total.toNumber()).toBe(9825);
+  });
+});
+```
+
+---
+
+## 5. Test Patterns and Best Practices
+
+### Use Descriptive Test Names
+
+```typescript
+// ✅ GOOD - Clear what's being tested
+test('calculates 25% gain correctly', () => { });
+test('throws error when dividing by zero', () => { });
+test('returns empty array when no holdings exist', () => { });
+
+// ❌ BAD - Vague
+test('works', () => { });
+test('test1', () => { });
+test('calculates correctly', () => { });
+```
+
+### One Assertion Per Test (Generally)
+
+```typescript
+// ✅ GOOD - Single concept
+test('add returns correct sum', () => {
+  const result = FinancialMath.add(10, 20);
+  expect(result.toNumber()).toBe(30);
+});
+
+// ✅ ACCEPTABLE - Multiple assertions for same concept
+test('add returns Decimal instance', () => {
+  const result = FinancialMath.add(10, 20);
+  expect(result).toBeInstanceOf(Decimal);
+  expect(result.toNumber()).toBe(30);
+});
+
+// ❌ BAD - Testing multiple unrelated things
+test('add and multiply work', () => {
+  expect(FinancialMath.add(10, 20).toNumber()).toBe(30);
+  expect(FinancialMath.multiply(10, 20).toNumber()).toBe(200);
+});
+```
+
+### Test Error Cases
+
+```typescript
+describe('error handling', () => {
+  test('throws error on division by zero', () => {
+    expect(() => FinancialMath.divide(10, 0)).toThrow('Division by zero');
+  });
+  
+  test('throws error on negative shares', () => {
+    expect(() => 
+      TradingValidation.validateOrder(-5, 100, 10000)
+    ).toThrow('Shares must be positive');
+  });
+  
+  test('returns validation error for insufficient funds', () => {
+    const result = TradingValidation.validateOrder(100, 150, 10000);
+    expect(result.isValid).toBe(false);
+    expect(result.errors.general).toBe('Insufficient funds');
+  });
+});
+```
+
+### Use Test Data Factories (DRY)
+
+```typescript
+// ✅ GOOD - Reusable test data
+function createMockUser(overrides = {}) {
+  return {
+    id: '1',
+    email: 'test@example.com',
+    name: 'Test User',
+    role: 'USER',
+    ...overrides
+  };
+}
+
+function createMockHolding(overrides = {}) {
+  return {
+    id: '1',
+    ticker: 'AAPL',
+    shares: 10,
+    averagePrice: 150,
+    ...overrides
+  };
+}
+
+// Usage
+test('calculates portfolio value', () => {
+  const holdings = [
+    createMockHolding({ shares: 10, averagePrice: 150 }),
+    createMockHolding({ ticker: 'MSFT', shares: 5, averagePrice: 300 })
+  ];
+  // ...
+});
+```
+
+---
+
+## 6. Mocking Guidelines
+
+### When to Mock
+
+**Mock external dependencies:**
+
+- ✅ Database (Prisma)
+- ✅ Network requests (fetch, ApiClient)
+- ✅ External APIs (Yahoo Finance)
+- ✅ File system
+- ✅ Date/time (when testing time-sensitive logic)
+
+**Don't mock:**
+
+- ❌ Services being tested
+- ❌ Pure functions (FinancialMath, Formatters)
+- ❌ Simple utilities
+
+### Mock Prisma
+
+```typescript
+// tests/api/portfolio.test.ts
+jest.mock('@/prisma/client', () => ({
+  prisma: {
+    portfolio: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn()
+    },
+    holding: {
+      findMany: jest.fn()
+    }
+  }
+}));
+
+import { prisma } from '@/prisma/client';
+
+test('fetches portfolio', async () => {
+  const mockPortfolio = { id: '1', name: 'My Portfolio' };
+  (prisma.portfolio.findUnique as jest.Mock).mockResolvedValue(mockPortfolio);
+  
+  const result = await getPortfolio('1');
+  
+  expect(result).toEqual(mockPortfolio);
+  expect(prisma.portfolio.findUnique).toHaveBeenCalledWith({
+    where: { id: '1' }
+  });
+});
+```
+
+### Mock ApiClient
+
+```typescript
+// tests/hooks/usePortfolio.test.ts
+jest.mock('@/lib/api/api-client', () => ({
+  ApiClient: {
+    get: jest.fn(),
+    post: jest.fn()
+  }
+}));
+
+import { ApiClient } from '@/lib/api/api-client';
+
+test('fetches portfolio data', async () => {
+  const mockData = { totalValue: 10000 };
+  (ApiClient.get as jest.Mock).mockResolvedValue({
+    success: true,
+    data: mockData
+  });
+  
+  const { result } = renderHook(() => usePortfolioOverview());
+  
+  await waitFor(() => {
+    expect(result.current.data).toEqual(mockData);
+  });
+});
+```
+
+### Mock Dates
+
+```typescript
+// Mock Date.now()
+const mockDate = new Date('2024-01-15T10:00:00Z');
+jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+
+test('records correct timestamp', () => {
+  const timestamp = new Date();
+  expect(timestamp.toISOString()).toBe('2024-01-15T10:00:00.000Z');
+});
+
+// Restore after test
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+```
+
+---
+
+## 7. Coverage Goals
+
+### Target Coverage by Layer
+
+```
+Services:           100% (critical - NO EXCEPTIONS)
+Financial Math:     100% (critical - NO EXCEPTIONS)
+API Routes:         80%  (important)
+Hooks:              50%  (nice to have)
+Components:         No specific target (optional)
+```
+
+### Run Coverage Report
+
+```bash
+npm test -- --coverage
+```
+
+### Coverage Configuration
+
+```json
+// jest.config.js
+{
+  "collectCoverageFrom": [
+    "src/lib/**/*.{ts,tsx}",
+    "src/app/api/**/*.{ts,tsx}",
+    "src/hooks/**/*.{ts,tsx}",
+    "!src/**/*.d.ts"
+  ],
+  "coverageThresholds": {
+    "global": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "src/lib/financial/**/*.ts": {
+      "branches": 100,
+      "functions": 100,
+      "lines": 100,
+      "statements": 100
+    }
+  }
+}
+```
+
+---
+
+## 8. Test Commands
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --maxWorkers=2"
+  }
+}
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode (re-run on file changes)
+npm run test:watch
+
+# Run specific test file
+npm test -- financial-math.test.ts
+
+# Run tests matching pattern
+npm test -- --testNamePattern="add"
+
+# Coverage report
+npm run test:coverage
+
+# Update snapshots
+npm test -- -u
+```
+
+---
+
+## 9. CI/CD Integration
+
+### GitHub Actions Example
+
+```yaml
+# .github/workflows/test.yml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run tests
+        run: npm run test:ci
+        
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+```
+
+### Pre-commit Hook
+
+```bash
+# .husky/pre-commit
+#!/bin/sh
+npm test -- --bail --findRelatedTests
+```
+
+### Block Merges on Test Failures
+
+```yaml
+# Branch protection rules in GitHub
+- Require status checks to pass before merging
+- Require "Tests" workflow to pass
+```
+
+---
+
+## 10. Common Testing Pitfalls
+
+### ❌ Pitfall 1: Testing Implementation Details
+
+```typescript
+// ❌ BAD - Tests internal state
+test('sets loading to true', () => {
+  const component = render(<Component />);
+  expect(component.state.loading).toBe(true);
+});
+
+// ✅ GOOD - Tests observable behavior
+test('shows loading spinner', () => {
+  render(<Component />);
+  expect(screen.getByText('Loading...')).toBeInTheDocument();
+});
+```
+
+### ❌ Pitfall 2: Flaky Tests (Random Failures)
+
+```typescript
+// ❌ BAD - Depends on timing
+test('fetches data', async () => {
+  fetchData();
+  await new Promise(resolve => setTimeout(resolve, 100)); // Flaky!
+  expect(data).toBeDefined();
+});
+
+// ✅ GOOD - Use waitFor
+test('fetches data', async () => {
+  fetchData();
+  await waitFor(() => {
+    expect(data).toBeDefined();
+  });
+});
+```
+
+### ❌ Pitfall 3: Tests That Don't Actually Test
+
+```typescript
+// ❌ BAD - Always passes
+test('function exists', () => {
+  expect(myFunction).toBeDefined();
+});
+
+// ✅ GOOD - Tests behavior
+test('function returns correct value', () => {
+  expect(myFunction(input)).toBe(expected);
+});
+```
+
+### ❌ Pitfall 4: Over-Mocking
+
+```typescript
+// ❌ BAD - Mocking everything (test proves nothing)
+jest.mock('@/lib/financial-math');
+FinancialMath.add.mockReturnValue(30);
+
+test('calculates total', () => {
+  const total = calculateTotal(10, 20);
+  expect(total).toBe(30); // This is useless
+});
+
+// ✅ GOOD - Test real implementation
+import { FinancialMath } from '@/lib/financial-math';
+
+test('calculates total', () => {
+  const total = FinancialMath.add(10, 20);
+  expect(total.toNumber()).toBe(30);
+});
+```
+
+---
+
+## Quick Decision Tree
+
+**Should I test this?**
+
+```
+Is it a service?
+├─ YES → MUST TEST (100% coverage)
+└─ NO → Is it financial calculation?
+    ├─ YES → MUST TEST (100% coverage)
+    └─ NO → Is it an API route?
+        ├─ YES → Should test (80% coverage goal)
+        └─ NO → Is it a hook?
+            ├─ YES → Nice to test (50% coverage goal)
+            └─ NO → Is it a component?
+                ├─ Complex logic? → Consider testing
+                └─ Simple rendering? → Skip
+```
+
+**What should I mock?**
+
+```
+Is it an external dependency?
+├─ YES → Mock it (Database, API, File System)
+└─ NO → Is it the code being tested?
+    ├─ YES → DON'T mock it
+    └─ NO → Is it a service?
+        ├─ YES → DON'T mock it (test real implementation)
+        └─ NO → Evaluate case by case
+```
+
+---
+
+## Integration with Other Rules
+
+- See **[financial-math.mdc](./financial-math.mdc)** for financial testing requirements
+- See **[service-layer.mdc](./service-layer.mdc)** for service architecture (unit testable)
+- See **[error-handling.mdc](./error-handling.mdc)** for error case testing
+
+---
+
+## Summary
+
+**Golden Rules:**
+1. Services MUST be tested (100% coverage)
+2. Financial calculations MUST be tested (100% coverage, all edge cases)
+3. Test precision - catch floating-point errors
+4. Test edge cases - zero, negative, large, small numbers
+5. Test error cases - invalid input, boundary conditions
+6. Use descriptive test names
+7. One concept per test
+8. Mock external dependencies only
+9. Run tests in CI/CD
+10. Block merges on test failures
+
+**Testing is not optional for business logic.** Every service, every calculation, every validation rule must have tests. If you write code without tests, you're shipping bugs.
+
+**Financial calculations are CRITICAL.** A single floating-point error can cost users real money. Test everything. No exceptions.

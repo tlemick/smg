@@ -1,0 +1,885 @@
+---
+description: Prisma Schema Governance - Keeping Schema in Sync with Evolving Codebase
+globs: 
+  - prisma/schema.prisma
+  - src/app/api/**/*.ts
+alwaysApply: true
+---
+
+# Prisma Schema Governance
+
+## The Challenge
+
+As your codebase evolves, the database schema can become:
+- **Outdated** - Missing fields needed by new features
+- **Bloated** - Containing unused fields from deprecated features
+- **Inefficient** - Missing indexes for common queries
+- **Undocumented** - Relationships and constraints not well understood
+
+This guide establishes a **rules-based governance process** to keep your schema healthy.
+
+---
+
+## Schema Review Cadence
+
+### Weekly Schema Review (Quick Check)
+**Frequency:** Every Monday (or after major feature merges)
+**Duration:** 15 minutes
+**Process:**
+1. Review new migrations created this week
+2. Check if any new API routes use Prisma models not in schema
+3. Verify indexes exist for new query patterns
+4. Update schema documentation
+
+**Command:**
+```bash
+# Check for migrations not yet applied
+npx prisma migrate status
+
+# Check for schema drift (changes not in migrations)
+npx prisma migrate diff \
+  --from-schema-datamodel prisma/schema.prisma \
+  --to-schema-datasource env:DATABASE_URL \
+  --exit-code
+```
+
+### Monthly Schema Audit (Deep Review)
+**Frequency:** First Monday of each month
+**Duration:** 1-2 hours
+**Process:**
+1. Run schema compliance checks (see checklist below)
+2. Identify unused models/fields
+3. Review query performance (slow query log)
+4. Analyze index usage
+5. Plan schema optimizations
+6. Update schema documentation
+
+---
+
+## Schema Compliance Checklist
+
+### 1. Model Coverage Check
+**Goal:** Ensure all business entities are properly modeled
+
+```bash
+# List all models in schema
+npx prisma format && grep "^model " prisma/schema.prisma
+
+# Check if any API routes reference non-existent models
+grep -r "prisma\." src/app/api/ | grep -v "prisma.client" | sort -u
+```
+
+**Questions to Ask:**
+- [ ] Does each API endpoint have the models it needs?
+- [ ] Are there any "stringly-typed" fields that should be enums?
+- [ ] Are all foreign keys properly defined?
+- [ ] Do all models have appropriate indexes?
+
+### 2. Field Usage Audit
+**Goal:** Identify unused fields for potential removal
+
+**Manual Process:**
+1. For each model, list all fields
+2. Search codebase for usage of each field
+3. Mark fields with zero usages as "candidates for removal"
+4. Verify with team before removing (might be used in unreleased features)
+
+**Example:**
+```bash
+# Check if field 'onboardingCompletedAt' is used
+grep -r "onboardingCompletedAt" src/
+
+# If no results (except schema file), it's unused
+```
+
+**Quarterly Cleanup:**
+- Remove fields unused for 3+ months
+- Document removal in migration name
+- Keep removal migrations for at least 6 months before considering them "safe"
+
+### 3. Index Optimization Check
+**Goal:** Ensure common queries are properly indexed
+
+**Current Index Strategy:**
+- **Primary Keys:** Auto-indexed by default
+- **Foreign Keys:** Always indexed (for joins)
+- **Common Filters:** Index fields used in `where` clauses
+- **Sort Fields:** Index fields used in `orderBy`
+- **Composite Indexes:** For multi-field queries
+
+**How to Find Missing Indexes:**
+```sql
+-- Run this query in your database
+SELECT 
+  schemaname,
+  tablename,
+  indexname,
+  indexdef
+FROM pg_indexes
+WHERE schemaname = 'public'
+ORDER BY tablename, indexname;
+```
+
+**Common Patterns Needing Indexes:**
+```prisma
+// ❌ BAD - No index on frequently filtered field
+model Transaction {
+  userId String
+  date   DateTime
+  type   String  // Often filtered, but no index!
+}
+
+// ✅ GOOD - Indexed for common queries
+model Transaction {
+  userId String
+  date   DateTime
+  type   String
+  
+  @@index([userId, date])  // Composite index for user's recent transactions
+  @@index([type])          // For filtering by transaction type
+}
+```
+
+### 4. Relationship Integrity Check
+**Goal:** Ensure all foreign keys have proper cascade behavior
+
+**Review Cascade Rules:**
+- `onDelete: Cascade` - Child deleted when parent deleted (e.g., Portfolio → Holdings)
+- `onDelete: Restrict` - Prevent parent deletion if children exist
+- `onDelete: SetNull` - Set foreign key to null when parent deleted
+- No cascade - Default behavior (should be explicit)
+
+**Current Schema Audit:**
+```bash
+# Find all foreign key relations
+grep -A 2 "references:" prisma/schema.prisma
+```
+
+**Questions to Ask:**
+- [ ] What happens when a User is deleted? (Should cascade to Portfolio, Transaction, etc.)
+- [ ] What happens when a GameSession is deleted? (Should cascade to Portfolio)
+- [ ] What happens when an Asset is deleted? (Should it be deletable if holdings exist?)
+
+### 5. Data Type Review
+**Goal:** Ensure fields use optimal data types
+
+**Common Issues:**
+- **String vs. Enum:** Use enums for fixed options (status, role, type)
+- **Int vs. BigInt:** Use BigInt for volume, market cap, large numbers
+- **Float vs. Decimal:** ⚠️ **CRITICAL** - Use Decimal for money (but Prisma doesn't support Decimal natively)
+- **DateTime vs. Date:** Use DateTime for timestamps, Date for calendar dates
+- **Json vs. Relational:** Only use Json when structure is truly dynamic
+
+**Current Schema Issues to Watch:**
+```prisma
+// ⚠️ POTENTIAL ISSUE - Using Float for money (precision errors)
+model Portfolio {
+  cash_balance Float  // Should be handled with Decimal.js in code
+}
+
+model Transaction {
+  price Float  // Should be handled with Decimal.js in code
+  total Float  // Should be handled with Decimal.js in code
+}
+```
+
+**Note:** Since Prisma doesn't support Decimal natively, we handle precision in code using `Decimal.js`. See `.cursor/rules/financial-math.mdc` for details.
+
+### 6. Naming Convention Check
+**Goal:** Consistent, readable naming across schema
+
+**Current Conventions:**
+- **Models:** PascalCase (e.g., `User`, `GameSession`, `PortfolioPerformance`)
+- **Fields:** camelCase (e.g., `userId`, `createdAt`, `cash_balance`)
+- **Enums:** SCREAMING_SNAKE_CASE values (e.g., `USER`, `ADMIN`, `PENDING`)
+- **Relations:** descriptive names (e.g., `user`, `portfolio`, `gameSession`)
+
+**Inconsistencies to Fix:**
+```prisma
+// ⚠️ INCONSISTENT - mix of snake_case and camelCase
+model Portfolio {
+  cash_balance Float      // snake_case
+  createdAt    DateTime   // camelCase
+}
+
+model PortfolioPerformance {
+  portfolio_value          Float  // snake_case
+  sp500_value              Float  // snake_case
+  portfolio_percent_change Float  // snake_case
+}
+```
+
+**Decision Needed:**
+- **Option A:** Standardize on camelCase everywhere (requires migration)
+- **Option B:** Keep snake_case for fields matching external data sources
+- **Option C:** Document exceptions and freeze further changes
+
+---
+
+## Migration Best Practices
+
+### When to Create a Migration
+
+**Always Create Migration For:**
+- ✅ Adding new models
+- ✅ Adding/removing fields
+- ✅ Changing field types
+- ✅ Adding/removing indexes
+- ✅ Changing relationships (foreign keys)
+- ✅ Changing constraints (unique, default, etc.)
+
+**Don't Need Migration For:**
+- ❌ Comments in schema file
+- ❌ Reordering fields (cosmetic)
+- ❌ Renaming fields in code (without schema change)
+
+### Migration Naming Convention
+
+```bash
+# Template: YYYYMMDDHHMMSS_descriptive_name
+
+# ✅ GOOD - Descriptive, explains WHY
+npx prisma migrate dev --name add_user_preferences_for_notifications
+npx prisma migrate dev --name add_index_transactions_by_date
+npx prisma migrate dev --name remove_unused_portfolio_fields
+
+# ❌ BAD - Vague, doesn't explain purpose
+npx prisma migrate dev --name update
+npx prisma migrate dev --name fix
+npx prisma migrate dev --name changes
+```
+
+### Migration Safety Rules
+
+**Development (Local):**
+- Use `npx prisma migrate dev` - Creates migration and applies it
+- Safe to iterate and modify migrations before committing
+- Can use `npx prisma migrate reset` to start fresh
+
+**Staging/Production:**
+- Use `npx prisma migrate deploy` - Only applies committed migrations
+- ⚠️ **NEVER** edit migrations after they've been deployed
+- ⚠️ **NEVER** delete migrations (creates drift between environments)
+
+### Breaking vs. Non-Breaking Changes
+
+**Non-Breaking (Safe to Deploy):**
+- ✅ Adding new models
+- ✅ Adding new optional fields
+- ✅ Adding indexes
+- ✅ Adding defaults to existing fields
+
+**Breaking (Requires Coordination):**
+- ⚠️ Removing fields (existing code may reference them)
+- ⚠️ Renaming fields (existing code will break)
+- ⚠️ Changing field types (data conversion needed)
+- ⚠️ Adding required fields (existing rows won't have values)
+
+**Safe Breaking Change Process:**
+1. **Migration 1:** Add new field (optional)
+2. **Deploy Code:** Update application to use new field
+3. **Backfill:** Populate new field for existing rows
+4. **Migration 2:** Make field required
+5. **Migration 3:** Remove old field (after new field is validated)
+
+---
+
+## Schema Documentation Standards
+
+### Model-Level Documentation
+
+```prisma
+/// User accounts for the Stock Market Game.
+/// Each user can have multiple portfolios across different game sessions.
+/// Related models: Portfolio, Transaction, Order, Watchlist
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+  
+  // Authentication & Authorization
+  password String
+  role     String  @default("USER") // USER | ADMIN
+  active   Boolean @default(true)
+  
+  // Onboarding tracking
+  hasCompletedOnboarding Boolean   @default(false)
+  onboardingCompletedAt  DateTime?
+  
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  portfolios   Portfolio[]
+  transactions Transaction[]
+  orders       Order[]
+  limitOrders  LimitOrder[]
+  watchlists   Watchlist[]
+  activities   UserActivity[]
+  
+  @@index([role])
+  @@index([active])
+}
+```
+
+### Field-Level Documentation
+
+**When to Add Comments:**
+- Non-obvious field purposes
+- Business logic constraints
+- Data sources (e.g., "populated from Yahoo Finance")
+- Deprecation warnings
+- Validation rules
+
+**Example:**
+```prisma
+model Asset {
+  ticker String @unique // Yahoo Finance ticker symbol (uppercase)
+  
+  // Fractional share configuration
+  minimumPurchaseAmount Float   @default(0.0001) // Minimum $ amount for purchase
+  allowFractionalShares Boolean @default(true)   // If false, require whole shares
+  
+  // Logo URL from Clearbit API (cached, may be null if unavailable)
+  logoUrl String?
+  
+  // Quote caching relationship (1:1)
+  quoteCache AssetQuoteCache?
+}
+```
+
+### Relationship Documentation
+
+**Document:**
+- Cardinality (1:1, 1:many, many:many)
+- Cascade behavior
+- Business meaning
+
+**Example:**
+```prisma
+model Portfolio {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionId    String
+  
+  // Belongs to one User (many portfolios per user)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Belongs to one GameSession (many portfolios per session)
+  gameSession GameSession @relation(fields: [sessionId], references: [id])
+  
+  // Has many Holdings (deleted when portfolio is deleted)
+  holdings Holding[]
+  
+  // Has many Transactions (audit trail, retained even after deletion)
+  transactions Transaction[]
+  
+  @@index([userId])
+  @@index([sessionId])
+}
+```
+
+---
+
+## Schema Evolution Patterns
+
+### Pattern 1: Adding a New Feature
+
+**Example: Adding "favorite assets" feature**
+
+1. **Design Phase:**
+   - Decide: New model or add to existing? (New: `FavoriteAsset` model)
+   - Sketch relationships (User → FavoriteAsset → Asset)
+   - Plan indexes (userId + assetId composite)
+
+2. **Schema Update:**
+   ```prisma
+   model FavoriteAsset {
+     id        String   @id @default(cuid())
+     userId    String
+     assetId   Int
+     addedAt   DateTime @default(now())
+     notes     String?  // Optional user notes
+     
+     user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+     asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+     
+     @@unique([userId, assetId]) // User can't favorite same asset twice
+     @@index([userId])
+     @@index([assetId])
+   }
+   ```
+
+3. **Create Migration:**
+   ```bash
+   npx prisma migrate dev --name add_favorite_assets_feature
+   ```
+
+4. **Update API Routes:**
+   - Create `/api/user/favorites` (GET, POST, DELETE)
+   - Update types in `src/types/index.ts`
+
+5. **Update Architecture Docs:**
+   - Add to schema documentation
+   - Update API route list in `.cursor/rules/architecture.mdc`
+
+### Pattern 2: Deprecating a Feature
+
+**Example: Removing old "Daily_SP500" table (now using external API)**
+
+1. **Verify Zero Usage:**
+   ```bash
+   grep -r "Daily_SP500" src/
+   grep -r "daily_SP500" src/
+   ```
+
+2. **Mark as Deprecated (First):**
+   ```prisma
+   /// @deprecated - No longer used. Data now fetched from Yahoo Finance API.
+   /// TODO: Remove after Q2 2025 if no issues reported.
+   model Daily_SP500 {
+     // ... existing fields
+   }
+   ```
+
+3. **Wait 1-2 Sprints** (in case rollback needed)
+
+4. **Create Removal Migration:**
+   ```bash
+   npx prisma migrate dev --name remove_deprecated_daily_sp500_table
+   ```
+
+5. **Document in Changelog:**
+   - Update `docs/schema-changelog.md`
+   - Note why it was removed
+   - Note what replaced it
+
+### Pattern 3: Refactoring Relationships
+
+**Example: Splitting "Order" into "Order" + "LimitOrder"**
+
+✅ **Already Done in Your Schema** - This is a good example of proper refactoring!
+
+**Original (Hypothetical):**
+```prisma
+model Order {
+  id         String   @id
+  type       String   // "BUY" | "SELL"
+  priceType  String   // "MARKET" | "LIMIT"
+  limitPrice Float?   // Only for limit orders
+  expireAt   DateTime? // Only for limit orders
+  status     String
+}
+```
+
+**Refactored (Current):**
+```prisma
+// Immediate market orders (executed immediately)
+model Order {
+  id        String   @id
+  type      String   // "BUY" | "SELL"
+  status    String   // "COMPLETED" | "FAILED"
+  price     Float    // Execution price
+  priceType String   @default("MARKET")
+}
+
+// Pending limit orders (executed when price target hit)
+model LimitOrder {
+  id            String    @id
+  type          String    // "BUY" | "SELL"
+  limitPrice    Float     // Target price
+  status        String    @default("PENDING") // "PENDING" | "EXECUTED" | "EXPIRED"
+  expireAt      DateTime?
+  executedPrice Float?
+  executedAt    DateTime?
+}
+```
+
+**Benefits:**
+- Clearer semantics (separate concerns)
+- No nullable fields that are "sometimes required"
+- Easier to query pending vs. completed orders
+
+---
+
+## Automated Schema Checks
+
+### 1. Schema Lint (Pre-Commit Hook)
+
+Create `.husky/pre-commit` or add to your CI:
+
+```bash
+#!/bin/sh
+# Check Prisma schema formatting
+npx prisma format --check
+
+# Validate schema is error-free
+npx prisma validate
+
+# Check for missing migrations
+npx prisma migrate diff \
+  --from-schema-datamodel prisma/schema.prisma \
+  --to-schema-datasource env:DATABASE_URL \
+  --exit-code || {
+    echo "⚠️  Schema changes detected without migration!"
+    echo "Run: npx prisma migrate dev --name descriptive_name"
+    exit 1
+  }
+```
+
+### 2. Schema Drift Detection (CI/CD)
+
+Add to GitHub Actions / GitLab CI:
+
+```yaml
+name: Schema Drift Check
+on: [pull_request]
+
+jobs:
+  check-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for schema drift
+        run: |
+          npx prisma migrate diff \
+            --from-migrations ./prisma/migrations \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --exit-code
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
+      - name: Validate schema
+        run: npx prisma validate
+```
+
+### 3. Schema Documentation Check
+
+Create `scripts/check-schema-docs.ts`:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+
+// Check if schema.prisma has documentation comments for all models
+const schemaFile = fs.readFileSync('prisma/schema.prisma', 'utf-8');
+
+const models = schemaFile.match(/^model \w+/gm) || [];
+const documentedModels = schemaFile.match(/^\/\/\/.*\n^model \w+/gm) || [];
+
+if (models.length !== documentedModels.length) {
+  console.error('❌ Not all models have documentation comments!');
+  console.log(`Models: ${models.length}, Documented: ${documentedModels.length}`);
+  process.exit(1);
+}
+
+console.log('✅ All models are documented');
+```
+
+### 4. Unused Field Detector
+
+Create `scripts/find-unused-fields.sh`:
+
+```bash
+#!/bin/bash
+# Find fields that are never referenced in the codebase
+
+echo "Checking for unused schema fields..."
+
+# Get all fields from schema
+grep -E "^\s+\w+\s+(String|Int|Float|Boolean|DateTime)" prisma/schema.prisma | \
+  awk '{print $1}' | \
+  while read field; do
+    # Search for usage in src/ directory
+    count=$(grep -r "\b$field\b" src/ --include="*.ts" --include="*.tsx" | wc -l)
+    
+    if [ $count -eq 0 ]; then
+      echo "⚠️  Field '$field' appears unused"
+    fi
+  done
+
+echo "✅ Unused field check complete"
+```
+
+---
+
+## Performance Monitoring
+
+### Slow Query Log Analysis
+
+**Enable in PostgreSQL:**
+```sql
+-- Add to postgresql.conf
+log_min_duration_statement = 1000  -- Log queries > 1 second
+```
+
+**Weekly Review Process:**
+1. Check PostgreSQL logs for slow queries
+2. Run `EXPLAIN ANALYZE` on slow queries
+3. Identify missing indexes
+4. Create migration to add indexes
+
+**Example:**
+```sql
+-- Slow query found in logs
+EXPLAIN ANALYZE
+SELECT * FROM "Holding" 
+WHERE "portfolioId" = 'xyz' 
+ORDER BY "createdAt" DESC;
+
+-- If seq scan detected, add index:
+-- In Prisma schema:
+@@index([portfolioId, createdAt])
+```
+
+### Index Usage Stats
+
+**Check Unused Indexes:**
+```sql
+SELECT
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan as index_scans
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0
+  AND indexname NOT LIKE '%_pkey'
+ORDER BY tablename;
+```
+
+**Remove Unused Indexes:**
+If an index has 0 scans after 1 month in production, consider removing it.
+
+---
+
+## Schema Versioning Strategy
+
+### Migration Naming Convention
+
+**Format:** `YYYYMMDDHHMMSS_category_descriptive_name`
+
+**Categories:**
+- `add_` - Adding new models/fields
+- `update_` - Modifying existing fields
+- `remove_` - Removing models/fields
+- `index_` - Adding/removing indexes
+- `refactor_` - Structural changes
+- `fix_` - Fixing schema issues
+
+**Examples:**
+- `20250106120000_add_favorite_assets_model`
+- `20250106120001_index_transactions_by_user_and_date`
+- `20250106120002_update_portfolio_add_risk_tolerance`
+- `20250106120003_remove_deprecated_daily_sp500`
+- `20250106120004_refactor_split_order_into_order_and_limit_order`
+
+### Semantic Versioning for Schema
+
+**Consider tagging schema versions:**
+```bash
+# Major version: Breaking changes (field removal, type changes)
+git tag schema-v2.0.0
+
+# Minor version: New features (new models, new fields)
+git tag schema-v1.1.0
+
+# Patch version: Indexes, constraints, non-breaking changes
+git tag schema-v1.0.1
+```
+
+**Document in `prisma/SCHEMA_CHANGELOG.md`:**
+```markdown
+# Schema Changelog
+
+## v2.0.0 (2025-01-06)
+### Breaking Changes
+- Removed `Daily_SP500` model (use Yahoo Finance API instead)
+- Renamed `Portfolio.cash` to `Portfolio.cash_balance` for consistency
+
+### Added
+- `FavoriteAsset` model for user favorites feature
+- `AssetQuoteCache` model for quote caching
+
+### Changed
+- Split `Order` into `Order` and `LimitOrder` for better semantics
+```
+
+---
+
+## Integration with Architecture Rules
+
+### Update Architecture Docs When Schema Changes
+
+**After Every Migration:**
+1. Update `.cursor/rules/architecture.mdc` - Database section
+2. Update API route documentation if new endpoints added
+3. Update `src/types/index.ts` with new TypeScript interfaces
+4. Update hook documentation if new data fetching needed
+
+**Example Workflow:**
+```bash
+# 1. Create migration
+npx prisma migrate dev --name add_favorite_assets
+
+# 2. Update types
+# Add FavoriteAsset interface to src/types/index.ts
+
+# 3. Update architecture docs
+# Add FavoriteAsset to "Key Models" section in architecture.mdc
+
+# 4. Create API routes
+# Create /api/user/favorites/route.ts
+
+# 5. Update API route list
+# Add to "Route Organization" in architecture.mdc
+
+# 6. Commit all changes together
+git add prisma/ src/types/ .cursor/rules/ src/app/api/
+git commit -m "feat: Add favorite assets feature"
+```
+
+---
+
+## Current Schema Health Report
+
+### ✅ Strengths
+1. **Comprehensive Coverage** - 18 models covering all major features
+2. **Good Indexing** - Most foreign keys and common queries are indexed
+3. **Proper Cascades** - Appropriate `onDelete: Cascade` for parent-child relationships
+4. **Caching Strategy** - `AssetQuoteCache` and `YahooSearchCache` for performance
+5. **Audit Trail** - `createdAt` and `updatedAt` on most models
+6. **Activity Tracking** - `UserActivity` model for comprehensive user action log
+
+### ⚠️ Areas for Improvement
+
+1. **Naming Consistency**
+   - Mix of `snake_case` and `camelCase` field names
+   - Recommendation: Standardize on camelCase or document exceptions
+
+2. **Enum Usage**
+   - Many "String" fields that should be enums:
+     - `User.role` → Enum: `USER | ADMIN`
+     - `Order.status` → Enum: `PENDING | COMPLETED | FAILED`
+     - `Asset.type` → Enum: `STOCK | BOND | MUTUAL_FUND`
+
+3. **Float Precision**
+   - Using `Float` for money (precision issues)
+   - Currently handled in code with Decimal.js (acceptable)
+   - Consider: PostgreSQL `DECIMAL` type (but Prisma support limited)
+
+4. **Documentation**
+   - Models lack description comments
+   - No field-level documentation
+   - No relationship documentation
+
+5. **Potential Unused Fields**
+   - Need audit to identify unused fields
+   - Example candidates: `SystemConfig` (is this used?)
+
+### 🔄 Recommended Next Actions
+
+1. **This Week:**
+   - [ ] Add documentation comments to all models
+   - [ ] Run unused field audit
+   - [ ] Check if `SystemConfig` is being used
+
+2. **This Month:**
+   - [ ] Create enum types for status/role/type fields
+   - [ ] Standardize field naming (snake_case vs camelCase)
+   - [ ] Add missing indexes (run slow query analysis)
+
+3. **This Quarter:**
+   - [ ] Create `prisma/SCHEMA_CHANGELOG.md`
+   - [ ] Set up automated schema drift detection (CI/CD)
+   - [ ] Implement pre-commit schema validation hooks
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Schema validation
+npx prisma validate
+
+# Format schema
+npx prisma format
+
+# Check migration status
+npx prisma migrate status
+
+# Create new migration (dev)
+npx prisma migrate dev --name descriptive_name
+
+# Apply migrations (prod)
+npx prisma migrate deploy
+
+# Reset database (dev only - DESTRUCTIVE)
+npx prisma migrate reset
+
+# Generate Prisma Client
+npx prisma generate
+
+# Open Prisma Studio (GUI)
+npx prisma studio
+
+# Check for schema drift
+npx prisma migrate diff \
+  --from-schema-datamodel prisma/schema.prisma \
+  --to-schema-datasource env:DATABASE_URL
+
+# View migration history
+ls -la prisma/migrations/
+
+# Resolve migration conflicts (after merge)
+npx prisma migrate resolve --applied MIGRATION_NAME
+```
+
+---
+
+## Rules Summary
+
+### When to Update Schema
+
+**ALWAYS Update Schema When:**
+- Adding new data models
+- Changing data structure
+- Adding/removing relationships
+- Optimizing queries (indexes)
+
+**ALWAYS Create Migration When:**
+- Schema.prisma changes
+- Before deploying to staging/prod
+
+**ALWAYS Document When:**
+- Adding new models
+- Changing relationships
+- Making breaking changes
+
+**ALWAYS Review When:**
+- Weekly (quick check)
+- Monthly (deep audit)
+- Before major releases
+
+### Schema Governance Principles
+
+1. **Schema is Source of Truth** - All data structure decisions start here
+2. **Migrations are Immutable** - Never edit deployed migrations
+3. **Documentation is Required** - All models must be documented
+4. **Performance Matters** - Index common query patterns
+5. **Consistency is Key** - Follow naming conventions strictly
+6. **Evolution Over Revolution** - Prefer incremental changes
+7. **Backwards Compatibility** - Plan for safe migrations
+
+---
+
+**Last Updated:** January 6, 2025
+**Schema Version:** ~2.0 (inferred from migration history)
+**Total Models:** 18
+**Total Migrations:** 3
+**Status:** ✅ Healthy (needs documentation improvements)

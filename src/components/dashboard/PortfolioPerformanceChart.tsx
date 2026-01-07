@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { usePortfolioPerformanceSeries } from '@/hooks/usePortfolioPerformanceSeries';
 import { useChartColors } from '@/hooks/useChartColors';
+import { Formatters } from '@/lib/financial';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, LineChart, Line, Tooltip, YAxis, XAxis, ReferenceLine } from 'recharts';
 
@@ -46,7 +47,11 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
           if (!info) return null;
           
           const value = entry.value;
-          const formattedValue = `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+          // Backend returns percentage values (e.g., 5.0 = 5%), format directly
+          const formattedValue = Formatters.percentage(value, { 
+            showSign: true, 
+            multiplier: 1 
+          });
           
           return (
             <div key={index} className="flex items-center justify-between gap-4">
@@ -69,8 +74,8 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
 }
 
 export function PortfolioPerformanceChart() {
-  const { points, meta, loading, error } = usePortfolioPerformanceSeries();
-  const { colors: resolvedColors, mounted } = useChartColors();
+  const { points, formatted, chartConfig, isLoading, error } = usePortfolioPerformanceSeries();
+  const { colors: resolvedColors } = useChartColors();
   
   const colors = useMemo(
     () => ({
@@ -83,74 +88,6 @@ export function PortfolioPerformanceChart() {
     [resolvedColors]
   );
 
-  const data = useMemo(() => points.map(p => ({
-    date: new Date(p.date).toLocaleDateString(),
-    dateObj: new Date(p.date),
-    youPct: p.youPct,
-    sp500Pct: p.sp500Pct,
-    leaderPct: p.leaderPct,
-  })), [points]);
-
-  const dateMarkers = useMemo(() => {
-    if (!meta?.startDate || data.length === 0) return [];
-    const start = new Date(meta.startDate);
-    const end = data[data.length - 1]?.dateObj || new Date();
-    const markers = [];
-    
-    // Add start date marker
-    markers.push({
-      date: start.toLocaleDateString(),
-      label: `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-      isStart: true,
-    });
-    
-    // Calculate intermediate markers (roughly 4-5 markers across the timeline)
-    const daysDiff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const numMarkers = Math.min(4, Math.max(2, Math.floor(daysDiff / 14))); // One every ~2 weeks, max 4
-    const interval = daysDiff / (numMarkers + 1);
-    
-    for (let i = 1; i <= numMarkers; i++) {
-      const markerDate = new Date(start.getTime() + (interval * i * 24 * 60 * 60 * 1000));
-      markers.push({
-        date: markerDate.toLocaleDateString(),
-        label: markerDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        isStart: false,
-      });
-    }
-    
-    return markers;
-  }, [meta, data]);
-
-  const lastValues = useMemo(() => {
-    const lastNonNull = (arr: Array<number | null>) => {
-      for (let i = arr.length - 1; i >= 0; i--) {
-        const v = arr[i];
-        if (v !== null && Number.isFinite(v)) return v as number;
-      }
-      return null as number | null;
-    };
-    const you = lastNonNull(points.map(p => p.youPct ?? null));
-    const sp = lastNonNull(points.map(p => p.sp500Pct ?? null));
-    const leader = lastNonNull(points.map(p => p.leaderPct ?? null));
-    const fmt = (v: number | null) => (v === null ? '--' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`);
-    return { youLabel: fmt(you), spLabel: fmt(sp), leaderLabel: fmt(leader) };
-  }, [points]);
-
-  const yDomain = useMemo<[number, number]>(() => {
-    if (data.length === 0) return [0, 0];
-    const vals: number[] = [];
-    data.forEach(d => {
-      if (d.youPct !== null) vals.push(d.youPct);
-      if (d.sp500Pct !== null) vals.push(d.sp500Pct);
-      if (d.leaderPct !== null) vals.push(d.leaderPct);
-    });
-    if (vals.length === 0) return [-5, 5];
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const pad = Math.max(1, (max - min) * 0.1);
-    return [Math.floor(min - pad), Math.ceil(max + pad)];
-  }, [data]);
-
   return (
     <div>
       {error && (
@@ -158,7 +95,7 @@ export function PortfolioPerformanceChart() {
       )}
 
       <div className="mb-3 flex flex-col items-end gap-2">
-      <div className="flex items-end gap-6">
+        <div className="flex items-end gap-6">
           {/* Badge 1: You */}
           <div className="flex flex-col items-center">
             <span 
@@ -167,7 +104,7 @@ export function PortfolioPerformanceChart() {
             >
               You
             </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.youLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.you}</span>
           </div>
 
           {/* Badge 2: S&P 500 */}
@@ -178,7 +115,7 @@ export function PortfolioPerformanceChart() {
             >
               S&P 500
             </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.spLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.sp500}</span>
           </div>
 
           {/* Badge 3: Leader */}
@@ -189,35 +126,35 @@ export function PortfolioPerformanceChart() {
             >
               Leader
             </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{lastValues.leaderLabel}</span>
+            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.leader}</span>
           </div>
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="h-64 space-y-2">
           <Skeleton className="h-full w-full" />
         </div>
-      ) : data.length === 0 ? (
+      ) : points.length === 0 ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">No data yet</div>
       ) : (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 8, left: 0, right: 16, bottom: 32 }}>
+            <LineChart data={points} margin={{ top: 8, left: 0, right: 16, bottom: 32 }}>
               <XAxis dataKey="date" hide />
-              <YAxis hide domain={yDomain} tickFormatter={(v) => `${v}%`} />
+              <YAxis hide domain={chartConfig.yDomain} tickFormatter={(v) => `${v}%`} />
               <Tooltip content={<CustomTooltip colors={colors} />} />
               
               {/* Game start line with date */}
-              {dateMarkers.length > 0 && dateMarkers[0].isStart && (
+              {chartConfig.dateMarkers.length > 0 && chartConfig.dateMarkers[0].isStart && (
                 <ReferenceLine 
-                  x={dateMarkers[0].date} 
+                  x={chartConfig.dateMarkers[0].date} 
                   stroke={colors.reference} 
                   strokeDasharray="3 3" 
                   strokeWidth={2}
                   strokeOpacity={0.6}
                   label={{ 
-                    value: `Game start: ${dateMarkers[0].label}`, 
+                    value: `Game start: ${chartConfig.dateMarkers[0].label}`, 
                     position: 'insideBottomLeft', 
                     fill: colors.label, 
                     fontSize: 11,
@@ -228,7 +165,7 @@ export function PortfolioPerformanceChart() {
               )}
               
               {/* Intermediate date markers */}
-              {dateMarkers.slice(1).map((marker, idx) => (
+              {chartConfig.dateMarkers.slice(1).map((marker, idx) => (
                 <ReferenceLine 
                   key={idx}
                   x={marker.date} 

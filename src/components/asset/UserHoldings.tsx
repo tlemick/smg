@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserHoldingsApiResponse, UserHoldingsData } from '@/types';
 import { useToast } from '@/hooks/useToast';
-import { TikTokEmbed } from '@/components/ui/TikTokEmbed';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface UserHoldingsProps {
   ticker: string;
@@ -77,28 +78,29 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-6">
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Your Holdings</h3>
-          <TikTokEmbed storageKey={`tiktok:asset:holdings:${ticker}`} topic="Portfolio Strategy" />
-        </div>
+      <Card className="shadow-none">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Your Holdings</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
+          <div className="h-20 bg-muted rounded"></div>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-6">
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Your Holdings</h3>
-          <TikTokEmbed storageKey={`tiktok:asset:holdings:${ticker}`} topic="Portfolio Strategy" />
-        </div>
-        <div className="text-center text-red-600">
+      <Card className="shadow-none">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Your Holdings</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+        <div className="text-center text-destructive">
           <p>Failed to load holdings</p>
           <button 
             onClick={() => window.location.reload()}
@@ -107,30 +109,32 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
             Try again
           </button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!detailedHoldings?.data?.hasHoldings) {
     return (
-      <div className="bg-white rounded-lg p-6">
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Your Holdings</h3>
-          <TikTokEmbed storageKey={`tiktok:asset:holdings:${ticker}`} topic="Portfolio Strategy" />
-        </div>
-        <div className="text-center text-gray-500">
-          <p className="text-sm text-gray-600">
+      <Card className="shadow-none">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Your Holdings</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+        <div className="text-center text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             You don&apos;t currently own any shares of {ticker}. 
             Start building your position today.
           </p>
-          <button 
+          <Button 
             onClick={handleBuyClick}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium transition-colors"
+            className="mt-4"
           >
             Buy {ticker}
-          </button>
+          </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -141,35 +145,35 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
   const isPositive = totalUnrealized >= 0;
 
   return (
-    <div className="bg-white rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Your Holdings</h3>
-        <TikTokEmbed storageKey={`tiktok:asset:holdings:${ticker}`} topic="Portfolio Strategy" />
-      </div>
+    <Card className="shadow-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-semibold">Your Holdings</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
       
       {/* Portfolio Summary */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+      <div className="bg-muted rounded-lg p-4 mb-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Total Shares</label>
-            <p className="text-lg font-semibold text-gray-900">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Total Shares</label>
+            <p className="text-lg font-semibold text-foreground">
               {formatShares(summary?.totalQuantity || 0)}
             </p>
           </div>
           <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Market Value</label>
-            <p className="text-lg font-semibold text-gray-900">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Market Value</label>
+            <p className="text-lg font-semibold text-foreground">
               {formatCurrency(summary?.currentValue || 0)}
             </p>
           </div>
           <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Total Cost</label>
-            <p className="text-lg font-semibold text-gray-900">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Total Cost</label>
+            <p className="text-lg font-semibold text-foreground">
               {formatCurrency(summary?.totalCostBasis || 0)}
             </p>
           </div>
           <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Unrealized P&L</label>
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Unrealized P&L</label>
             <p className={`text-lg font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(totalUnrealized)}
             </p>
@@ -182,18 +186,18 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
 
       {/* Average Cost Basis */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Cost Basis</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Cost Basis</h4>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-600">Average Cost:</span>
-            <span className="font-medium">{formatCurrency(summary?.avgCostBasis || 0)}</span>
+            <span className="text-muted-foreground">Average Cost:</span>
+            <span className="font-medium text-foreground">{formatCurrency(summary?.avgCostBasis || 0)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Current Price:</span>
-            <span className="font-medium">{formatCurrency(currentPrice)}</span>
+            <span className="text-muted-foreground">Current Price:</span>
+            <span className="font-medium text-foreground">{formatCurrency(currentPrice)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Gain/Loss per Share:</span>
+            <span className="text-muted-foreground">Gain/Loss per Share:</span>
             <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(currentPrice - (summary?.avgCostBasis || 0))}
             </span>
@@ -204,22 +208,22 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
       {/* Portfolio Breakdown */}
       {holdings.holdings && holdings.holdings.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Portfolio Breakdown</h4>
+          <h4 className="text-sm font-medium text-foreground mb-2">Portfolio Breakdown</h4>
           <div className="space-y-3">
             {holdings.holdings.map((holding, index) => (
-              <div key={index} className="border rounded-lg p-3">
+              <div key={index} className="border border-border rounded-lg p-3">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-medium text-gray-900">{holding.portfolio.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-foreground">{holding.portfolio.name}</p>
+                    <p className="text-sm text-muted-foreground">
                       {formatShares(holding.quantity)} shares
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {holding.portfolio.gameSession.name || 'Default Game'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {formatCurrency(holding.currentValue)}
                     </p>
                     <p className={`text-sm ${holding.unrealizedPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -227,7 +231,7 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
                     </p>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   <div className="flex justify-between">
                     <span>Cost: {formatCurrency(holding.costBasis)}</span>
                     <span>Avg: {formatCurrency(holding.averagePrice)}</span>
@@ -242,16 +246,16 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
       {/* Realized P&L */}
       {summary?.realizedPnL !== undefined && summary.realizedPnL !== 0 && (
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Realized P&L</h4>
+          <h4 className="text-sm font-medium text-foreground mb-2">Realized P&L</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Realized Gain/Loss:</span>
+              <span className="text-muted-foreground">Realized Gain/Loss:</span>
               <span className={`font-medium ${summary.realizedPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.realizedPnL)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Total Return:</span>
+              <span className="text-muted-foreground">Total Return:</span>
               <span className={`font-medium ${(summary.realizedPnL + totalUnrealized) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.realizedPnL + totalUnrealized)}
               </span>
@@ -261,26 +265,27 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
       )}
 
       {/* Action Buttons */}
-      <div className="pt-4 border-t border-gray-200">
-        <div className="flex space-x-3">
-          <button 
+      <div className="pt-4 border-t border-border">
+        <div className="flex gap-3">
+          <Button 
             onClick={handleBuyClick}
-            className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium transition-colors"
+            className="flex-1"
           >
             Buy More
-          </button>
-          <button 
+          </Button>
+          <Button 
             onClick={handleSellClick}
-            className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 font-medium transition-colors"
+            variant="destructive"
+            className="flex-1"
           >
             Sell
-          </button>
+          </Button>
         </div>
-        <button className="w-full mt-2 border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 font-medium">
+        <Button variant="outline" className="w-full mt-2">
           View Transaction History
-        </button>
+        </Button>
       </div>
-
-    </div>
+      </CardContent>
+    </Card>
   );
 } 

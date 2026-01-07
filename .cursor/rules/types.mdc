@@ -1,0 +1,783 @@
+---
+description: TypeScript Type System Standards and Conventions
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript Type System Standards
+
+## Overview
+
+This document defines how we use TypeScript's type system in this project. Types are the backbone of our codebase's reliability and developer experience. Following these standards ensures consistency, maintainability, and proper type safety.
+
+---
+
+## 1. Type Definition Location
+
+### When to Use `src/types/`
+
+✅ **Shared types go in `src/types/index.ts`:**
+- API request/response types
+- Domain models (User, Portfolio, Asset)
+- Types used across multiple files
+- Complex types with significant logic
+- Types that form contracts between layers
+
+### When to Define Types Inline
+
+✅ **Component-specific types stay inline:**
+- Component props interfaces
+- Local state shapes
+- Helper function types used only in that file
+- One-off utility types
+
+### Examples
+
+```typescript
+// ❌ BAD - Component props in src/types/
+// src/types/index.ts
+export interface AssetChartProps { ... }
+
+// ✅ GOOD - Component props inline
+// src/components/asset/AssetChart.tsx
+interface AssetChartProps {
+  ticker: string;
+  className?: string;
+}
+
+export function AssetChart({ ticker, className }: AssetChartProps) { ... }
+```
+
+```typescript
+// ✅ GOOD - Shared domain type in src/types/
+// src/types/index.ts
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+// Used in: hooks, components, API routes, services
+```
+
+---
+
+## 2. Naming Conventions
+
+### Props Interfaces
+
+**Pattern:** `*Props` or `*ComponentNameProps`
+
+```typescript
+// ✅ GOOD
+interface AssetChartProps { }
+interface BuyModalProps { }
+interface WatchlistTableProps { }
+
+// ❌ BAD
+interface AssetChartProperties { }
+interface BuyModalOptions { }
+interface IWatchlistTable { } // Don't use "I" prefix
+```
+
+### API Response Types
+
+**Pattern:** `*Response` or `*ApiResponse`
+
+```typescript
+// ✅ GOOD - Matches endpoint structure
+export interface PortfolioOverviewResponse extends ApiResponse<PortfolioOverviewData> {
+  meta: {
+    userId: string;
+    holdingCount: number;
+  };
+}
+
+export interface AssetDetailApiResponse extends ApiResponse<AssetDetailData> { }
+```
+
+### API Request Types
+
+**Pattern:** `*Request` or `*ApiRequest`
+
+```typescript
+// ✅ GOOD
+export interface SearchApiRequest {
+  query: string;
+  quotesCount?: number;
+  newsCount?: number;
+}
+
+export interface MarketOrderApiRequest {
+  assetId: number;
+  orderType: 'BUY' | 'SELL';
+  shares?: number;
+  dollarAmount?: number;
+}
+```
+
+### Data Transfer Objects (DTOs)
+
+**Pattern:** `*Data`
+
+```typescript
+// ✅ GOOD - Intermediate data structures
+export interface AssetDetailData {
+  asset: { ... };
+  quote: { ... };
+  typeSpecific: { ... };
+  userHoldings: UserHoldingsSummary | null;
+}
+
+export interface ActivityFeedData {
+  activities: UserActivity[];
+  pagination: { ... };
+  stats: Record<string, number>;
+}
+```
+
+### Domain Entities
+
+**Pattern:** Plain descriptive names (no suffix)
+
+```typescript
+// ✅ GOOD - Core domain models
+export interface User { }
+export interface Portfolio { }
+export interface Watchlist { }
+export interface Asset { }
+export interface Transaction { }
+```
+
+### Enums and Constants
+
+**Pattern:** SCREAMING_SNAKE_CASE for enum values
+
+```typescript
+// ✅ GOOD
+export type OrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELLED' | 'FAILED';
+export type AssetType = 'STOCK' | 'BOND' | 'MUTUAL_FUND' | 'ETF' | 'INDEX';
+export type ActivityCategory = 'TRADE' | 'PORTFOLIO' | 'MARKET' | 'EDUCATION' | 'SYSTEM';
+
+// If you must use enum (rare):
+enum MarketState {
+  PRE = 'PRE',
+  REGULAR = 'REGULAR',
+  POST = 'POST',
+  CLOSED = 'CLOSED'
+}
+```
+
+---
+
+## 3. Interface vs Type
+
+### Use `interface` for Object Shapes
+
+✅ **Interfaces are extensible and provide better error messages:**
+
+```typescript
+// ✅ GOOD - Use interface for objects
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+// Can be extended later
+export interface AdminUser extends User {
+  permissions: string[];
+}
+```
+
+### Use `type` for Everything Else
+
+✅ **Types for unions, intersections, primitives, tuples:**
+
+```typescript
+// ✅ GOOD - Union types
+export type OrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELLED';
+export type ActivityCategory = 'TRADE' | 'PORTFOLIO' | 'MARKET';
+
+// ✅ GOOD - Intersection types
+export type UserWithPortfolio = User & { portfolio: Portfolio };
+
+// ✅ GOOD - Utility types
+export type Nullable<T> = T | null;
+export type Optional<T> = T | undefined;
+
+// ✅ GOOD - Function types
+export type ValidationFunction = (value: unknown) => boolean;
+export type AsyncLoader<T> = () => Promise<T>;
+```
+
+### Current Codebase Pattern
+
+**We predominantly use interfaces.** Follow this established pattern:
+
+```typescript
+// ✅ Matches our codebase
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface PaginatedResponse<T = any> {
+  items: T[];
+  total: number;
+  page: number;
+}
+```
+
+---
+
+## 4. API Types Pattern
+
+### Generic Response Wrapper
+
+**Established Pattern:** `ApiResponse<T>`
+
+```typescript
+// ✅ Our standard API response
+export interface ApiResponse<T = any> {
+  success: boolean;      // Always present
+  data?: T;              // Present on success
+  error?: string;        // Present on failure
+  message?: string;      // Optional human-readable message
+  timestamp?: string;    // Optional ISO timestamp
+  cached?: boolean;      // Optional cache indicator
+  meta?: any;            // Optional metadata
+}
+
+// Usage in specific responses
+export interface PortfolioOverviewResponse extends ApiResponse<PortfolioOverviewData> {
+  meta: {
+    userId: string;
+    holdingCount: number;
+    assetCount: number;
+    cacheAgeMs: number;
+  };
+}
+```
+
+### Pagination Wrapper
+
+```typescript
+// ✅ Standard pagination
+export interface PaginatedResponse<T = any> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// Usage
+export interface UserListResponse extends ApiResponse<PaginatedResponse<User>> { }
+```
+
+### Error Types
+
+```typescript
+// ✅ Structured error types
+export interface ApiError {
+  code: string;           // Machine-readable error code
+  message: string;        // Human-readable message
+  details?: any;          // Additional context
+  timestamp: string;      // When error occurred
+}
+
+export interface ValidationError {
+  field: string;          // Which field failed validation
+  message: string;        // What went wrong
+  value?: any;            // The invalid value (optional)
+}
+```
+
+---
+
+## 5. Type Organization in `src/types/index.ts`
+
+### Group by Domain
+
+Our `src/types/index.ts` follows this structure:
+
+```typescript
+// === Core Types ===
+export interface User { }
+
+// === Stock API Types ===
+export interface SearchApiRequest { }
+export interface QuoteApiResponse { }
+
+// === Watchlist Types ===
+export interface Watchlist { }
+export interface WatchlistItem { }
+
+// === Trading UI Types ===
+export interface TradingModalProps { }
+export interface OrderFormData { }
+
+// === Portfolio Types ===
+export interface PortfolioAllocation { }
+
+// === Activity Feed Types ===
+export interface UserActivity { }
+```
+
+### Use JSDoc Comments for Complex Types
+
+```typescript
+/**
+ * Comprehensive asset detail including quote, fundamentals, 
+ * type-specific metrics, and user holdings.
+ * 
+ * Returned by GET /api/asset-detail/[ticker]
+ * 
+ * @example
+ * const { asset, quote, userHoldings } = assetDetailData;
+ */
+export interface AssetDetailData {
+  asset: Asset;
+  quote: AssetDetailQuote;
+  typeSpecific: AssetDetailTypeSpecific;
+  userHoldings: UserHoldingsSummary | null;
+  authenticated: boolean;
+  riskMeasures?: RiskMeasures;
+}
+```
+
+### Export Everything from `index.ts`
+
+```typescript
+// ✅ GOOD - Single source of truth
+export { User, Portfolio, Asset } from './index';
+export type { ApiResponse, ApiError } from './index';
+
+// ❌ BAD - Don't create separate type files
+// types/user.ts
+// types/portfolio.ts
+// types/asset.ts
+```
+
+---
+
+## 6. Avoiding `any`
+
+### When is `any` Acceptable?
+
+**Rare Cases Only:**
+1. **External library types** that are truly unknown
+2. **Truly dynamic data** (e.g., arbitrary JSON from third-party API)
+3. **Generic utilities** where type safety is handled elsewhere
+4. **Temporary placeholder** during rapid prototyping (FIX IMMEDIATELY)
+
+```typescript
+// ✅ ACCEPTABLE - External data we can't predict
+export interface UserActivity {
+  data?: any; // JSON data with activity-specific information
+}
+
+// ✅ ACCEPTABLE - Generic response wrapper
+export interface ApiResponse<T = any> {
+  data?: T;
+  meta?: any; // Varies by endpoint
+}
+```
+
+### Use `unknown` for Truly Unknown Types
+
+```typescript
+// ✅ GOOD - Force type checking
+function processData(data: unknown) {
+  if (typeof data === 'string') {
+    return data.toUpperCase();
+  }
+  if (typeof data === 'number') {
+    return data * 2;
+  }
+  throw new Error('Unsupported data type');
+}
+
+// ❌ BAD - No type safety
+function processData(data: any) {
+  return data.toUpperCase(); // Runtime error if not string!
+}
+```
+
+### Use Generics Instead of `any`
+
+```typescript
+// ✅ GOOD - Type-safe generic
+async function fetchData<T>(endpoint: string): Promise<T> {
+  const response = await fetch(endpoint);
+  return response.json() as T;
+}
+
+// ❌ BAD - Loses type information
+async function fetchData(endpoint: string): Promise<any> {
+  const response = await fetch(endpoint);
+  return response.json();
+}
+```
+
+---
+
+## 7. Enums vs Union Types
+
+### Prefer String Literal Unions (Most Cases)
+
+```typescript
+// ✅ GOOD - Simple, readable, no overhead
+export type OrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELLED' | 'FAILED';
+export type OrderType = 'BUY' | 'SELL';
+export type AssetType = 'STOCK' | 'BOND' | 'MUTUAL_FUND' | 'ETF' | 'INDEX';
+
+// Usage
+function processOrder(status: OrderStatus) {
+  if (status === 'EXECUTED') { ... }
+}
+```
+
+### Use Enums Only When Necessary
+
+**When to use enums:**
+- Need reverse mapping (number to string)
+- Complex logic with enum values
+- Integrating with external systems expecting enums
+
+```typescript
+// ✅ GOOD - Enum with numeric values (rare)
+enum HttpStatus {
+  OK = 200,
+  CREATED = 201,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  NOT_FOUND = 404,
+  SERVER_ERROR = 500
+}
+
+// Reverse mapping works
+const statusName = HttpStatus[200]; // "OK"
+```
+
+### Why We Prefer Unions
+
+1. **No runtime overhead** - Just types, compiled away
+2. **More flexible** - Can combine with other types
+3. **Better autocomplete** - IDEs show all options
+4. **Simpler** - No enum declaration syntax
+
+---
+
+## 8. Optional vs Required Fields
+
+### Use `?` for Truly Optional Fields
+
+```typescript
+// ✅ GOOD - Optional fields with ?
+export interface User {
+  id: string;               // Always present
+  email: string;            // Always present
+  name: string | null;      // Always present, but can be null
+  role: string;             // Always present
+  avatarUrl?: string;       // May or may not be present
+}
+```
+
+### Use `| null` When Null is Meaningful
+
+```typescript
+// ✅ GOOD - null means "explicitly no value"
+export interface Portfolio {
+  id: string;
+  name: string;
+  description: string | null; // null = "no description", missing = error
+}
+
+// ✅ GOOD - Distinguishes between "not loaded" and "doesn't exist"
+interface UserHoldings {
+  holdings: Holding[] | null; // null = no holdings, undefined = not loaded
+}
+```
+
+### Avoid `| undefined` (Prefer `?`)
+
+```typescript
+// ❌ BAD - Redundant
+interface User {
+  name: string | undefined;
+}
+
+// ✅ GOOD - Use optional
+interface User {
+  name?: string;
+}
+```
+
+### Dates: String vs Date
+
+```typescript
+// ✅ GOOD - API responses use strings
+export interface User {
+  createdAt: Date | string;  // API returns string, Prisma returns Date
+  updatedAt: Date | string;
+}
+
+// ✅ GOOD - Clarify in comments
+export interface Bond {
+  issueDate: string | Date | null; // JSON serialized as string
+  maturityDate: string | Date | null;
+}
+```
+
+---
+
+## 9. Advanced Patterns
+
+### Discriminated Unions
+
+```typescript
+// ✅ GOOD - Type-safe state management
+type LoadingState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: string };
+
+function renderState<T>(state: LoadingState<T>) {
+  switch (state.status) {
+    case 'idle':
+      return 'Not started';
+    case 'loading':
+      return 'Loading...';
+    case 'success':
+      return state.data; // TypeScript knows data exists!
+    case 'error':
+      return state.error; // TypeScript knows error exists!
+  }
+}
+```
+
+### Utility Types
+
+```typescript
+// ✅ GOOD - Use built-in utility types
+type PartialUser = Partial<User>;           // All fields optional
+type RequiredUser = Required<User>;         // All fields required
+type UserKeys = keyof User;                 // Union of keys
+type UserIdAndEmail = Pick<User, 'id' | 'email'>;
+type UserWithoutPassword = Omit<User, 'password'>;
+type ReadonlyUser = Readonly<User>;
+```
+
+### Generic Constraints
+
+```typescript
+// ✅ GOOD - Constrain generic types
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+// Usage
+const user: User = { id: '1', email: 'test@example.com', ... };
+const email = getProperty(user, 'email'); // Type-safe!
+```
+
+### Conditional Types
+
+```typescript
+// ✅ GOOD - Type transformations
+type ApiResponseData<T> = T extends ApiResponse<infer D> ? D : never;
+
+// Extracts the data type from ApiResponse<User> -> User
+type UserData = ApiResponseData<ApiResponse<User>>; // User
+```
+
+---
+
+## 10. Hook Return Types
+
+### Consistent Pattern
+
+**All hooks MUST return an object with these fields:**
+
+```typescript
+// ✅ GOOD - Standard hook return
+export function usePortfolioOverview() {
+  return {
+    data: ...,           // The fetched/computed data
+    isLoading: ...,      // Loading state (always 'isLoading', not 'loading')
+    error: ...,          // Error message (string | null)
+    refresh?: ...,       // Optional: Refetch function
+    // ... additional data/helpers
+  };
+}
+
+// ❌ BAD - Inconsistent naming
+export function usePortfolioOverview() {
+  return {
+    portfolio: ...,      // Use 'data' instead
+    loading: ...,        // Use 'isLoading' instead
+    err: ...,            // Use 'error' instead
+  };
+}
+```
+
+### Type the Return Value
+
+```typescript
+// ✅ GOOD - Explicit return type
+interface UsePortfolioOverviewReturn {
+  data: PortfolioOverviewResponse | null;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => void;
+  lastFetch: Date | null;
+  // Helper getters
+  totalPortfolioValue: number;
+  cashBalance: number;
+  hasHoldings: boolean;
+}
+
+export function usePortfolioOverview(): UsePortfolioOverviewReturn {
+  // Implementation
+}
+```
+
+---
+
+## 11. Common Pitfalls
+
+### ❌ Pitfall 1: Using `any` Instead of Proper Types
+
+```typescript
+// ❌ BAD
+function processHolding(holding: any) {
+  return holding.quantity * holding.price; // No type safety!
+}
+
+// ✅ GOOD
+function processHolding(holding: Holding) {
+  return holding.quantity * holding.averagePrice; // Type-safe!
+}
+```
+
+### ❌ Pitfall 2: Not Exporting Types
+
+```typescript
+// ❌ BAD - Type not exported
+interface User {
+  id: string;
+}
+
+// ✅ GOOD - Export for use elsewhere
+export interface User {
+  id: string;
+}
+```
+
+### ❌ Pitfall 3: Overly Broad Types
+
+```typescript
+// ❌ BAD - Too permissive
+function fetchUser(id: string | number | object) { ... }
+
+// ✅ GOOD - Specific type
+function fetchUser(id: string) { ... }
+```
+
+### ❌ Pitfall 4: Inline Complex Types
+
+```typescript
+// ❌ BAD - Complex inline type
+function processPortfolio(
+  portfolio: {
+    id: string;
+    name: string;
+    holdings: Array<{
+      ticker: string;
+      shares: number;
+      price: number;
+    }>;
+  }
+) { ... }
+
+// ✅ GOOD - Named interfaces
+interface Holding {
+  ticker: string;
+  shares: number;
+  price: number;
+}
+
+interface Portfolio {
+  id: string;
+  name: string;
+  holdings: Holding[];
+}
+
+function processPortfolio(portfolio: Portfolio) { ... }
+```
+
+---
+
+## Quick Decision Tree
+
+**Where should I define this type?**
+
+```
+Is it used in multiple files?
+├─ YES → src/types/index.ts
+└─ NO → Is it component props?
+    ├─ YES → Inline in component file
+    └─ NO → Is it a helper/utility type?
+        ├─ YES → Inline where used
+        └─ NO → Consider if it should be shared (→ src/types/)
+```
+
+**Should I use interface or type?**
+
+```
+Is it an object shape?
+├─ YES → Use interface
+└─ NO → Is it a union, intersection, or primitive?
+    ├─ YES → Use type
+    └─ NO → Use interface (default)
+```
+
+**Should I use enum or union type?**
+
+```
+Do I need reverse mapping or complex logic?
+├─ YES → Use enum
+└─ NO → Use string literal union (preferred)
+```
+
+---
+
+## Integration with Other Rules
+
+- See **[data.mdc](./data.mdc)** for API type patterns
+- See **[error-handling.mdc](./error-handling.mdc)** for error type usage
+- See **[component-patterns.mdc](./component-patterns.mdc)** for props typing
+- See **[service-layer.mdc](./service-layer.mdc)** for service type patterns
+
+---
+
+## Summary
+
+**Golden Rules:**
+1. Shared types → `src/types/index.ts`, Component props → Inline
+2. Use `interface` for objects, `type` for unions/intersections
+3. Avoid `any`, use `unknown` or generics instead
+4. Prefer string literal unions over enums
+5. Use `?` for optional, `| null` when null is meaningful
+6. Export all shared types
+7. Use JSDoc comments for complex types
+8. Follow established naming conventions (*Props, *Response, *Request, *Data)
+
+**Type Safety is Non-Negotiable.** Every piece of data flowing through our application should be properly typed. No excuses, no shortcuts.

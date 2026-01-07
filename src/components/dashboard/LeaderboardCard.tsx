@@ -18,7 +18,7 @@ function formatPercent(pct?: number): string {
 }
 
 export function LeaderboardCard() {
-  const { topUsers, loading, error } = useUserRanking();
+  const { topUsers, isLoading, error } = useUserRanking();
 
   const topThree = (topUsers || []).slice(0, 3);
   const others = (topUsers || []).slice(3);
@@ -45,7 +45,7 @@ export function LeaderboardCard() {
             <div className="bg-destructive/10 text-destructive border border-destructive/30 p-3 rounded text-sm mb-3">{error}</div>
           )}
 
-          {loading ? (
+          {isLoading ? (
             <div className="space-y-2">
               {/* space-y-2 = 8px (2 units), py-2 = 8px (2 units), h-6/h-4 = 24px/16px (6/4 units) */}
               {Array.from({ length: 10 }).map((_, i) => (

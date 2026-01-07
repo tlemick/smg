@@ -261,6 +261,56 @@ export interface WatchlistQuotesResponse {
   }>;
 }
 
+// Dashboard-specific watchlist types (more detailed than API types above)
+export interface WatchlistAsset {
+  id: number;
+  ticker: string;
+  name: string;
+  type: string;
+  logoUrl?: string | null;
+}
+
+export interface WatchlistItemDetailed {
+  id: string;
+  watchlistId: string;
+  assetId: number;
+  assetType: string;
+  addedAt: string;
+  notes?: string;
+  asset: WatchlistAsset;
+}
+
+export interface WatchlistDetailed {
+  id: string;
+  name: string;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+  items: WatchlistItemDetailed[];
+}
+
+export interface WatchlistQuoteData {
+  regularMarketPrice: number;
+  regularMarketOpen?: number;
+  regularMarketChange: number | null;
+  regularMarketChangePercent: number | null;
+  currency: string;
+  marketState: string;
+  beta?: number;
+}
+
+export interface WatchlistQuoteItem {
+  watchlistItemId: string;
+  asset: WatchlistAsset;
+  quote: WatchlistQuoteData | null;
+  error: string | null;
+}
+
+export interface WatchlistUserHolding {
+  ticker: string;
+  shares: number;
+}
+
 // === Generic API Response Types ===
 
 export interface ApiResponse<T = any> {
@@ -358,8 +408,8 @@ export interface AssetDetailTypeSpecific {
   bond?: {
     id: number;
     issuer: string | null;
-    issueDate: Date | null;
-    maturityDate: Date | null;
+    issueDate: string | Date | null; // JSON serialized as string
+    maturityDate: string | Date | null; // JSON serialized as string
     couponRate: number | null;
     faceValue: number | null;
     yieldToMaturity: number | null;
@@ -373,7 +423,7 @@ export interface AssetDetailTypeSpecific {
     fundType: string | null;
     expenseRatio: number | null;
     fundManager: string | null;
-    inceptionDate: Date | null;
+    inceptionDate: string | Date | null; // JSON serialized as string
     aum: number | null;
     nav: number | null;
     minimumInvestment: number | null;
@@ -421,7 +471,7 @@ export interface AssetDetailData {
     currencyName: string | null;
     logoUrl: string | null;
     allowFractionalShares: boolean;
-    lastUpdated: Date | null;
+    lastUpdated: string | Date | null; // JSON serialized as string
   };
   quote: AssetDetailQuote;
   typeSpecific: AssetDetailTypeSpecific;
@@ -912,12 +962,7 @@ export interface PortfolioPerformanceSeriesResponse extends ApiResponse<Portfoli
 
 // === Transactions Feed Types ===
 
-export interface TransactionsFeedProps {
-  className?: string;
-  showHeader?: boolean;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
-}
+// Note: TransactionsCardProps moved to component file (inline pattern)
 
 export interface TransactionItemProps {
   order: UnifiedOrder;
@@ -1014,4 +1059,27 @@ export interface OnboardingAssetSuggestion {
   name: string;
   reason: string;
   category?: string;
+}
+
+// === Dashboard Component Types ===
+
+// TikTok-style lessons
+export interface TikTokLesson {
+  id: string;
+  title: string;
+  topic: string;
+  image: string;
+  duration?: string;
+}
+
+export interface TikTokLessonCardProps {
+  lesson: TikTokLesson;
+  onClick: () => void;
+}
+
+export interface TikTokLessonsProps {
+  title?: string;
+  subtitle?: string;
+  topics?: string[];
+  maxItems?: number;
 } 

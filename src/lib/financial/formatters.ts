@@ -518,4 +518,40 @@ export class Formatters {
     
     return `${sign}${absValue.toFixed(0)}`;
   }
+  
+  /**
+   * Format a number with sign prefix (+ for positive, - for negative)
+   * Useful for displaying price changes, gains/losses
+   * 
+   * @example
+   * Formatters.signedNumber(2.5, { decimals: 2 }) // "+2.50"
+   * Formatters.signedNumber(-1.3, { decimals: 2 }) // "-1.30"
+   * Formatters.signedNumber(0, { decimals: 2 }) // "0.00"
+   */
+  static signedNumber(
+    value: number | Decimal | null | undefined,
+    options: { decimals?: number } = {}
+  ): string {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
+    
+    const { decimals = 2 } = options;
+    const numValue = typeof value === 'number' ? value : value.toNumber();
+    
+    // Add sign prefix
+    const sign = numValue > 0 ? '+' : numValue < 0 ? '' : ''; // negative sign is automatic
+    
+    return `${sign}${numValue.toFixed(decimals)}`;
+  }
+  
+  /**
+   * Alias for compactNumber - formats large numbers
+   * 
+   * @example
+   * Formatters.compactNumber(1234567890) // "1.23B"
+   */
+  static compactNumber(value: number | null | undefined): string {
+    return this.abbreviateNumber(value);
+  }
 }

@@ -222,7 +222,9 @@ describe('FinancialMath - Aggregation', () => {
 describe('FinancialMath - Comparison', () => {
   describe('equals', () => {
     test('compares equal values', () => {
-      expect(FinancialMath.equals(0.1 + 0.2, 0.3)).toBe(true);
+      // Create Decimals first to test precision handling
+      const sum = FinancialMath.add(0.1, 0.2);
+      expect(FinancialMath.equals(sum, 0.3)).toBe(true);
     });
     
     test('compares unequal values', () => {
@@ -298,10 +300,10 @@ describe('FinancialMath - Edge Cases', () => {
   
   test('handles chain of operations', () => {
     // Portfolio calculation: (shares * price) + (shares2 * price2) + cash
-    const position1 = FinancialMath.multiply(100, 50.25);
-    const position2 = FinancialMath.multiply(50, 75.5);
-    const investments = FinancialMath.add(position1, position2);
-    const total = FinancialMath.add(investments, 1000);
-    expect(total.toNumber()).toBe(9825);
+    const position1 = FinancialMath.multiply(100, 50.25); // 5025
+    const position2 = FinancialMath.multiply(50, 75.5);   // 3775
+    const investments = FinancialMath.add(position1, position2); // 8800
+    const total = FinancialMath.add(investments, 1000);   // 9800
+    expect(total.toNumber()).toBe(9800);
   });
 });

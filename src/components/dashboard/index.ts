@@ -1,6 +1,6 @@
 // Dashboard Components
 export { PortfolioCard } from './PortfolioCard';
-export { Watchlists } from './Watchlists';
+export { Watchlists } from './watchlists';
 export { TransactionsCard } from './TransactionsCard';
 export { Leaderboard } from './Leaderboard';
 export { LeaderboardCard } from './LeaderboardCard';

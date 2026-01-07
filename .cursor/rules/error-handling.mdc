@@ -1,0 +1,986 @@
+---
+description: Error Handling Standards and Best Practices
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Error Handling Standards
+
+## Overview
+
+Proper error handling is critical for user experience and debugging. This document defines how we handle, display, and log errors throughout the application stack - from API routes to hooks to components.
+
+---
+
+## 1. API Route Error Handling
+
+### The Golden Pattern
+
+**Every API route MUST follow this structure:**
+
+```typescript
+export async function GET(request: NextRequest) {
+  try {
+    // 1. Authenticate (if protected)
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Validate input
+    // 3. Perform business logic
+    // 4. Return success response
+
+    return NextResponse.json({
+      success: true,
+      data: result,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error: any) {
+    // 5. Log error with context
+    console.error('Error in GET /api/endpoint:', error);
+    
+    // 6. Return user-friendly error
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error.message || 'An unexpected error occurred' 
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Structured Response Format
+
+**ALWAYS return this structure:**
+
+```typescript
+// ✅ Success Response
+{
+  success: true,
+  data: { ... },
+  meta?: { ... },
+  timestamp?: string
+}
+
+// ✅ Error Response
+{
+  success: false,
+  error: string,        // User-friendly message
+  timestamp?: string
+}
+```
+
+### HTTP Status Codes
+
+Use appropriate status codes:
+
+```typescript
+// ✅ GOOD - Clear status codes
+return NextResponse.json(
+  { success: false, error: 'Authentication required' },
+  { status: 401 }  // Unauthorized
+);
+
+return NextResponse.json(
+  { success: false, error: 'Forbidden' },
+  { status: 403 }  // Forbidden (authenticated but no permission)
+);
+
+return NextResponse.json(
+  { success: false, error: 'Not found' },
+  { status: 404 }  // Not Found
+);
+
+return NextResponse.json(
+  { success: false, error: 'Invalid request data' },
+  { status: 400 }  // Bad Request
+);
+
+return NextResponse.json(
+  { success: false, error: 'Internal server error' },
+  { status: 500 }  // Server Error
+);
+```
+
+### Error Logging
+
+**Always log errors with context:**
+
+```typescript
+// ✅ GOOD - Rich context
+catch (error: any) {
+  console.error('Error fetching portfolio overview:', {
+    userId: user.id,
+    endpoint: '/api/user/portfolio/overview',
+    error: error.message,
+    stack: error.stack,
+    timestamp: new Date().toISOString()
+  });
+  
+  return NextResponse.json(
+    { success: false, error: 'Failed to fetch portfolio overview' },
+    { status: 500 }
+  );
+}
+
+// ❌ BAD - No context
+catch (error) {
+  console.error(error);
+  return NextResponse.json({ error: 'Error' }, { status: 500 });
+}
+```
+
+### Never Expose Sensitive Details
+
+```typescript
+// ❌ BAD - Exposes internal details
+catch (error: any) {
+  return NextResponse.json({
+    success: false,
+    error: error.stack,  // NEVER expose stack traces!
+    query: sqlQuery      // NEVER expose SQL queries!
+  });
+}
+
+// ✅ GOOD - User-friendly message
+catch (error: any) {
+  console.error('Database query failed:', error); // Log internally
+  return NextResponse.json({
+    success: false,
+    error: 'Failed to retrieve data'  // Generic message to user
+  });
+}
+```
+
+---
+
+## 2. Hook Error Handling
+
+### Standard Hook Pattern
+
+**All data-fetching hooks MUST follow this pattern:**
+
+```typescript
+export function usePortfolioOverview() {
+  const [data, setData] = useState<PortfolioOverviewResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        setError(null);  // Clear previous errors
+
+        const result = await ApiClient.get<PortfolioOverviewResponse['data']>(
+          '/api/user/portfolio/overview'
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch portfolio data');
+        }
+
+        setData(result as PortfolioOverviewResponse);
+      } catch (err) {
+        console.error('Error fetching portfolio data:', err);
+        const errorMessage = err instanceof ApiError 
+          ? err.message 
+          : 'Failed to load portfolio data';
+        setError(errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  return { data, isLoading, error };
+}
+```
+
+### Error State Type
+
+**Always use `string | null` for errors:**
+
+```typescript
+// ✅ GOOD
+const [error, setError] = useState<string | null>(null);
+
+// ❌ BAD - Error object is hard to display
+const [error, setError] = useState<Error | null>(null);
+
+// ❌ BAD - Boolean doesn't provide message
+const [hasError, setHasError] = useState(false);
+```
+
+### Extract User-Friendly Messages
+
+```typescript
+// ✅ GOOD - Extract meaningful message
+catch (err) {
+  let errorMessage = 'An unexpected error occurred';
+  
+  if (err instanceof ApiError) {
+    errorMessage = err.message;
+  } else if (err instanceof Error) {
+    errorMessage = err.message;
+  } else if (typeof err === 'string') {
+    errorMessage = err;
+  }
+  
+  setError(errorMessage);
+}
+
+// ❌ BAD - Generic message
+catch (err) {
+  setError('Error');
+}
+```
+
+### Check API Response Success
+
+```typescript
+// ✅ GOOD - Validate response
+const result = await ApiClient.get('/api/data');
+
+if (!result.success) {
+  throw new Error(result.error || 'Request failed');
+}
+
+// Now safe to use result.data
+setData(result.data);
+
+// ❌ BAD - Assume success
+const result = await ApiClient.get('/api/data');
+setData(result.data); // Might be undefined if error!
+```
+
+---
+
+## 3. Component Error Display
+
+### Standard Error UI Pattern
+
+```typescript
+// ✅ GOOD - Consistent error display
+export function PortfolioCard() {
+  const { data, isLoading, error } = usePortfolioOverview();
+  
+  // Handle loading state
+  if (isLoading) {
+    return <CardSkeleton />;
+  }
+  
+  // Handle error state
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Render normal state
+  return (
+    <Card>
+      <CardContent>
+        {/* Display data */}
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Error Display Component
+
+**Create reusable error components:**
+
+```typescript
+// src/components/ui/error-display.tsx
+interface ErrorDisplayProps {
+  message: string;
+  onRetry?: () => void;
+  compact?: boolean;
+}
+
+export function ErrorDisplay({ message, onRetry, compact }: ErrorDisplayProps) {
+  if (compact) {
+    return (
+      <div className="text-sm text-destructive flex items-center gap-2">
+        <AlertCircle className="h-4 w-4" />
+        <span>{message}</span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="text-center py-8">
+      <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
+      <p className="text-sm text-muted-foreground mb-4">{message}</p>
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Try Again
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// Usage
+if (error) return <ErrorDisplay message={error} onRetry={refresh} />;
+```
+
+### Inline Error Messages (Forms)
+
+```typescript
+// ✅ GOOD - Field-specific errors
+<div>
+  <Input 
+    value={shares} 
+    onChange={(e) => setShares(e.target.value)}
+    className={errors.shares ? 'border-destructive' : ''}
+  />
+  {errors.shares && (
+    <p className="text-sm text-destructive mt-1">{errors.shares}</p>
+  )}
+</div>
+```
+
+---
+
+## 4. Toast Notifications
+
+### When to Use Toasts
+
+**Use toasts for:**
+- ✅ Success confirmations (Order placed, Watchlist created)
+- ✅ User-triggered errors (Trade failed, Insufficient funds)
+- ✅ Important warnings (Market closed, Session expiring)
+- ✅ Background operation results
+
+**Don't use toasts for:**
+- ❌ Data loading errors (show in UI instead)
+- ❌ Validation errors (show inline)
+- ❌ Silent background updates
+
+### Toast Pattern
+
+```typescript
+import { useToast } from '@/context/ToastContext';
+
+export function BuyModal() {
+  const { showToast } = useToast();
+  
+  const handleSubmit = async () => {
+    try {
+      const result = await ApiClient.post('/api/trade/market-order', orderData);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      // ✅ Success toast
+      showToast('Order executed successfully', 'success');
+      onClose();
+      
+    } catch (error: any) {
+      // ✅ Error toast
+      showToast(
+        `Order failed: ${error.message}`,
+        'error'
+      );
+    }
+  };
+  
+  return (
+    <Modal>
+      {/* Form content */}
+    </Modal>
+  );
+}
+```
+
+### Toast Types
+
+```typescript
+// Success (green)
+showToast('Portfolio updated successfully', 'success');
+
+// Error (red)
+showToast('Failed to save changes', 'error');
+
+// Info (blue)
+showToast('Market will close in 5 minutes', 'info');
+
+// Warning (yellow/orange)
+showToast('Your session will expire soon', 'warning');
+```
+
+---
+
+## 5. Validation Errors
+
+### Validation Result Type
+
+```typescript
+// ✅ GOOD - Structured validation
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+  warnings?: Record<string, string>;
+}
+
+// Usage in service
+export class TradingValidation {
+  static validateMarketOrder(
+    shares: number,
+    price: number,
+    cashAvailable: number
+  ): ValidationResult {
+    const errors: Record<string, string> = {};
+    
+    if (shares <= 0) {
+      errors.shares = 'Shares must be positive';
+    }
+    
+    const cost = FinancialMath.multiply(shares, price);
+    if (cost.greaterThan(cashAvailable)) {
+      errors.general = 'Insufficient funds';
+    }
+    
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors
+    };
+  }
+}
+```
+
+### Display Validation Errors
+
+```typescript
+// ✅ GOOD - Field-specific errors
+export function OrderForm() {
+  const [shares, setShares] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const handleSubmit = () => {
+    const validation = TradingValidation.validateMarketOrder(
+      Number(shares),
+      price,
+      cashBalance
+    );
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+    
+    // Submit order
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <Input 
+          value={shares} 
+          onChange={(e) => setShares(e.target.value)}
+          className={errors.shares ? 'border-destructive' : ''}
+        />
+        {errors.shares && (
+          <p className="text-sm text-destructive mt-1">{errors.shares}</p>
+        )}
+      </div>
+      
+      {errors.general && (
+        <div className="bg-destructive/10 border border-destructive text-destructive p-3 rounded">
+          {errors.general}
+        </div>
+      )}
+      
+      <Button type="submit">Submit</Button>
+    </form>
+  );
+}
+```
+
+---
+
+## 6. Error Boundaries (React)
+
+### Create Error Boundary Component
+
+```typescript
+// src/components/ErrorBoundary.tsx
+import React, { Component, ReactNode } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+          <AlertCircle className="h-16 w-16 text-destructive mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4 text-center max-w-md">
+            We're sorry, but something unexpected happened. 
+            Please try refreshing the page.
+          </p>
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="default"
+          >
+            Refresh Page
+          </Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+### Use Error Boundaries
+
+```typescript
+// ✅ GOOD - Wrap risky components
+export default function DashboardPage() {
+  return (
+    <div>
+      <ErrorBoundary>
+        <PortfolioCard />
+      </ErrorBoundary>
+      
+      <ErrorBoundary>
+        <ActivityFeed />
+      </ErrorBoundary>
+      
+      <ErrorBoundary>
+        <TransactionsFeed />
+      </ErrorBoundary>
+    </div>
+  );
+}
+```
+
+---
+
+## 7. Network Errors
+
+### Timeout Handling
+
+```typescript
+// ApiClient with timeout
+export class ApiClient {
+  private static async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    timeout: number = 30000
+  ): Promise<ApiResponse<T>> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(endpoint, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new ApiError(data.error || 'Request failed', response.status);
+      }
+      
+      return data;
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new ApiError('Request timeout - please try again', 408);
+      }
+      
+      if (!navigator.onLine) {
+        throw new ApiError('No internet connection', 0);
+      }
+      
+      throw error;
+    }
+  }
+}
+```
+
+### Retry Logic
+
+```typescript
+// ✅ GOOD - Retry failed requests
+export class ApiClient {
+  private static async requestWithRetry<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    maxRetries: number = 3
+  ): Promise<ApiResponse<T>> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await this.request<T>(endpoint, options);
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry on client errors (4xx)
+        if (error.status >= 400 && error.status < 500) {
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => 
+            setTimeout(resolve, Math.pow(2, attempt) * 1000)
+          );
+        }
+      }
+    }
+    
+    throw lastError!;
+  }
+}
+```
+
+### Offline Detection
+
+```typescript
+// ✅ GOOD - Detect offline state
+export function useNetworkStatus() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  return isOnline;
+}
+
+// Usage in component
+export function DataFetchingComponent() {
+  const isOnline = useNetworkStatus();
+  const { showToast } = useToast();
+  
+  useEffect(() => {
+    if (!isOnline) {
+      showToast('No internet connection', 'warning');
+    }
+  }, [isOnline]);
+  
+  if (!isOnline) {
+    return <OfflineNotice />;
+  }
+  
+  // Normal content
+}
+```
+
+---
+
+## 8. Logging Strategy
+
+### Development Logging
+
+```typescript
+// ✅ GOOD - Rich development logs
+if (process.env.NODE_ENV === 'development') {
+  console.error('API Error:', {
+    endpoint: '/api/user/portfolio',
+    method: 'GET',
+    userId: user.id,
+    error: error.message,
+    stack: error.stack,
+    timestamp: new Date().toISOString()
+  });
+}
+```
+
+### Production Logging
+
+```typescript
+// ✅ GOOD - Log to error tracking service
+try {
+  // Business logic
+} catch (error: any) {
+  // Log to console (CloudWatch, etc. will capture)
+  console.error('Error in portfolio overview:', {
+    userId: user.id,
+    error: error.message,
+    timestamp: new Date().toISOString()
+  });
+  
+  // In production, consider:
+  // - Sentry.captureException(error)
+  // - LogRocket.captureException(error)
+  // - Custom error tracking service
+  
+  return NextResponse.json(
+    { success: false, error: 'Failed to fetch portfolio' },
+    { status: 500 }
+  );
+}
+```
+
+### What to Log
+
+**Always log:**
+- ✅ Exceptions with stack traces
+- ✅ User context (userId, session)
+- ✅ Request context (endpoint, method, params)
+- ✅ Timestamp
+- ✅ Environment (dev/staging/prod)
+
+**Never log:**
+- ❌ Passwords or sensitive credentials
+- ❌ Credit card numbers
+- ❌ API keys or tokens
+- ❌ Personal identifying information (PII) in production
+
+---
+
+## 9. ApiError Class
+
+### Custom Error Class
+
+```typescript
+// src/lib/api/api-error.ts
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number = 500,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// Usage
+throw new ApiError('User not found', 404, 'USER_NOT_FOUND');
+throw new ApiError('Invalid input', 400, 'VALIDATION_ERROR', validationErrors);
+```
+
+### Use in API Routes
+
+```typescript
+// ✅ GOOD - Throw typed errors
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser();
+    
+    if (!user) {
+      throw new ApiError('Authentication required', 401, 'AUTH_REQUIRED');
+    }
+    
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { userId: user.id }
+    });
+    
+    if (!portfolio) {
+      throw new ApiError('Portfolio not found', 404, 'PORTFOLIO_NOT_FOUND');
+    }
+    
+    return NextResponse.json({ success: true, data: portfolio });
+    
+  } catch (error: any) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: error.status }
+      );
+    }
+    
+    console.error('Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+---
+
+## 10. Common Error Scenarios
+
+### Scenario 1: Insufficient Funds
+
+```typescript
+// ✅ GOOD - Clear, actionable error
+if (orderCost > cashBalance) {
+  return NextResponse.json({
+    success: false,
+    error: `Insufficient funds. Required: ${Formatters.currency(orderCost)}, Available: ${Formatters.currency(cashBalance)}`
+  }, { status: 400 });
+}
+```
+
+### Scenario 2: Market Closed
+
+```typescript
+// ✅ GOOD - Informative error with guidance
+if (marketState !== 'REGULAR') {
+  return NextResponse.json({
+    success: false,
+    error: 'Market is currently closed. Use a limit order to queue your trade for when the market opens.',
+    educationalNote: 'Markets are typically open Monday-Friday, 9:30 AM - 4:00 PM ET.'
+  }, { status: 400 });
+}
+```
+
+### Scenario 3: Asset Not Found
+
+```typescript
+// ✅ GOOD - Suggest alternatives
+const asset = await prisma.asset.findUnique({
+  where: { ticker: ticker.toUpperCase() }
+});
+
+if (!asset) {
+  return NextResponse.json({
+    success: false,
+    error: `Asset '${ticker}' not found. Please check the ticker symbol.`,
+    suggestion: 'Try using the search feature to find the correct ticker.'
+  }, { status: 404 });
+}
+```
+
+### Scenario 4: Concurrent Update Conflict
+
+```typescript
+// ✅ GOOD - Explain conflict and suggest retry
+try {
+  await prisma.portfolio.update({
+    where: { id: portfolioId, version: currentVersion },
+    data: { cash_balance: newBalance, version: currentVersion + 1 }
+  });
+} catch (error: any) {
+  if (error.code === 'P2025') { // Prisma: Record not found
+    return NextResponse.json({
+      success: false,
+      error: 'Portfolio was updated by another process. Please refresh and try again.'
+    }, { status: 409 });
+  }
+  throw error;
+}
+```
+
+---
+
+## Quick Decision Tree
+
+**Where should I handle this error?**
+
+```
+Is it a validation error?
+├─ YES → Validate in service, return ValidationResult, display inline
+└─ NO → Is it a network/API error?
+    ├─ YES → Catch in hook, store in error state, display in component
+    └─ NO → Is it a critical error?
+        ├─ YES → Use ErrorBoundary to catch render errors
+        └─ NO → Handle in component logic
+```
+
+**What should I show the user?**
+
+```
+Can the user fix it?
+├─ YES → Show actionable error with guidance (e.g., "Insufficient funds")
+└─ NO → Is it temporary?
+    ├─ YES → Show retry option (e.g., "Network error - Try again")
+    └─ NO → Show generic error + contact support
+```
+
+---
+
+## Integration with Other Rules
+
+- See **[types.mdc](./types.mdc)** for ApiError and ValidationError types
+- See **[data.mdc](./data.mdc)** for API response structure
+- See **[component-patterns.mdc](./component-patterns.mdc)** for error display patterns
+
+---
+
+## Summary
+
+**Golden Rules:**
+1. Always wrap API routes in try-catch
+2. Return structured responses: `{ success, data/error }`
+3. Use appropriate HTTP status codes
+4. Log errors with context, never expose sensitive details
+5. Hooks must return `{ data, isLoading, error }`
+6. Components display errors from hooks
+7. Use toasts for user-triggered actions
+8. Create reusable error UI components
+9. Use ErrorBoundary for render errors
+10. Make error messages actionable and user-friendly
+
+**Error handling is not optional.** Every API route, every hook, every user action must have proper error handling. No exceptions.

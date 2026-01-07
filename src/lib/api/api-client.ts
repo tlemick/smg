@@ -1,67 +1,69 @@
+import { ApiResponse } from '@/types';
+
 /**
- * ApiClient Service
- * 
- * Centralized HTTP client for all API communication.
- * Provides consistent error handling, retry logic, and request/response formatting.
- * 
- * USAGE RULES:
- * - All API calls should go through this client
- * - No direct fetch() calls in hooks or components
- * - Consistent error handling across the application
- * 
- * @example
- * // In a hook:
- * const data = await ApiClient.get<PortfolioData>('/api/portfolio/overview');
- * const result = await ApiClient.post<OrderResponse>('/api/trade/market-order', orderData);
+ * Request options for API calls
  */
-
-import type { ApiResponse } from '@/types';
-
 export interface RequestOptions extends RequestInit {
-  retries?: number;
-  retryDelay?: number;
+  retry?: boolean;
+  maxRetries?: number;
   timeout?: number;
+  skipErrorHandling?: boolean;
 }
 
+/**
+ * Error class for API errors
+ */
 export class ApiError extends Error {
   constructor(
     message: string,
-    public statusCode?: number,
-    public response?: any
+    public status?: number,
+    public data?: any
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
+/**
+ * Centralized API Client for all HTTP communication
+ * 
+ * Features:
+ * - Automatic retry with exponential backoff
+ * - Request timeout handling
+ * - Type-safe responses
+ * - Consistent error handling
+ * - Request cancellation support
+ */
 export class ApiClient {
-  private static readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
-  private static readonly DEFAULT_RETRIES = 0; // No retries by default
-  private static readonly DEFAULT_RETRY_DELAY = 1000; // 1 second
-  
+  private static pendingRequests = new Map<string, Promise<any>>();
+
   /**
-   * Make an HTTP request with error handling and retries
+   * Core request method with retry logic and error handling
    */
   private static async request<T>(
     endpoint: string,
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const {
-      retries = this.DEFAULT_RETRIES,
-      retryDelay = this.DEFAULT_RETRY_DELAY,
-      timeout = this.DEFAULT_TIMEOUT,
+      retry = true,
+      maxRetries = 3,
+      timeout = 30000,
+      skipErrorHandling = false,
       ...fetchOptions
     } = options;
-    
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    let lastError: Error | null = null;
-    
-    // Retry loop
-    for (let attempt = 0; attempt <= retries; attempt++) {
+
+    // Request deduplication - if same request is in flight, return existing promise
+    const requestKey = `${fetchOptions.method || 'GET'}-${endpoint}`;
+    if (this.pendingRequests.has(requestKey)) {
+      return this.pendingRequests.get(requestKey);
+    }
+
+    const executeRequest = async (attempt: number = 1): Promise<ApiResponse<T>> => {
       try {
+        // Create abort controller for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
         const response = await fetch(endpoint, {
           ...fetchOptions,
           signal: controller.signal,
@@ -70,157 +72,185 @@ export class ApiClient {
             ...fetchOptions.headers,
           },
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         // Parse response
         const data: ApiResponse<T> = await response.json();
-        
-        // Check for HTTP errors
+
+        // Handle non-OK responses
         if (!response.ok) {
-          throw new ApiError(
-            data.error || data.message || `HTTP ${response.status}: ${response.statusText}`,
-            response.status,
-            data
-          );
+          const errorMessage = data.error || `Request failed with status ${response.status}`;
+          
+          // Retry on 5xx errors or network issues
+          if (retry && attempt < maxRetries && (response.status >= 500 || response.status === 429)) {
+            const delay = this.calculateBackoff(attempt);
+            await this.sleep(delay);
+            return executeRequest(attempt + 1);
+          }
+
+          if (!skipErrorHandling) {
+            console.error(`API Error [${endpoint}]:`, {
+              status: response.status,
+              error: errorMessage,
+              attempt,
+            });
+          }
+
+          throw new ApiError(errorMessage, response.status, data);
         }
-        
-        // Check for application-level errors
-        if (!data.success && data.error) {
-          throw new ApiError(data.error, response.status, data);
-        }
-        
+
         return data;
-        
-      } catch (error) {
-        lastError = error as Error;
-        
-        // Don't retry on abort (timeout)
-        if (error instanceof DOMException && error.name === 'AbortError') {
+      } catch (error: any) {
+        // Handle abort/timeout
+        if (error.name === 'AbortError') {
           throw new ApiError('Request timeout', 408);
         }
-        
-        // Don't retry on 4xx errors (client errors)
-        if (error instanceof ApiError && error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+
+        // Handle network errors with retry
+        if (retry && attempt < maxRetries && error.name !== 'ApiError') {
+          const delay = this.calculateBackoff(attempt);
+          await this.sleep(delay);
+          return executeRequest(attempt + 1);
+        }
+
+        // Re-throw ApiError as-is
+        if (error instanceof ApiError) {
           throw error;
         }
-        
-        // If we have retries left, wait and try again
-        if (attempt < retries) {
-          await this.delay(retryDelay * (attempt + 1)); // Exponential backoff
-          continue;
+
+        // Wrap other errors
+        const errorMessage = error.message || 'An unexpected error occurred';
+        if (!skipErrorHandling) {
+          console.error(`API Error [${endpoint}]:`, error);
         }
-        
-        // No more retries, throw the error
-        throw error;
+        throw new ApiError(errorMessage);
       }
-    }
-    
-    // Should never reach here, but TypeScript requires it
-    throw lastError || new Error('Request failed');
+    };
+
+    // Execute request and manage pending requests map
+    const requestPromise = executeRequest().finally(() => {
+      this.pendingRequests.delete(requestKey);
+    });
+
+    this.pendingRequests.set(requestKey, requestPromise);
+    return requestPromise;
   }
-  
+
+  /**
+   * Calculate exponential backoff delay
+   */
+  private static calculateBackoff(attempt: number): number {
+    const baseDelay = 300; // 300ms
+    const maxDelay = 5000; // 5s
+    const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
+    // Add jitter to prevent thundering herd
+    return delay + Math.random() * 300;
+  }
+
+  /**
+   * Sleep utility for retry delays
+   */
+  private static sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   /**
    * GET request
    */
   static async get<T>(
     endpoint: string,
-    options: RequestOptions = {}
+    options?: Omit<RequestOptions, 'method' | 'body'>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'GET',
     });
   }
-  
+
   /**
    * POST request
    */
   static async post<T>(
     endpoint: string,
-    data: unknown,
-    options: RequestOptions = {}
+    data?: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
-  
+
   /**
    * PUT request
    */
   static async put<T>(
     endpoint: string,
-    data: unknown,
-    options: RequestOptions = {}
+    data?: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
-  
+
   /**
    * PATCH request
    */
   static async patch<T>(
     endpoint: string,
-    data: unknown,
-    options: RequestOptions = {}
+    data?: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
-  
+
   /**
    * DELETE request
    */
   static async delete<T>(
     endpoint: string,
-    options: RequestOptions = {}
+    options?: Omit<RequestOptions, 'method' | 'body'>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'DELETE',
     });
   }
-  
+
   /**
-   * Utility: Delay for retry logic
+   * Build query string from params object
    */
-  private static delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  static buildQueryString(params: Record<string, any>): string {
+    const searchParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, String(v)));
+        } else {
+          searchParams.set(key, String(value));
+        }
+      }
+    });
+
+    const queryString = searchParams.toString();
+    return queryString ? `?${queryString}` : '';
   }
-  
+
   /**
-   * Check if error is an ApiError
+   * Clear all pending requests (useful for cleanup on unmount)
    */
-  static isApiError(error: unknown): error is ApiError {
-    return error instanceof ApiError;
-  }
-  
-  /**
-   * Extract error message from various error types
-   */
-  static getErrorMessage(error: unknown): string {
-    if (error instanceof ApiError) {
-      return error.message;
-    }
-    
-    if (error instanceof Error) {
-      return error.message;
-    }
-    
-    if (typeof error === 'string') {
-      return error;
-    }
-    
-    return 'An unknown error occurred';
+  static clearPendingRequests(): void {
+    this.pendingRequests.clear();
   }
 }
+

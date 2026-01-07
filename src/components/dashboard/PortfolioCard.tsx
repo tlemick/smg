@@ -18,14 +18,14 @@ export function PortfolioCard() {
     totalPortfolioValue, 
     totalUnrealizedPnLPercent, 
     data,
-    loading: portfolioLoading,
+    isLoading: portfolioLoading,
     error: portfolioError 
   } = usePortfolioOverview();
   
   const {
     currentUserRank,
     totalUsers,
-    loading: rankingLoading,
+    isLoading: rankingLoading,
     error: rankingError
   } = useUserRanking();
 

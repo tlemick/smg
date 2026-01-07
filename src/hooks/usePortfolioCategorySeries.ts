@@ -1,24 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PortfolioCategorySeriesResponse } from '@/types';
+import { ApiClient, ApiError } from '@/lib/api';
 
 export function usePortfolioCategorySeries(initialRange: string = '1m') {
   const [range, setRange] = useState<string>(initialRange);
   const [data, setData] = useState<PortfolioCategorySeriesResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (r: string) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
-      const res = await fetch(`/api/user/portfolio/category-series?range=${encodeURIComponent(r)}`);
-      const json: PortfolioCategorySeriesResponse = await res.json();
-      if (!json.success) throw new Error(json.error || 'Failed to fetch category series');
-      setData(json);
+      const result = await ApiClient.get<PortfolioCategorySeriesResponse['data']>(
+        `/api/user/portfolio/category-series${ApiClient.buildQueryString({ range: r })}`
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to fetch category series');
+      setData(result as PortfolioCategorySeriesResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch category series');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch category series';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
@@ -32,7 +35,7 @@ export function usePortfolioCategorySeries(initialRange: string = '1m') {
     range,
     setRange,
     data,
-    loading,
+    isLoading,
     error,
     refresh,
     points: data?.data?.points || [],

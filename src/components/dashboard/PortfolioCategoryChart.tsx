@@ -16,7 +16,7 @@ const TIMEFRAMES = [
 ];
 
 export function PortfolioCategoryChart() {
-  const { range, setRange, points, loading, error } = usePortfolioCategorySeries('1m');
+  const { range, setRange, points, isLoading, error } = usePortfolioCategorySeries('1m');
   const { colors: resolvedColors, mounted } = useChartColors();
   
   const colors = useMemo(
@@ -72,7 +72,7 @@ export function PortfolioCategoryChart() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">Loading…</div>
       ) : data.length === 0 ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">No data yet</div>

@@ -1,6 +1,6 @@
 import { AssetDetailQuote } from '@/types';
-import { TikTokEmbed } from '@/components/ui/TikTokEmbed';
 import { Formatters } from '@/lib/financial';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface BondMetricsProps {
   bond: {
@@ -51,29 +51,29 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
   const yearsToMaturity = calculateYearsToMaturity(bond.maturityDate);
 
   return (
-    <div className="bg-white rounded-lg p-6">
-      <div className="flex items-start justify-between mb-2">
-        <h3 className="text-lg font-semibold text-gray-900">Bond Metrics</h3>
-        <TikTokEmbed storageKey={`tiktok:asset:metrics:bond:${bond.ticker}`} topic="Risk Management" />
-      </div>
+    <Card className="shadow-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-semibold">Bond Metrics</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
       
       {/* Bond Information */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Bond Information</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Bond Information</h4>
         <div className="space-y-2">
           {bond.issuer && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Issuer:</span>
-              <span className="font-medium">{bond.issuer}</span>
+              <span className="text-muted-foreground">Issuer:</span>
+              <span className="font-medium text-foreground">{bond.issuer}</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-gray-600">Bond Type:</span>
-            <span className="font-medium">{getBondTypeDisplay(bond.bondType)}</span>
+            <span className="text-muted-foreground">Bond Type:</span>
+            <span className="font-medium text-foreground">{getBondTypeDisplay(bond.bondType)}</span>
           </div>
           {bond.creditRating && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Credit Rating:</span>
+              <span className="text-muted-foreground">Credit Rating:</span>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCreditRatingColor(bond.creditRating)}`}>
                 {bond.creditRating}
               </span>
@@ -84,69 +84,69 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
 
       {/* Yield & Return */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Yield & Return</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Yield & Return</h4>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-600">Current Yield:</span>
-            <span className="font-medium">{Formatters.percentage(quote.dividendYield, { multiplier: 1 })}</span>
+            <span className="text-muted-foreground">Current Yield:</span>
+            <span className="font-medium text-foreground">{Formatters.percentage(quote.dividendYield, { multiplier: 1 })}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Yield to Maturity:</span>
-            <span className="font-medium">{Formatters.percentage(bond.yieldToMaturity, { multiplier: 1 })}</span>
+            <span className="text-muted-foreground">Yield to Maturity:</span>
+            <span className="font-medium text-foreground">{Formatters.percentage(bond.yieldToMaturity, { multiplier: 1 })}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Coupon Rate:</span>
-            <span className="font-medium">{Formatters.percentage(bond.couponRate, { multiplier: 1 })}</span>
+            <span className="text-muted-foreground">Coupon Rate:</span>
+            <span className="font-medium text-foreground">{Formatters.percentage(bond.couponRate, { multiplier: 1 })}</span>
           </div>
         </div>
       </div>
 
       {/* Maturity & Duration */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Maturity & Duration</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Maturity & Duration</h4>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-600">Maturity Date:</span>
-            <span className="font-medium">{Formatters.date(bond.maturityDate)}</span>
+            <span className="text-muted-foreground">Maturity Date:</span>
+            <span className="font-medium text-foreground">{Formatters.date(bond.maturityDate)}</span>
           </div>
           {yearsToMaturity !== null && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Years to Maturity:</span>
-              <span className="font-medium">{yearsToMaturity.toFixed(1)} years</span>
+              <span className="text-muted-foreground">Years to Maturity:</span>
+              <span className="font-medium text-foreground">{yearsToMaturity.toFixed(1)} years</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-gray-600">Duration:</span>
-            <span className="font-medium">{Formatters.number(bond.duration, { decimals: 1 })} years</span>
+            <span className="text-muted-foreground">Duration:</span>
+            <span className="font-medium text-foreground">{Formatters.number(bond.duration, { decimals: 1 })} years</span>
           </div>
         </div>
       </div>
 
       {/* Price Information */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Price Information</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Price Information</h4>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-600">Current Price:</span>
-            <span className="font-medium">{Formatters.price(quote.regularMarketPrice, quote.currency || 'USD')}</span>
+            <span className="text-muted-foreground">Current Price:</span>
+            <span className="font-medium text-foreground">{Formatters.price(quote.regularMarketPrice, quote.currency || 'USD')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">52W High:</span>
-            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekHigh, quote.currency || 'USD')}</span>
+            <span className="text-muted-foreground">52W High:</span>
+            <span className="font-medium text-foreground">{Formatters.price(quote.fiftyTwoWeekHigh, quote.currency || 'USD')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">52W Low:</span>
-            <span className="font-medium">{Formatters.price(quote.fiftyTwoWeekLow, quote.currency || 'USD')}</span>
+            <span className="text-muted-foreground">52W Low:</span>
+            <span className="font-medium text-foreground">{Formatters.price(quote.fiftyTwoWeekLow, quote.currency || 'USD')}</span>
           </div>
         </div>
       </div>
 
       {/* Risk Analysis */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Risk Analysis</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">Risk Analysis</h4>
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Credit Risk:</span>
+            <span className="text-muted-foreground">Credit Risk:</span>
             <div className="flex items-center">
               {bond.creditRating && (
                 <span className={`text-xs px-2 py-1 rounded ${getCreditRatingColor(bond.creditRating)}`}>
@@ -159,7 +159,7 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Interest Rate Risk:</span>
+            <span className="text-muted-foreground">Interest Rate Risk:</span>
             <div className="flex items-center">
               {bond.duration && (
                 <span className={`text-xs px-2 py-1 rounded ${
@@ -173,7 +173,7 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
             </div>
           </div>
           
-          <div className="text-xs text-gray-500 mt-2">
+          <div className="text-xs text-muted-foreground mt-2">
             <p>Duration measures price sensitivity to interest rate changes.</p>
             <p>Higher duration = higher interest rate risk</p>
             {bond.duration && (
@@ -182,6 +182,7 @@ export function BondMetrics({ bond, quote }: BondMetricsProps) {
           </div>
         </div>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 } 

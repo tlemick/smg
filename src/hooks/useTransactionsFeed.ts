@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { UnifiedOrder } from '@/types';
+import { ApiClient, ApiError } from '@/lib/api';
 
 interface OrdersApiResponse {
   success: boolean;
@@ -46,35 +47,37 @@ export function useTransactionsFeed(options: UseTransactionsFeedOptions = {}) {
   } = options;
 
   const [data, setData] = useState<TransactionsFeedData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
       // Fetch all orders (both pending and executed)
-      const params = new URLSearchParams();
-      params.set('limit', limit.toString());
-      params.set('status', 'all'); // Get all statuses
-      params.set('type', 'all'); // Get both BUY and SELL
+      const queryString = ApiClient.buildQueryString({
+        limit: limit.toString(),
+        status: 'all',
+        type: 'all',
+      });
 
-      const response = await fetch(`/api/trade/orders?${params.toString()}`);
-      const result: OrdersApiResponse = await response.json();
+      const result = await ApiClient.get<OrdersApiResponse>(`/api/trade/orders${queryString}`);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch transactions');
       }
 
+      const responseData = result as unknown as OrdersApiResponse;
+
       // Separate orders by status
-      const pendingOrders = result.orders
+      const pendingOrders = responseData.orders
         .filter(order => order.status === 'PENDING')
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      const completedOrders = result.orders
+      const completedOrders = responseData.orders
         .filter(order => order.status === 'EXECUTED' || order.status === 'CANCELLED')
         .sort((a, b) => {
           // Sort completed orders by execution date if available, otherwise creation date
@@ -87,18 +90,19 @@ export function useTransactionsFeed(options: UseTransactionsFeedOptions = {}) {
         pendingOrders,
         completedOrders,
         stats: {
-          pending: result.summary?.totalPending || 0,
-          executed: result.summary?.totalExecuted || 0,
-          cancelled: result.summary?.totalCancelled || 0,
-          total: result.orders?.length || 0
+          pending: responseData.summary?.totalPending || 0,
+          executed: responseData.summary?.totalExecuted || 0,
+          cancelled: responseData.summary?.totalCancelled || 0,
+          total: responseData.orders?.length || 0
         }
       });
       setLastFetch(new Date());
     } catch (err) {
       console.error('Error fetching transactions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load transactions');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to load transactions';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [limit]);
 
@@ -162,7 +166,7 @@ export function useTransactionsFeed(options: UseTransactionsFeedOptions = {}) {
     data,
     pendingOrders: data?.pendingOrders || [],
     completedOrders: data?.completedOrders || [],
-    loading,
+    isLoading,
     error,
     lastFetch,
 

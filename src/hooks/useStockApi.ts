@@ -8,43 +8,37 @@ import {
   SearchApiResponse,
   ApiResponse 
 } from '@/types';
+import { ApiClient, ApiError } from '@/lib/api';
 
 export function useStockApi() {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const callApi = async <TRequest, TResponse>(
     endpoint: string,
     data: TRequest
   ): Promise<TResponse | null> => {
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const result = await ApiClient.post<TResponse>(endpoint, data);
 
-      const result: ApiResponse<TResponse> = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Request failed');
       }
 
-      if (result.success && result.data) {
+      if (result.data) {
         return result.data;
       } else {
-        throw new Error(result.error || 'Request failed');
+        throw new Error('No data returned from API');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      const errorMessage = err instanceof ApiError ? err.message : 'An error occurred';
+      setError(errorMessage);
       return null;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -58,7 +52,7 @@ export function useStockApi() {
     callApi<SearchApiRequest, SearchApiResponse>('/api/search', request);
 
   return {
-    loading,
+    isLoading,
     error,
     getQuote,
     getChart,

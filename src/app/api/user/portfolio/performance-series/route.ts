@@ -55,7 +55,12 @@ async function computePortfolioDailyValues(portfolioId: string, start: Date, end
   // Prefetch historical closes
   const historicalByAsset: Record<number, Array<{ date: Date; price: number }>> = {};
   for (const assetId of assetIds) {
-    await syncAssetHistoricalData(assetId, start, end).catch(() => {});
+    try {
+      await syncAssetHistoricalData(assetId, start, end);
+    } catch (error) {
+      console.error(`Failed to sync historical data for asset ${assetId}:`, error);
+      // Continue with cached data if sync fails
+    }
     const hist = await getAssetHistoricalData(assetId, start, end);
     const arr = hist
       .map(h => ({ date: new Date(h.date as any), price: (h.close as number) ?? (h.adjustedClose as number) ?? 0 }))

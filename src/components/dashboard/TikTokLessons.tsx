@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Icon, PlayIcon } from '@/components/ui';
-
-interface TikTokLesson {
-  id: string;
-  title: string;
-  topic: string;
-  image: string;
-  duration?: string;
-}
+import { TikTokLesson } from '@/types';
 
 // Educational financial topics for the TikTok-style lessons
 const lessons: TikTokLesson[] = [
@@ -51,10 +44,7 @@ const lessons: TikTokLesson[] = [
   }
 ];
 
-interface TikTokLessonCardProps {
-  lesson: TikTokLesson;
-  onClick: () => void;
-}
+import { TikTokLessonCardProps } from '@/types';
 
 function TikTokLessonCard({ lesson, onClick }: TikTokLessonCardProps) {
   return (
@@ -104,12 +94,7 @@ function TikTokLessonCard({ lesson, onClick }: TikTokLessonCardProps) {
   );
 }
 
-interface TikTokLessonsProps {
-  title?: string;
-  subtitle?: string;
-  topics?: string[];
-  maxItems?: number;
-}
+import { TikTokLessonsProps } from '@/types';
 
 export function TikTokLessons({ title = 'Listen to some friends.', subtitle = 'These winners from last year have some advice for you.', topics = [], maxItems }: TikTokLessonsProps) {
   const handleLessonClick = (lesson: TikTokLesson) => {

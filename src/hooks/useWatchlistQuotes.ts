@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { ApiClient, ApiError } from '@/lib/api';
 
 interface Asset {
   id: number;
@@ -49,19 +50,19 @@ export function useWatchlistQuotes(watchlistId: string): UseWatchlistQuotesRetur
     setError(null);
 
     try {
-      const response = await fetch(`/api/watchlist/${watchlistId}/quotes`);
-      const data = await response.json();
+      const result = await ApiClient.get<WatchlistQuote[]>(`/api/watchlist/${watchlistId}/quotes`);
       
-      if (data.success) {
-        setQuotes(data.data);
+      if (result.success && result.data) {
+        setQuotes(result.data);
         setLastUpdate(new Date());
         setError(null);
       } else {
-        setError(data.error || 'Failed to fetch quotes');
+        setError(result.error || 'Failed to fetch quotes');
       }
     } catch (err: any) {
       console.error('Failed to fetch quotes:', err);
-      setError('Failed to fetch quotes. Please try again.');
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch quotes. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsRefreshing(false);
     }
