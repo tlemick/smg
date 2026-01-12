@@ -1,26 +1,32 @@
 'use client';
 
 import React from 'react';
-import { InfoIcon } from '@/components/ui/Icon';
+import { Meteor } from '@phosphor-icons/react';
 import type { RiskMeasures } from '@/types';
-import { LessonButton } from '@/components/ui/LessonButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Formatters } from '@/lib/financial';
+import { Icon } from '@/components/ui/Icon';
 
-interface Props {
+interface RiskMeasuresPanelProps {
   riskMeasures?: RiskMeasures;
   assetType: string;
 }
 
-function formatPct(value: number | null | undefined, digits = 2): string {
+/**
+ * Helper function: Format percentage
+ */
+function formatPct(value: number | null | undefined, digits: number = 2): string {
   return Formatters.percentage(value, { decimals: digits });
 }
 
-function formatNumber(value: number | null | undefined, digits = 2): string {
+/**
+ * Helper function: Format number
+ */
+function formatNumber(value: number | null | undefined, digits: number = 2): string {
   return Formatters.number(value, { decimals: digits });
 }
 
-export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
+export function RiskMeasuresPanel({ riskMeasures, assetType }: RiskMeasuresPanelProps) {
   const common = riskMeasures?.common;
   const bondYtmPct = (riskMeasures?.bond?.yieldToMaturity != null)
     ? (riskMeasures.bond.yieldToMaturity as number) / 100
@@ -36,22 +42,25 @@ export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
   function getVolRisk(vol?: number | null): { level: 'low' | 'medium' | 'high'; label: string } | null {
     if (vol == null || Number.isNaN(vol)) return null;
     const pct = vol * 100;
-    if (pct < 10) return { level: 'low', label: `${pct.toFixed(0)}% Low` };
-    if (pct < 20) return { level: 'medium', label: `${pct.toFixed(0)}% Medium` };
-    return { level: 'high', label: `${pct.toFixed(0)}% High` };
+    if (pct < 10) return { level: 'low', label: `${Formatters.number(pct, { decimals: 0 })}% Low` };
+    if (pct < 20) return { level: 'medium', label: `${Formatters.number(pct, { decimals: 0 })}% Medium` };
+    return { level: 'high', label: `${Formatters.number(pct, { decimals: 0 })}% High` };
   }
 
   function getBetaRisk(beta?: number | null): { level: 'low' | 'medium' | 'high'; label: string } | null {
     if (beta == null || Number.isNaN(beta)) return null;
-    if (beta < 0.9) return { level: 'low', label: `${beta.toFixed(1)} Low` };
-    if (beta <= 1.1) return { level: 'medium', label: `${beta.toFixed(1)} Medium` };
-    return { level: 'high', label: `${beta.toFixed(1)} High` };
+    if (beta < 0.9) return { level: 'low', label: `${Formatters.number(beta, { decimals: 1 })} Low` };
+    if (beta <= 1.1) return { level: 'medium', label: `${Formatters.number(beta, { decimals: 1 })} Medium` };
+    return { level: 'high', label: `${Formatters.number(beta, { decimals: 1 })} High` };
   }
 
   return (
     <Card className="shadow-none h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-sm font-normal">Risk Factors</CardTitle>
+        <CardTitle className="text-sm font-normal flex items-center gap-2">
+          <Icon icon={Meteor} size="sm" />
+          Risk Factors
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="flex-1 pt-0">
@@ -130,24 +139,7 @@ export function RiskMeasuresPanel({ riskMeasures, assetType }: Props) {
           </div>
         )}
       </CardContent>
-
-      <div className="flex justify-end px-6 pb-6">
-        <LessonButton
-          text="Kelly Talks about Risk"
-          topics={["Risk Management"]}
-          maxItems={1}
-          modalLayout="dual"
-            modalContent={
-              <div className="flex flex-col gap-2 p-8">
-                <h3 className="text-lg font-semibold text-foreground">Understanding Risk</h3>
-                <p className="mt-2 text-sm text-muted-foreground max-w-prose">
-                  Beta and volatility help you compare how bumpy a ride an asset can be. Higher numbers mean larger ups and downs.
-                </p>
-              </div>
-            }
-          />
-        </div>
-      </Card>
+    </Card>
     );
   }
 

@@ -34,9 +34,9 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
   };
 
   return (
-    <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg px-4 py-3">
+    <div className="bg-neutral/95 backdrop-blur-sm border border-border/50 rounded-lg shadow-lg px-4 py-3">
       {/* Date header */}
-      <div className="text-xs font-medium text-foreground mb-2 pb-2 border-b border-border/50">
+      <div className="text-xs font-medium text-neutral-foreground mb-2 pb-2 border-b border-border/50">
         {label}
       </div>
       
@@ -57,12 +57,12 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
             <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div 
-                  className="w-2 h-2 rounded-full" 
+                  className="w-2 h-2 rounded-full border border-border dark:border-transparent" 
                   style={{ backgroundColor: info.color, opacity: 0.8 }}
                 />
-                <span className="text-xs text-muted-foreground">{info.label}</span>
+                <span className="text-xs text-neutral-foreground/60">{info.label}</span>
               </div>
-              <span className="text-xs font-mono font-medium text-foreground tabular-nums">
+              <span className="text-xs font-mono font-medium text-neutral-foreground tabular-nums">
                 {formattedValue}
               </span>
             </div>
@@ -143,7 +143,15 @@ export function PortfolioPerformanceChart() {
             <LineChart data={points} margin={{ top: 8, left: 0, right: 16, bottom: 32 }}>
               <XAxis dataKey="date" hide />
               <YAxis hide domain={chartConfig.yDomain} tickFormatter={(v) => `${v}%`} />
-              <Tooltip content={<CustomTooltip colors={colors} />} />
+              <Tooltip 
+                content={<CustomTooltip colors={colors} />}
+                cursor={{
+                  stroke: colors.reference,
+                  strokeWidth: 2,
+                  strokeDasharray: '5 5',
+                  opacity: 0.5
+                }}
+              />
               
               {/* Game start line with date */}
               {chartConfig.dateMarkers.length > 0 && chartConfig.dateMarkers[0].isStart && (
@@ -184,9 +192,33 @@ export function PortfolioPerformanceChart() {
                 />
               ))}
               
-              <Line type="monotone" dataKey="youPct" stroke={colors.you} strokeWidth={2} dot={false} name="You" />
-              <Line type="monotone" dataKey="sp500Pct" stroke={colors.benchmark} strokeWidth={2} dot={false} name="S&P 500" />
-              <Line type="monotone" dataKey="leaderPct" stroke={colors.leader} strokeWidth={2} dot={false} name="Leader" />
+              <Line 
+                type="monotone" 
+                dataKey="youPct" 
+                stroke={colors.you} 
+                strokeWidth={2} 
+                dot={false} 
+                activeDot={{ r: 5, fill: colors.you, strokeWidth: 2, stroke: '#fff' }}
+                name="You" 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="sp500Pct" 
+                stroke={colors.benchmark} 
+                strokeWidth={2} 
+                dot={false} 
+                activeDot={{ r: 5, fill: colors.benchmark, strokeWidth: 2, stroke: '#fff' }}
+                name="S&P 500" 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="leaderPct" 
+                stroke={colors.leader} 
+                strokeWidth={2} 
+                dot={false} 
+                activeDot={{ r: 5, fill: colors.leader, strokeWidth: 2, stroke: '#fff' }}
+                name="Leader" 
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

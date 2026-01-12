@@ -1,6 +1,9 @@
 export { AssetChart } from './AssetChart';
+export { CandlestickChart } from './CandlestickChart';
 export { AssetHeader } from './AssetHeader';
 export { AssetTopActions } from './AssetTopActions';
+export { AssetTopSection } from './AssetTopSection';
+export { AssetBackButton } from './AssetBackButton';
 export { BondMetrics } from './BondMetrics';
 export { FundMetrics } from './FundMetrics';
 export { StockMetrics } from './StockMetrics';
@@ -12,3 +15,4 @@ export { EditItemNotesModal } from './EditItemNotesModal';
 export { AssetOverviewPanel } from './AssetOverviewPanel';
 export { RiskMeasuresPanel } from './RiskMeasuresPanel';
 export { AssetNewsPanel } from './AssetNewsPanel';
+export { AssetGuidanceSection } from './AssetGuidanceSection';

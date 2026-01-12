@@ -2,6 +2,8 @@ import type { ComponentType } from 'react';
 import type { IconProps as PhosphorIconProps, IconWeight } from '@phosphor-icons/react';
 import {
   ArrowClockwiseIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
   ArrowUUpLeftIcon,
   ArticleMediumIcon,
   BellIcon,
@@ -12,6 +14,7 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   ChartBarIcon,
+  ChartLineIcon,
   ChartPieIcon,
   ChartPieSliceIcon,
   ChatCircleIcon,
@@ -58,6 +61,7 @@ import {
   UserPlusIcon,
   UsersIcon,
   WarningCircleIcon,
+  WaveformIcon,
   XCircleIcon,
   XIcon,
 } from '@phosphor-icons/react';
@@ -92,6 +96,8 @@ export function Icon({ icon: IconComponent, size = 'md', weight = 'regular', cla
 
 export {
   ArrowClockwiseIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
   ArrowUUpLeftIcon,
   ArticleMediumIcon,
   BellIcon,
@@ -104,6 +110,7 @@ export {
   ChartBarIcon,
   ChartPieIcon,
   ChartPieSliceIcon,
+  ChartLineIcon,
   ChatCircleIcon,
   CheckCircleIcon,
   CheckIcon,
@@ -148,6 +155,7 @@ export {
   UserPlusIcon,
   UsersIcon,
   WarningCircleIcon,
+  WaveformIcon,
   XIcon,
   XCircleIcon,
 };

@@ -61,12 +61,17 @@ export async function POST(request: NextRequest) {
     const daysDiff = endDate && startDate ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) : 30;
     const isShortTimeframe = daysDiff <= 7; // 1D, 5D timeframes
     const useIntraday = typedInterval !== '1d' && (typedInterval.toString().includes('m') || typedInterval.toString().includes('h'));
+    
+    // Use direct fetch for long historical ranges to avoid database cache issues
+    // The incremental sync logic can incorrectly limit data if only recent data exists
+    const isLongHistorical = daysDiff > 90; // 3M, 6M, 1Y, 5Y
 
     let quotes: ChartQuoteSerializable[] = [];
     let dataSource = 'database';
 
-    if (isShortTimeframe || useIntraday) {
-      // For short timeframes or intraday intervals, get data directly from Yahoo Finance
+    // Use direct fetch for: short timeframes, intraday, OR long historical ranges
+    if (isShortTimeframe || useIntraday || isLongHistorical) {
+      // Get data directly from Yahoo Finance
       try {
         const directData = await getChartDataDirect(upperTicker, startDate!, endDate!, typedInterval);
         quotes = directData.data.map((item: any) => ({
@@ -147,7 +152,10 @@ export async function POST(request: NextRequest) {
         dataSource,
         isShortTimeframe,
         useIntraday,
-        daysDiff
+        isLongHistorical,
+        daysDiff,
+        requestedDays: daysDiff,
+        actualDataPoints: quotes.length
       }
     });
   } catch (error: any) {

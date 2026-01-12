@@ -1082,4 +1082,104 @@ export interface TikTokLessonsProps {
   subtitle?: string;
   topics?: string[];
   maxItems?: number;
+}
+
+// === Chart Data Types ===
+
+/**
+ * Raw chart data from API (OHLCV format)
+ * Used for candlestick charts and line charts
+ * Note: volume can be string (from some endpoints) or bigint (from yahoo-finance2)
+ */
+export interface RawChartData {
+  date: Date;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  close: number | null;
+  volume: string | bigint | null;
+}
+
+/**
+ * Transformed chart data point ready for display
+ * Includes formatted date labels for X-axis
+ */
+export interface ChartDataPoint {
+  date: string;              // YYYY-MM-DD format
+  timestamp: number;          // Unix timestamp for sorting
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  formattedDate: string;      // Display label for X-axis
+}
+
+/**
+ * Timeframe configuration for chart display
+ */
+export interface TimeframeConfig {
+  value: string;              // e.g., '1d', '1mo', '1y'
+  label: string;              // e.g., '1D', '1M', '1Y'
+  interval: string;           // e.g., '15m', '1h', '1d'
+  days: number;               // Number of days to display
+}
+
+/**
+ * Chart API response structure
+ */
+export interface ChartApiResponse {
+  success: boolean;
+  data: {
+    quotes: RawChartData[];
+    meta?: {
+      currency?: string;
+      symbol?: string;
+      exchangeName?: string;
+      instrumentType?: string;
+      firstTradeDate?: number;
+      regularMarketTime?: number;
+      gmtoffset?: number;
+      timezone?: string;
+      exchangeTimezoneName?: string;
+      [key: string]: unknown;
+    };
+  };
+  error?: string;
+}
+
+// === Asset Guidance Types ===
+
+/**
+ * Individual guidance point (pro or con) with teen-friendly messaging
+ */
+export interface GuidancePoint {
+  id: string;
+  text: string;              // Teen-friendly explanation
+  iconName?: string;         // Optional Phosphor icon name (e.g., 'CurrencyDollarIcon', 'TargetIcon')
+  severity?: 'mild' | 'moderate' | 'severe'; // For cons
+  importance?: 'nice' | 'good' | 'great';    // For pros
+}
+
+/**
+ * Complete guidance result with pros, cons, and contextual messaging
+ */
+export interface GuidanceResult {
+  pros: GuidancePoint[];
+  cons: GuidancePoint[];
+  summary: string;           // "Thinking about buying AAPL?"
+  context: string;           // "Here's what makes it interesting..."
+  hasHoldings: boolean;      // true if user owns it
+  holdingSummary?: string;   // "You own 10 shares"
+}
+
+/**
+ * Parameters for generating asset guidance
+ */
+export interface GuidanceParams {
+  asset: AssetDetailData['asset'];
+  quote: AssetDetailData['quote'];
+  riskMeasures?: AssetDetailData['riskMeasures'];
+  userHoldings: UserHoldingsSummary | null;
+  authenticated: boolean;
 } 

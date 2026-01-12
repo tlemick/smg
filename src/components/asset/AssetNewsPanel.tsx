@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { NewsItem, AssetNewsResponse } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Icon, ArticleMediumIcon } from '@/components/ui/Icon';
 
 interface AssetNewsPanelProps {
   ticker: string;
@@ -27,70 +28,11 @@ function formatTimeAgo(date: Date): string {
   }
 }
 
-function NewsItemCard({ item, isGrid = false }: { item: NewsItem; isGrid?: boolean }) {
+function NewsItemCard({ item }: { item: NewsItem }) {
   const handleNewsClick = () => {
     window.open(item.link, '_blank', 'noopener,noreferrer');
   };
 
-  if (isGrid) {
-    // Grid layout for larger screens
-    return (
-      <div 
-        className="p-4 cursor-pointer hover:bg-muted transition-colors rounded-lg border border-border"
-        onClick={handleNewsClick}
-      >
-        <div className="mb-3">
-          {item.thumbnail ? (
-            <img 
-              src={item.thumbnail} 
-              alt=""
-              className="w-full h-32 object-cover rounded"
-              onError={(e) => {
-                // Replace with fallback on error
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div 
-            className="w-full h-32 bg-muted rounded flex items-center justify-center"
-            style={{ display: item.thumbnail ? 'none' : 'flex' }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-400">
-              <rect width="24" height="24" fill="currentColor" fillOpacity="0.1"/>
-              <path d="M12 8C10.9 8 10 8.9 10 10S10.9 12 12 12S14 11.1 14 10S13.1 8 12 8Z" fill="currentColor"/>
-              <path d="M21 5H18.41L17 3.59C16.78 3.37 16.47 3.25 16.14 3.25H7.86C7.53 3.25 7.22 3.37 7 3.59L5.59 5H3C2.45 5 2 5.45 2 6V18C2 18.55 2.45 19 3 19H18C18.55 19 19 18.55 19 18V6C19 5.45 18.55 5 18 5ZM12 16C10.34 16 9 14.66 9 13S10.34 10 12 10S15 11.34 15 13S13.66 16 12 16Z" fill="currentColor"/>
-            </svg>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-foreground leading-tight overflow-hidden" 
-              style={{ 
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as any
-              }}>
-            {item.title}
-          </h4>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="truncate">{item.publisher}</span>
-            <div className="flex items-center gap-2">
-              {item.isRecent && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  New
-                </span>
-              )}
-              <span className="whitespace-nowrap">{formatTimeAgo(item.publishedAt)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // List layout for smaller screens
   return (
     <div 
       className="py-3 cursor-pointer hover:bg-muted transition-colors rounded-md -mx-2 px-2"
@@ -116,7 +58,7 @@ function NewsItemCard({ item, isGrid = false }: { item: NewsItem; isGrid?: boole
             className="w-16 h-12 bg-muted rounded flex items-center justify-center"
             style={{ display: item.thumbnail ? 'none' : 'flex' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
               <rect width="24" height="24" fill="currentColor" fillOpacity="0.1"/>
               <path d="M12 8C10.9 8 10 8.9 10 10S10.9 12 12 12S14 11.1 14 10S13.1 8 12 8Z" fill="currentColor"/>
               <path d="M21 5H18.41L17 3.59C16.78 3.37 16.47 3.25 16.14 3.25H7.86C7.53 3.25 7.22 3.37 7 3.59L5.59 5H3C2.45 5 2 5.45 2 6V18C2 18.55 2.45 19 3 19H18C18.55 19 19 18.55 19 18V6C19 5.45 18.55 5 18 5ZM12 16C10.34 16 9 14.66 9 13S10.34 10 12 10S15 11.34 15 13S13.66 16 12 16Z" fill="currentColor"/>
@@ -124,7 +66,7 @@ function NewsItemCard({ item, isGrid = false }: { item: NewsItem; isGrid?: boole
           </div>
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-foreground leading-tight mb-1 overflow-hidden" 
+          <h4 className="text-sm font-medium text-foreground mb-1 overflow-hidden" 
               style={{ 
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -134,9 +76,9 @@ function NewsItemCard({ item, isGrid = false }: { item: NewsItem; isGrid?: boole
           </h4>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="truncate">{item.publisher}</span>
-            <div className="flex items-center gap-2 ml-2">
+            <div className="flex items-center gap-2">
               {item.isRecent && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
                   New
                 </span>
               )}
@@ -192,17 +134,20 @@ export function AssetNewsPanel({ ticker, assetName }: AssetNewsPanelProps) {
     return (
       <Card className="shadow-none h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-normal">Recent News</CardTitle>
+          <CardTitle className="text-sm font-normal flex items-center gap-2">
+            <Icon icon={ArticleMediumIcon} size="sm" />
+            Recent News
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="flex gap-3">
-                <div className="w-16 h-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                <div className="w-16 h-12 bg-muted rounded"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
-                  <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2"></div>
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
                 </div>
               </div>
             </div>
@@ -217,9 +162,12 @@ export function AssetNewsPanel({ ticker, assetName }: AssetNewsPanelProps) {
     return (
       <Card className="shadow-none h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-normal">Recent News</CardTitle>
+          <CardTitle className="text-sm font-normal flex items-center gap-2">
+            <Icon icon={ArticleMediumIcon} size="sm" />
+            Recent News
+          </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-4">
         <div className="text-center py-8">
           <div className="text-muted-foreground mb-2">
             <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,7 +185,10 @@ export function AssetNewsPanel({ ticker, assetName }: AssetNewsPanelProps) {
     return (
       <Card className="shadow-none h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-normal">Recent News</CardTitle>
+          <CardTitle className="text-sm font-normal flex items-center gap-2">
+            <Icon icon={ArticleMediumIcon} size="sm" />
+            Recent News
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
         <div className="text-center py-8">
@@ -257,7 +208,10 @@ export function AssetNewsPanel({ ticker, assetName }: AssetNewsPanelProps) {
     <Card className="shadow-none relative">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Recent News</CardTitle>
+          <CardTitle className="text-sm font-normal flex items-center gap-2">
+            <Icon icon={ArticleMediumIcon} size="sm" />
+            Recent News
+          </CardTitle>
           {cacheAge > 0 && (
             <span className="text-xs text-muted-foreground">
               Updated {Math.floor(cacheAge / 60000)}m ago
@@ -266,38 +220,25 @@ export function AssetNewsPanel({ ticker, assetName }: AssetNewsPanelProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-
-      {/* Mobile and tablet: List layout */}
-      <div className="block lg:hidden">
         <div className="divide-y divide-border -mx-2">
           {news.slice(0, 4).map((item) => (
-            <NewsItemCard key={item.uuid} item={item} isGrid={false} />
+            <NewsItemCard key={item.uuid} item={item} />
           ))}
         </div>
-      </div>
 
-      {/* Desktop: Grid layout */}
-      <div className="hidden lg:block">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {news.slice(0, 4).map((item) => (
-            <NewsItemCard key={item.uuid} item={item} isGrid={true} />
-          ))}
-        </div>
-      </div>
-
-      {news.length > 4 && (
-        <div className="mt-6 pt-4 border-t border-border flex justify-center">
-          <button
-            onClick={() => {
-              // Could link to a dedicated news page in the future
-              window.open(`https://finance.yahoo.com/quote/${ticker}/news`, '_blank', 'noopener,noreferrer');
-            }}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            View all news →
-          </button>
-        </div>
-      )}
+        {news.length > 4 && (
+          <div className="mt-6 pt-4 border-t border-border flex justify-center">
+            <button
+              onClick={() => {
+                // Could link to a dedicated news page in the future
+                window.open(`https://finance.yahoo.com/quote/${ticker}/news`, '_blank', 'noopener,noreferrer');
+              }}
+              className="text-sm text-primary hover:text-primary/80 font-medium"
+            >
+              View all news →
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

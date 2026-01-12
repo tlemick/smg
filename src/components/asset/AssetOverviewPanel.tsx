@@ -1,36 +1,50 @@
 'use client';
 
 import React from 'react';
-import { InfoIcon } from '@/components/ui/Icon';
+import { PiggyBank } from '@phosphor-icons/react';
 import type { AssetDetailData } from '@/types';
-import { LessonButton } from '@/components/ui/LessonButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Formatters } from '@/lib/financial';
+import { Icon } from '@/components/ui/Icon';
 
-interface Props {
+interface AssetOverviewPanelProps {
   asset: AssetDetailData['asset'];
   quote: AssetDetailData['quote'];
   typeSpecific: AssetDetailData['typeSpecific'];
   profile?: AssetDetailData['profile'];
 }
 
-// Helper wrappers for backward compatibility (can be removed if all usages are updated)
-function formatNumber(value: number | undefined | null, decimals = 2): string {
+/**
+ * Helper function: Format number with decimals
+ */
+function formatNumber(value: number | undefined | null, decimals: number = 2): string {
   return Formatters.number(value, { decimals });
 }
 
-function formatPercentage(value: number | undefined | null, decimals = 2): string {
+/**
+ * Helper function: Format percentage
+ */
+function formatPercentage(value: number | undefined | null, decimals: number = 2): string {
   return Formatters.percentage(value, { decimals });
 }
 
-function formatCurrency(value: number | undefined | null, decimals = 2): string {
+/**
+ * Helper function: Format currency
+ */
+function formatCurrency(value: number | undefined | null, decimals: number = 2): string {
   return Formatters.currency(value, { decimals });
 }
 
+/**
+ * Helper function: Format market cap
+ */
 function formatMarketCap(value: string | undefined | null): string {
   return Formatters.marketCap(value);
 }
 
+/**
+ * Get color class for analyst consensus rating
+ */
 function getConsensusColor(consensus?: string): string {
   switch (consensus) {
     case 'Strong Buy': return 'text-emerald-700';
@@ -42,13 +56,16 @@ function getConsensusColor(consensus?: string): string {
   }
 }
 
-export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: Props) {
+export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: AssetOverviewPanelProps) {
   // For stocks, show financial metrics; for others, show basic asset info
   if (asset.type === 'STOCK') {
     return (
       <Card className="shadow-none h-full flex flex-col">
         <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-normal">Financial Metrics</CardTitle>
+          <CardTitle className="text-sm font-normal flex items-center gap-2">
+            <Icon icon={PiggyBank} size="sm" />
+            Financial Metrics
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="flex-1 pt-0">
@@ -90,7 +107,9 @@ export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: Prop
             </div>
 
             {/* Analyst Consensus */}
-            {quote.analystConsensus && quote.analystConsensus.totalAnalysts && quote.analystConsensus.totalAnalysts > 0 && (
+            {quote.analystConsensus && 
+             quote.analystConsensus.totalAnalysts !== undefined && 
+             quote.analystConsensus.totalAnalysts > 0 && (
               <div className="py-3 flex items-center justify-between" title={`Based on ${quote.analystConsensus.totalAnalysts} analyst recommendations`}>
                 <span className="text-muted-foreground text-sm">Analyst Consensus</span>
                 <div className="flex items-center gap-2">
@@ -105,38 +124,6 @@ export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: Prop
             )}
           </div>
         </CardContent>
-
-        <div className="flex justify-end px-6 pb-6">
-          <LessonButton
-            text="Understanding Financial Metrics"
-            topics={['Financial Analysis', 'Stock Valuation']}
-            maxItems={2}
-            modalLayout="dual"
-            modalContent={
-              <div className="flex flex-col gap-4 p-8">
-                <h3 className="text-lg font-semibold text-foreground">Financial Metrics Explained</h3>
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium text-foreground">Market Cap</h4>
-                    <p className="text-sm text-muted-foreground">Shows company size. Large-cap (&gt;$10B) are typically more stable, small-cap (&lt;$2B) more volatile.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">P/E Ratio</h4>
-                    <p className="text-sm text-muted-foreground">Price relative to earnings. Lower P/E may indicate value; higher P/E may indicate growth expectations.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">Dividend Yield</h4>
-                    <p className="text-sm text-muted-foreground">Income return from owning the stock. Higher yields may indicate mature companies or distressed situations.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">Analyst Consensus</h4>
-                    <p className="text-sm text-muted-foreground">Professional analysts' average recommendation. Consider alongside your own research.</p>
-                  </div>
-                </div>
-              </div>
-            }
-          />
-        </div>
       </Card>
     );
   }
@@ -160,24 +147,27 @@ export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: Prop
     rows.push(
       { label: 'Fund Family', value: typeSpecific.mutualFund.fundFamily || 'N/A', tooltip: 'Investment company managing the fund' },
       { label: 'Category', value: typeSpecific.mutualFund.fundType || 'N/A', tooltip: 'Investment style and objective' },
-      { label: 'AUM', value: typeSpecific.mutualFund.aum ? `$${typeSpecific.mutualFund.aum.toLocaleString()}` : 'N/A', tooltip: 'Total assets under management' },
-      { label: 'Expense Ratio', value: typeSpecific.mutualFund.expenseRatio != null ? `${(typeSpecific.mutualFund.expenseRatio * 100).toFixed(2)}%` : 'N/A', tooltip: 'Annual management fee' }
+      { label: 'AUM', value: typeSpecific.mutualFund.aum ? Formatters.currency(typeSpecific.mutualFund.aum, { decimals: 0 }) : 'N/A', tooltip: 'Total assets under management' },
+      { label: 'Expense Ratio', value: typeSpecific.mutualFund.expenseRatio != null ? Formatters.percentage(typeSpecific.mutualFund.expenseRatio, { multiplier: 1 }) : 'N/A', tooltip: 'Annual management fee' }
     );
   }
 
   if (asset.type === 'BOND' && typeSpecific.bond) {
     rows.push(
       { label: 'Issuer', value: typeSpecific.bond.issuer || 'N/A', tooltip: 'Entity that issued the bond' },
-      { label: 'Maturity Date', value: typeSpecific.bond.maturityDate ? new Date(typeSpecific.bond.maturityDate).toLocaleDateString() : 'N/A', tooltip: 'When principal is repaid' },
-      { label: 'Coupon Rate', value: typeSpecific.bond.couponRate != null ? `${typeSpecific.bond.couponRate.toFixed(2)}%` : 'N/A', tooltip: 'Annual interest rate' },
-      { label: 'Face Value', value: typeSpecific.bond.faceValue != null ? `$${typeSpecific.bond.faceValue.toLocaleString()}` : 'N/A', tooltip: 'Principal amount at maturity' }
+      { label: 'Maturity Date', value: typeSpecific.bond.maturityDate ? Formatters.date(typeSpecific.bond.maturityDate) : 'N/A', tooltip: 'When principal is repaid' },
+      { label: 'Coupon Rate', value: typeSpecific.bond.couponRate != null ? Formatters.percentage(typeSpecific.bond.couponRate, { multiplier: 1 }) : 'N/A', tooltip: 'Annual interest rate' },
+      { label: 'Face Value', value: typeSpecific.bond.faceValue != null ? Formatters.currency(typeSpecific.bond.faceValue, { decimals: 0 }) : 'N/A', tooltip: 'Principal amount at maturity' }
     );
   }
 
   return (
     <Card className="shadow-none h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold">Asset Overview</CardTitle>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Icon icon={PiggyBank} size="sm" />
+          Asset Overview
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="flex-1 pt-0">
@@ -190,27 +180,7 @@ export function AssetOverviewPanel({ asset, quote, typeSpecific, profile }: Prop
           ))}
         </div>
       </CardContent>
-
-      <div className="flex justify-end px-6 pb-6">
-        <LessonButton
-          text="What is this?"
-          topics={[asset.type === 'MUTUAL_FUND' ? 'Mutual Funds' : asset.type === 'BOND' ? 'Fixed Income' : 'Investment Types']}
-          maxItems={1}
-          modalLayout="dual"
-            modalContent={
-              <div className="flex flex-col gap-2 p-8">
-                <h3 className="text-lg font-semibold text-foreground">About {asset.type.replace('_', ' ')}s</h3>
-                <p className="mt-2 text-sm text-muted-foreground max-w-prose">
-                  Learn about different types of financial assets and how to understand their key characteristics. Each asset type has unique features that affect how it behaves in your portfolio.
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground max-w-prose">
-                  Understanding what you're investing in is the first step to making informed decisions. Look at the asset overview to see key information about this financial instrument.
-                </p>
-              </div>
-            }
-          />
-        </div>
-      </Card>
+    </Card>
     );
   }
 

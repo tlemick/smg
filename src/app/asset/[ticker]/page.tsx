@@ -2,13 +2,13 @@
 
 import { useParams } from 'next/navigation';
 import { useAssetDetail } from '@/hooks/useAssetDetail';
-import { AssetHeader } from '@/components/asset/AssetHeader';
 import { AssetChart } from '@/components/asset/AssetChart';
-import { AssetTopActions, AssetOverviewPanel, RiskMeasuresPanel, AssetNewsPanel } from '@/components/asset';
+import { AssetOverviewPanel, RiskMeasuresPanel, AssetNewsPanel, AssetGuidanceSection } from '@/components/asset';
+import { AssetTopSection } from '@/components/asset/AssetTopSection';
+import { AssetBackButton } from '@/components/asset/AssetBackButton';
 import { StockMetrics } from '@/components/asset/StockMetrics';
 import { BondMetrics } from '@/components/asset/BondMetrics';
 import { FundMetrics } from '@/components/asset/FundMetrics';
-import { UserHoldings } from '@/components/asset/UserHoldings';
 import { PageLayout } from '@/components/layout/PageLayout';
 
 /**
@@ -77,89 +77,81 @@ export default function AssetDetailPage() {
   return (
     <PageLayout>
       <div className="space-y-4">
-        {/* Full-width chart at the top */}
+        {/* Back Arrow */}
+        <AssetBackButton />
+
+        {/* Top Section: Name, Price, Actions */}
+        <AssetTopSection 
+          asset={asset}
+          quote={quote}
+          userHoldings={userHoldings}
+          authenticated={authenticated}
+        />
+
+        {/* Price Chart */}
         <AssetChart 
           ticker={asset.ticker}
           currentPrice={quote.regularMarketPrice}
           currency={quote.currency}
         />
 
-        {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left Column: Header + Top Actions + Metrics */}
-          <div className="lg:col-span-7 space-y-4">
-            <AssetHeader 
-              asset={asset}
-              quote={quote}
-              hasHoldings={!!userHoldings}
-              authenticated={authenticated}
-              profile={profile}
-            />
-
-            {authenticated && userHoldings && (
-              <UserHoldings 
-                ticker={asset.ticker}
-                currentPrice={quote.regularMarketPrice}
-                currency={quote.currency || 'USD'}
-              />
-            )}
-
-            <AssetTopActions 
-              asset={asset}
-              authenticated={authenticated}
-              hasHoldings={!!userHoldings}
-            />
-
-            {/* Type-specific metrics */}
-            {asset.type === 'STOCK' && typeSpecific.stock && (
-              <StockMetrics stock={typeSpecific.stock} quote={quote} />
-            )}
-            {asset.type === 'BOND' && typeSpecific.bond && (
-              <BondMetrics 
-                bond={{
-                  ...typeSpecific.bond,
-                  ticker: asset.ticker,
-                  name: asset.name,
-                  maturityDate: typeSpecific.bond.maturityDate 
-                    ? (typeSpecific.bond.maturityDate instanceof Date 
-                        ? typeSpecific.bond.maturityDate 
-                        : new Date(typeSpecific.bond.maturityDate))
-                    : null,
-                  duration: riskMeasures?.bond?.durationApprox ?? null,
-                }} 
-                quote={quote} 
-              />
-            )}
-            {(asset.type === 'MUTUAL_FUND' || asset.type === 'ETF') && typeSpecific.mutualFund && (
-              <FundMetrics 
-                fund={{
-                  ...typeSpecific.mutualFund,
-                  ticker: asset.ticker,
-                  name: asset.name,
-                  inceptionDate: typeSpecific.mutualFund.inceptionDate
-                    ? (typeSpecific.mutualFund.inceptionDate instanceof Date
-                        ? typeSpecific.mutualFund.inceptionDate
-                        : new Date(typeSpecific.mutualFund.inceptionDate))
-                    : null,
-                  totalAssets: typeSpecific.mutualFund.aum ?? null,
-                  category: profile?.category ?? null,
-                  investmentObjective: profile?.longBusinessSummary ?? profile?.investmentObjective ?? null,
-                }} 
-                quote={quote} 
-                assetType={asset.type} 
-              />
-            )}
-          </div>
-
-          {/* Right Column: Overview, Risk, News */}
-          <div className="lg:col-span-5 space-y-4">
-            <AssetOverviewPanel asset={asset} quote={quote} typeSpecific={typeSpecific} profile={profile} />
-            <RiskMeasuresPanel riskMeasures={assetData.riskMeasures} assetType={asset.type} />
-            <AssetNewsPanel ticker={asset.ticker} assetName={asset.name} />
-          </div>
+        {/* Risk & Financial Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <RiskMeasuresPanel riskMeasures={assetData.riskMeasures} assetType={asset.type} />
+          <AssetOverviewPanel asset={asset} quote={quote} typeSpecific={typeSpecific} profile={profile} />
         </div>
 
-        
+        {/* Type-specific Metrics & News Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {asset.type === 'STOCK' && typeSpecific.stock && (
+            <StockMetrics stock={typeSpecific.stock} quote={quote} />
+          )}
+          {asset.type === 'BOND' && typeSpecific.bond && (
+            <BondMetrics 
+              bond={{
+                ...typeSpecific.bond,
+                ticker: asset.ticker,
+                name: asset.name,
+                maturityDate: typeSpecific.bond.maturityDate 
+                  ? (typeSpecific.bond.maturityDate instanceof Date 
+                      ? typeSpecific.bond.maturityDate 
+                      : new Date(typeSpecific.bond.maturityDate))
+                  : null,
+                duration: riskMeasures?.bond?.durationApprox ?? null,
+              }} 
+              quote={quote} 
+            />
+          )}
+          {(asset.type === 'MUTUAL_FUND' || asset.type === 'ETF') && typeSpecific.mutualFund && (
+            <FundMetrics 
+              fund={{
+                ...typeSpecific.mutualFund,
+                ticker: asset.ticker,
+                name: asset.name,
+                inceptionDate: typeSpecific.mutualFund.inceptionDate
+                  ? (typeSpecific.mutualFund.inceptionDate instanceof Date
+                      ? typeSpecific.mutualFund.inceptionDate
+                      : new Date(typeSpecific.mutualFund.inceptionDate))
+                  : null,
+                totalAssets: typeSpecific.mutualFund.aum ?? null,
+                category: profile?.category ?? null,
+                investmentObjective: profile?.longBusinessSummary ?? profile?.investmentObjective ?? null,
+              }} 
+              quote={quote} 
+              assetType={asset.type} 
+            />
+          )}
+          <AssetNewsPanel ticker={asset.ticker} assetName={asset.name} />
+        </div>
+
+        {/* Investment Guidance Section */}
+        <AssetGuidanceSection
+          asset={asset}
+          quote={quote}
+          userHoldings={userHoldings}
+          authenticated={authenticated}
+          riskMeasures={riskMeasures}
+        />
       </div>
     </PageLayout>
   );
