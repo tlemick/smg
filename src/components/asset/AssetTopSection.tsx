@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Icon, ArrowUpIcon, ArrowDownIcon } from '@/components/ui/Icon';
 import { WatchlistSelectionModal } from './WatchlistSelectionModal';
+import { TradeDrawer } from '@/components/trading';
 import { useWatchlistStatus } from '@/hooks/useWatchlistStatus';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 import { createModalClasses } from '@/lib/positioning';
 import { createPortal } from 'react-dom';
 
@@ -43,23 +45,29 @@ export function AssetTopSection({
   const router = useRouter();
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [tradeDrawerState, setTradeDrawerState] = useState<{
+    isOpen: boolean;
+    orderType: 'BUY' | 'SELL';
+  }>({ isOpen: false, orderType: 'BUY' });
 
   const { inWatchlists, isLoading: watchlistLoading } = useWatchlistStatus(
     asset.ticker,
     authenticated
   );
 
+  // Get portfolio overview for cash balance
+  const { data: portfolioData } = usePortfolioOverview();
+
   // Price change color (using semantic chart tokens)
   const priceColor = getChangeColor(quote.regularMarketChange ?? null);
 
-  // Buy/Sell handlers
+  // Buy/Sell handlers - now open drawer instead of navigating
   const handleBuyClick = () => {
     if (!authenticated) {
       setShowLoginPrompt(true);
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/buy/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeDrawerState({ isOpen: true, orderType: 'BUY' });
   };
 
   const handleSellClick = () => {
@@ -70,8 +78,7 @@ export function AssetTopSection({
     if (!userHoldings || userHoldings.totalQuantity === 0) {
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/sell/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeDrawerState({ isOpen: true, orderType: 'SELL' });
   };
 
   const handleWatchlistClick = () => {
@@ -194,6 +201,30 @@ export function AssetTopSection({
         </div>,
         document.body
       )}
+
+      {/* Trade Drawer */}
+      <TradeDrawer
+        isOpen={tradeDrawerState.isOpen}
+        onClose={() => setTradeDrawerState({ ...tradeDrawerState, isOpen: false })}
+        asset={{
+          id: asset.id,
+          ticker: asset.ticker,
+          name: asset.name,
+          allowFractionalShares: asset.allowFractionalShares ?? true,
+        }}
+        currentPrice={quote.regularMarketPrice}
+        currency={quote.currency || 'USD'}
+        orderType={tradeDrawerState.orderType}
+        userCashBalance={portfolioData?.cashBalance}
+        userHoldings={
+          userHoldings && userHoldings.totalQuantity > 0
+            ? {
+                totalQuantity: userHoldings.totalQuantity,
+                avgCostBasis: userHoldings.avgCostBasis,
+              }
+            : undefined
+        }
+      />
     </>
   );
 }

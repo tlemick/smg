@@ -18,11 +18,6 @@ export function CompanyLogo({
   className = '' 
 }: CompanyLogoProps) {
   const [imageError, setImageError] = useState(false);
-  
-  // Debug logging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`CompanyLogo for ${ticker}:`, { logoUrl, imageError });
-  }
 
   // Size configurations
   const sizeClasses = {

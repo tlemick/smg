@@ -27,6 +27,7 @@ export function TransactionsCard({
     hasTransactions,
     hasPending,
     hasCompleted,
+    refresh,
   } = useTransactionsFeed({
     limit: 1000, // Get all transactions
     autoRefresh,
@@ -92,6 +93,7 @@ export function TransactionsCard({
                 orders={pendingOrders}
                 emptyMessage="No pending orders"
                 loading={false}
+                onCancelSuccess={refresh}
               />
             )}
 
@@ -103,6 +105,7 @@ export function TransactionsCard({
                 orders={completedOrders}
                 emptyMessage="No completed transactions"
                 loading={false}
+                onCancelSuccess={refresh}
               />
             )}
           </div>

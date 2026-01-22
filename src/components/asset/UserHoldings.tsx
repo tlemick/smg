@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { UserHoldingsApiResponse, UserHoldingsData } from '@/types';
 import { useToast } from '@/hooks/useToast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TradeDrawer } from '@/components/trading';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 
 interface UserHoldingsProps {
   ticker: string;
@@ -15,10 +16,14 @@ interface UserHoldingsProps {
 
 export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsProps) {
   const { success: _success } = useToast();
-  const router = useRouter();
   const [detailedHoldings, setDetailedHoldings] = useState<UserHoldingsApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTradeDrawerOpen, setIsTradeDrawerOpen] = useState(false);
+  const [tradeAction, setTradeAction] = useState<'BUY' | 'SELL'>('BUY');
+
+  // Get user cash balance for trade drawer
+  const { cashBalance } = usePortfolioOverview();
 
   useEffect(() => {
     const fetchDetailedHoldings = async () => {
@@ -67,13 +72,13 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
 
   // Trading handlers
   const handleBuyClick = () => {
-    const returnUrl = `/asset/${ticker}`;
-    router.push(`/trade/buy/${ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeAction('BUY');
+    setIsTradeDrawerOpen(true);
   };
 
   const handleSellClick = () => {
-    const returnUrl = `/asset/${ticker}`;
-    router.push(`/trade/sell/${ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeAction('SELL');
+    setIsTradeDrawerOpen(true);
   };
 
   if (loading) {
@@ -286,6 +291,28 @@ export function UserHoldings({ ticker, currentPrice, currency }: UserHoldingsPro
         </Button>
       </div>
       </CardContent>
+
+      {/* Trade Drawer */}
+      <TradeDrawer
+        isOpen={isTradeDrawerOpen}
+        onClose={() => setIsTradeDrawerOpen(false)}
+        asset={{
+          ticker: ticker,
+          name: detailedHoldings?.assetName || ticker,
+          allowFractionalShares: true,
+        }}
+        orderType={tradeAction}
+        currentPrice={currentPrice}
+        userCashBalance={cashBalance}
+        userHoldings={
+          detailedHoldings?.holdings
+            ? {
+                totalQuantity: detailedHoldings.holdings.totalQuantity,
+                avgCostBasis: detailedHoldings.holdings.avgCostBasis,
+              }
+            : undefined
+        }
+      />
     </Card>
   );
 } 

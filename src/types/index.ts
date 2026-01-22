@@ -733,6 +733,40 @@ export interface UnifiedOrder {
   educationalNote: string;
 }
 
+// === Trade Drawer Types ===
+
+export interface TradeDrawerStep {
+  step: 1 | 2 | 3 | 4 | 5;
+  canGoBack: boolean;
+  canGoForward: boolean;
+}
+
+export interface TradeOrderData {
+  orderType: 'MARKET' | 'LIMIT';
+  tradeType: 'BUY' | 'SELL';
+  quantityType: 'DOLLARS' | 'SHARES';
+  amount: number; // Dollar amount or share count
+  limitPrice?: number;
+  estimatedShares?: number; // Calculated
+  estimatedCost?: number; // Calculated
+  notes?: string;
+}
+
+export interface ExecutedTradeOrder {
+  orderId: string;
+  transactionId?: string;
+  status: 'EXECUTED' | 'PENDING' | 'FAILED';
+  filledShares: number;
+  filledPrice: number;
+  filledNotional: number;
+  executedAt: Date;
+  timeInForce: 'DAY' | 'GTC';
+  asset: {
+    ticker: string;
+    name: string;
+  };
+}
+
 export interface OrderManagementProps {
   userId: string;
   showEducationalContent?: boolean;
@@ -969,6 +1003,7 @@ export interface TransactionItemProps {
   showTimestamp?: boolean;
   compact?: boolean;
   onOrderClick?: (orderId: string) => void;
+  onCancelSuccess?: () => void;
 }
 
 export interface TransactionSectionProps {
@@ -977,6 +1012,7 @@ export interface TransactionSectionProps {
   orders: UnifiedOrder[];
   emptyMessage: string;
   loading?: boolean;
+  onCancelSuccess?: () => void;
 }
 
 // === Asset News Types ===
@@ -1046,6 +1082,34 @@ export interface TrendingAssetsResponse {
   success: boolean;
   assets: TrendingAsset[];
   assetType: string;
+}
+
+// === Trade Suggestions Types ===
+
+export interface StockSuggestion {
+  ticker: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  logoUrl?: string | null;
+  marketCap?: string | null;
+  volume?: string | null;
+  category: 'trending' | 'consumer' | 'dividend' | 'penny';
+  // Dividend-specific fields
+  dividendYield?: number | null;
+  dividendRate?: number | null;
+  // Additional metrics
+  fiftyTwoWeekHigh?: number | null;
+  fiftyTwoWeekLow?: number | null;
+}
+
+export interface TradeSuggestionsApiResponse extends ApiResponse<StockSuggestion[]> {
+  meta: {
+    category: string;
+    count: number;
+    timestamp: string;
+  };
 }
 
 export interface SimplifiedBuyRequest {

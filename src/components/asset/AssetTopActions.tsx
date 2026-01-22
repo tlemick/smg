@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { WatchlistSelectionModal } from './WatchlistSelectionModal';
 import { LessonButton } from '@/components/ui/LessonButton';
 import { createModalClasses, createPopoverClasses } from '@/lib/positioning';
+import { TradeDrawer } from '@/components/trading';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 
 // Trade icon SVG component
 const TradeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -26,13 +27,16 @@ interface AssetTopActionsProps {
 }
 
 export function AssetTopActions({ asset, authenticated, hasHoldings }: AssetTopActionsProps) {
-  const router = useRouter();
-
   const [isTradeOpen, setIsTradeOpen] = useState(false);
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isTradeDrawerOpen, setIsTradeDrawerOpen] = useState(false);
+  const [tradeAction, setTradeAction] = useState<'BUY' | 'SELL'>('BUY');
 
   const tradeRef = useRef<HTMLDivElement | null>(null);
+
+  // Get user cash balance for trade drawer
+  const { cashBalance } = usePortfolioOverview();
 
   // Simple outside click handler for the trade popover
   useEffect(() => {
@@ -52,8 +56,9 @@ export function AssetTopActions({ asset, authenticated, hasHoldings }: AssetTopA
       setShowLoginPrompt(true);
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/buy/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setIsTradeOpen(false); // Close popover
+    setTradeAction('BUY');
+    setIsTradeDrawerOpen(true);
   };
 
   const handleSellClick = () => {
@@ -64,8 +69,9 @@ export function AssetTopActions({ asset, authenticated, hasHoldings }: AssetTopA
     if (!hasHoldings) {
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/sell/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setIsTradeOpen(false); // Close popover
+    setTradeAction('SELL');
+    setIsTradeDrawerOpen(true);
   };
 
   const handleWatchlistClick = () => {
@@ -189,6 +195,21 @@ export function AssetTopActions({ asset, authenticated, hasHoldings }: AssetTopA
         </div>,
         document.body
       )}
+
+      {/* Trade Drawer */}
+      <TradeDrawer
+        isOpen={isTradeDrawerOpen}
+        onClose={() => setIsTradeDrawerOpen(false)}
+        asset={{
+          ticker: asset.ticker,
+          name: asset.name,
+          allowFractionalShares: asset.allowFractionalShares,
+        }}
+        orderType={tradeAction}
+        currentPrice={0} // Will be fetched by the drawer
+        userCashBalance={cashBalance}
+        userHoldings={undefined} // Will be fetched if needed
+      />
     </div>
   );
 }

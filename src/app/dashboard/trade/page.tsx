@@ -1,12 +1,27 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
+import { Command } from '@phosphor-icons/react';
 import { CircleNotchIcon, Icon } from '@/components/ui';
-import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  TrendingTab,
+  ConsumerBrandsTab,
+  DividendAristocratsTab,
+  PennyStocksTab,
+} from '@/components/trade';
 
+/**
+ * Trade Ideas Page
+ * 
+ * Educational page suggesting stocks across 4 categories to help students discover assets:
+ * 1. Hype Train - Trending/viral stocks
+ * 2. Stuff You Buy - Consumer brands
+ * 3. Safe & Steady - Dividend aristocrats
+ * 4. Cheap Seats - Penny stocks
+ */
 export default function TradePage() {
   const { user, isLoading } = useUser();
   const router = useRouter();
@@ -22,7 +37,7 @@ export default function TradePage() {
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Icon icon={CircleNotchIcon} size="lg" className="animate-spin text-primary" />
           <span className="text-lg text-muted-foreground">Loading...</span>
         </div>
@@ -31,42 +46,42 @@ export default function TradePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
-      <div>
-        <h1 className="text-4xl font-bold font-mono text-foreground">
-          Trade
+      <div className="mb-20">
+        <h1 className="text-3xl font-mono text-foreground leading-none">
+          Trade Ideas
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Buy and sell stocks, manage orders, and execute trades
+        <p className="text-muted-foreground max-w-prose">
+          Search in the bar above to find assets to add to your portfolio or use <span className="bg-muted text-xs text-foreground px-2 py-1 rounded-md inline-flex items-center gap-1"><Command size={16} weight="regular" />CMND + K</span> to open the global search. Explore the assets in the tab below to find some asset classes that you might have be aware of!
         </p>
       </div>
 
-      {/* Placeholder Content */}
-      <Card className="p-8 text-center">
-        <div className="max-w-md mx-auto">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold font-mono text-foreground mb-2">
-            Trading Platform Coming Soon
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            We're developing advanced trading features including buy/sell orders, market analysis, and real-time execution.
-          </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
-          </Link>
-        </div>
-      </Card>
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="hype-train" className="w-full">
+        <TabsList>
+          <TabsTrigger value="hype-train">Hype Train</TabsTrigger>
+          <TabsTrigger value="consumer">Stuff You Buy</TabsTrigger>
+          <TabsTrigger value="dividend">Safe & Steady</TabsTrigger>
+          <TabsTrigger value="penny">Cheap Seats</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="hype-train" className="mt-8">
+          <TrendingTab />
+        </TabsContent>
+
+        <TabsContent value="consumer" className="mt-8">
+          <ConsumerBrandsTab />
+        </TabsContent>
+
+        <TabsContent value="dividend" className="mt-8">
+          <DividendAristocratsTab />
+        </TabsContent>
+
+        <TabsContent value="penny" className="mt-8">
+          <PennyStocksTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

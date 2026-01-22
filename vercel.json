@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/trade/process-orders",
+      "schedule": "*/2 9-16 * * 1-5"
+    }
+  ]
+}

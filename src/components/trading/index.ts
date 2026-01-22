@@ -3,9 +3,6 @@ export { BuyOrderModal } from './BuyOrderModal';
 export { SellOrderModal } from './SellOrderModal';
 export { OrderManagement } from './OrderManagement';
 
-// New form components
-export { BuyOrderForm } from './forms/BuyOrderForm';
-export { SellOrderForm } from './forms/SellOrderForm';
-
-// Layout components
-export { TradePage } from './layout/TradePage'; 
+// Trade Drawer (Robinhood-style minimal flow)
+export { TradeDrawer } from './drawer/TradeDrawer';
+export * from './drawer'; 

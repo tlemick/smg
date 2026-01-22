@@ -14,21 +14,31 @@ import { OrderExecutionService } from '@/lib/order-execution-service';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Basic authentication for background jobs
+    // Support multiple authentication methods
     const authHeader = request.headers.get('authorization');
     const apiKey = process.env.ORDER_PROCESSING_API_KEY || 'dev-key-12345';
+    const vercelCronSecret = request.headers.get('x-vercel-cron-signature');
     
-    if (!authHeader || authHeader !== `Bearer ${apiKey}`) {
+    // Check if authorized by either method
+    const isAuthorizedByKey = authHeader === `Bearer ${apiKey}`;
+    const isVercelCron = !!vercelCronSecret; // Vercel auto-authenticates cron jobs
+    
+    // Allow in development without auth for testing
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (!isAuthorizedByKey && !isVercelCron && !isDevelopment) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Unauthorized. This endpoint is for background order processing only.' 
+          error: 'Unauthorized. This endpoint is for background order processing only.',
+          hint: 'Use Authorization: Bearer <API_KEY> header or deploy with Vercel Cron'
         },
         { status: 401 }
       );
     }
 
-    console.log('Order processing API called at:', new Date().toISOString());
+    const authMethod = isVercelCron ? 'Vercel Cron' : isAuthorizedByKey ? 'API Key' : 'Development';
+    console.log(`Order processing API called at: ${new Date().toISOString()} via ${authMethod}`);
 
     // Process all pending orders
     const result = await OrderExecutionService.processAllPendingOrders();

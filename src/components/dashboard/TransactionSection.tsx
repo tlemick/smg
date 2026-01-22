@@ -19,7 +19,8 @@ export function TransactionSection({
   icon, 
   orders, 
   emptyMessage, 
-  loading = false 
+  loading = false,
+  onCancelSuccess
 }: TransactionSectionProps) {
   return (
     <div>
@@ -58,6 +59,7 @@ export function TransactionSection({
               order={order}
               showTimestamp={true}
               compact={true}
+              onCancelSuccess={onCancelSuccess}
             />
           ))}
         </div>

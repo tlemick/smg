@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { AssetDetailData, UserHoldingsSummary } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TradeDrawer } from '@/components/trading';
+import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 import {
   Icon,
   ArrowUpIcon,
@@ -68,8 +69,12 @@ export function AssetGuidanceSection({
   authenticated,
   riskMeasures,
 }: AssetGuidanceSectionProps) {
-  const router = useRouter();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isTradeDrawerOpen, setIsTradeDrawerOpen] = useState(false);
+  const [tradeAction, setTradeAction] = useState<'BUY' | 'SELL'>('BUY');
+
+  // Get user cash balance for trade drawer
+  const { cashBalance } = usePortfolioOverview();
 
   // Get guidance from hook
   const guidance = useAssetGuidance({
@@ -116,8 +121,8 @@ export function AssetGuidanceSection({
       setShowLoginPrompt(true);
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/buy/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeAction('BUY');
+    setIsTradeDrawerOpen(true);
   };
 
   const handleSellClick = () => {
@@ -128,8 +133,8 @@ export function AssetGuidanceSection({
     if (!userHoldings || userHoldings.totalQuantity === 0) {
       return;
     }
-    const returnUrl = `/asset/${asset.ticker}`;
-    router.push(`/trade/sell/${asset.ticker}?returnTo=${encodeURIComponent(returnUrl)}`);
+    setTradeAction('SELL');
+    setIsTradeDrawerOpen(true);
   };
 
   return (
@@ -277,6 +282,28 @@ export function AssetGuidanceSection({
         </div>,
         document.body
       )}
+
+      {/* Trade Drawer */}
+      <TradeDrawer
+        isOpen={isTradeDrawerOpen}
+        onClose={() => setIsTradeDrawerOpen(false)}
+        asset={{
+          ticker: asset.ticker,
+          name: asset.name,
+          allowFractionalShares: asset.allowFractionalShares,
+        }}
+        orderType={tradeAction}
+        currentPrice={quote.regularMarketPrice}
+        userCashBalance={cashBalance}
+        userHoldings={
+          userHoldings
+            ? {
+                totalQuantity: userHoldings.totalQuantity,
+                avgCostBasis: userHoldings.avgCostBasis,
+              }
+            : undefined
+        }
+      />
     </>
   );
 }

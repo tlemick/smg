@@ -1098,4 +1098,79 @@ export async function getAssetNews(ticker: string, limit = 10) {
     console.error(`Failed to fetch news for ${ticker}:`, error);
     throw error;
   }
+}
+
+/**
+ * Get trending tickers from Yahoo Finance
+ * Returns a list of currently trending stocks in the US market
+ */
+export async function getTrendingTickers(limit: number = 10) {
+  try {
+    const trending = await yahooFinance.trendingSymbols('US', {
+      count: limit,
+      lang: 'en-US'
+    });
+    return trending.quotes || [];
+  } catch (error) {
+    console.error('Failed to fetch trending tickers:', error);
+    return [];
+  }
+}
+
+/**
+ * Curated list of consumer brands that students recognize and interact with
+ * These are companies behind products students use in their daily lives
+ */
+const CONSUMER_BRANDS = [
+  'NKE', 'AAPL', 'RBLX', 'KO', 'MCD', 'SBUX', 'DIS', 'NFLX', 'TSLA', 'AMZN',
+  'META', 'GOOGL', 'MSFT', 'SPOT', 'SNAP', 'COST', 'WMT', 'TGT', 'LULU',
+  'ULTA', 'HD', 'LOW', 'BBY', 'GME', 'AMC', 'F', 'GM', 'SONY', 'EA',
+  'ATVI', 'TTWO', 'ZM', 'UBER', 'LYFT', 'ABNB', 'DASH', 'SQ', 'PYPL', 'V',
+  'MA', 'YUM', 'CMG', 'SHAK', 'WING', 'DPZ', 'QSR', 'WEN', 'JACK', 'CRM'
+];
+
+/**
+ * Get random subset of consumer brand stock tickers
+ * Returns a shuffled selection to provide variety on each load
+ */
+export function getRandomConsumerBrands(count: number = 10): string[] {
+  const shuffled = [...CONSUMER_BRANDS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, CONSUMER_BRANDS.length));
+}
+
+/**
+ * Known dividend aristocrats (companies with 25+ years of consecutive dividend increases)
+ * These are considered "blue chip" stocks with proven track records of stability
+ */
+const DIVIDEND_ARISTOCRATS = [
+  'JNJ', 'PG', 'KO', 'PEP', 'WMT', 'MCD', 'TGT', 'LOW', 'CAT', 'MMM',
+  'CVX', 'XOM', 'IBM', 'GD', 'LMT', 'SYY', 'ADM', 'APD', 'ECL', 'CL'
+];
+
+/**
+ * Get list of dividend aristocrat tickers
+ * These stocks have increased dividends for 25+ consecutive years
+ */
+export function getDividendAristocrats(): string[] {
+  return DIVIDEND_ARISTOCRATS;
+}
+
+/**
+ * Curated list of interesting penny stocks (typically under $5)
+ * These are real companies with decent volume that students can learn from
+ * Note: Prices fluctuate - some may occasionally go over $5
+ */
+const PENNY_STOCK_CANDIDATES = [
+  'SNDL', 'GNUS', 'NAKD', 'SENS', 'TXMD', 'SESN', 'TNXP', 'JAGX', 'CIDM', 'CLVS',
+  'OCGN', 'TRNX', 'VEON', 'PLUG', 'NOK', 'SIRI', 'SOFI', 'PLTR', 'NIO', 'BB',
+  'AMC', 'ZYXI', 'AVDL', 'CTRM', 'CBAT', 'TRCH', 'ATOS', 'WKHS', 'TLRY', 'SNDL'
+];
+
+/**
+ * Get penny stock candidates
+ * Returns a list of tickers that are typically penny stocks (under $5)
+ * We'll filter the actual results by price when fetching quotes
+ */
+export function getPennyStockCandidates(): string[] {
+  return PENNY_STOCK_CANDIDATES;
 } 
