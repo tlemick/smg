@@ -3,6 +3,10 @@
     {
       "path": "/api/trade/process-orders",
       "schedule": "*/2 9-16 * * 1-5"
+    },
+    {
+      "path": "/api/jobs/compute-performance",
+      "schedule": "0 22 * * *"
     }
   ]
 }

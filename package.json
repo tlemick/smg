@@ -18,7 +18,9 @@
     "db:update-logos": "tsx scripts/update-asset-logos.ts",
     "debug:auth": "tsx scripts/debug-auth.ts",
     "test:auth": "tsx scripts/test-auth.ts",
-    "audit:schema": "tsx scripts/audit-schema.ts"
+    "audit:schema": "tsx scripts/audit-schema.ts",
+    "perf:compute": "tsx scripts/compute-performance.ts",
+    "perf:compute-local": "tsx scripts/compute-performance.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

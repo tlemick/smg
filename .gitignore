@@ -45,3 +45,4 @@ cookies*.txt
 
 # editor settings (keep local)
 .vscode/
+.env*.local

@@ -70,6 +70,75 @@ const seedAssets: SeedAsset[] = [
   { ticker: 'SNAP', name: 'Snap Inc.', type: 'STOCK', extra: { sector: 'Communication Services', industry: 'Social Media' } },
   { ticker: 'LULU', name: 'Lululemon Athletica Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Apparel' } },
   
+  // Additional Technology Stocks
+  { ticker: 'ADBE', name: 'Adobe Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Software' } },
+  { ticker: 'ORCL', name: 'Oracle Corporation', type: 'STOCK', extra: { sector: 'Technology', industry: 'Software' } },
+  { ticker: 'IBM', name: 'International Business Machines Corp.', type: 'STOCK', extra: { sector: 'Technology', industry: 'IT Services' } },
+  { ticker: 'NOW', name: 'ServiceNow, Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Software' } },
+  { ticker: 'SNOW', name: 'Snowflake Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Cloud Computing' } },
+  { ticker: 'PLTR', name: 'Palantir Technologies Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Software' } },
+  { ticker: 'CRWD', name: 'CrowdStrike Holdings, Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Cybersecurity' } },
+  { ticker: 'ZS', name: 'Zscaler, Inc.', type: 'STOCK', extra: { sector: 'Technology', industry: 'Cybersecurity' } },
+  
+  // Additional Healthcare Stocks
+  { ticker: 'PFE', name: 'Pfizer Inc.', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Pharmaceuticals' } },
+  { ticker: 'MRK', name: 'Merck & Co., Inc.', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Pharmaceuticals' } },
+  { ticker: 'TMO', name: 'Thermo Fisher Scientific Inc.', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Life Sciences' } },
+  { ticker: 'DHR', name: 'Danaher Corporation', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Life Sciences' } },
+  { ticker: 'ABT', name: 'Abbott Laboratories', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Medical Devices' } },
+  { ticker: 'GILD', name: 'Gilead Sciences, Inc.', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Biotechnology' } },
+  { ticker: 'BIIB', name: 'Biogen Inc.', type: 'STOCK', extra: { sector: 'Healthcare', industry: 'Biotechnology' } },
+  
+  // Additional Financial Stocks
+  { ticker: 'GS', name: 'The Goldman Sachs Group, Inc.', type: 'STOCK', extra: { sector: 'Financials', industry: 'Investment Banking' } },
+  { ticker: 'WFC', name: 'Wells Fargo & Company', type: 'STOCK', extra: { sector: 'Financials', industry: 'Banks' } },
+  { ticker: 'C', name: 'Citigroup Inc.', type: 'STOCK', extra: { sector: 'Financials', industry: 'Banks' } },
+  { ticker: 'SCHW', name: 'The Charles Schwab Corporation', type: 'STOCK', extra: { sector: 'Financials', industry: 'Brokerage' } },
+  { ticker: 'BLK', name: 'BlackRock, Inc.', type: 'STOCK', extra: { sector: 'Financials', industry: 'Asset Management' } },
+  
+  // Additional Consumer Discretionary Stocks
+  { ticker: 'TGT', name: 'Target Corporation', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Retail' } },
+  { ticker: 'LOW', name: 'Lowe\'s Companies, Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Retail' } },
+  { ticker: 'MCD', name: 'McDonald\'s Corporation', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Restaurants' } },
+  { ticker: 'YUM', name: 'Yum! Brands, Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Restaurants' } },
+  { ticker: 'BKNG', name: 'Booking Holdings Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'Travel' } },
+  { ticker: 'EBAY', name: 'eBay Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'E-commerce' } },
+  { ticker: 'SHOP', name: 'Shopify Inc.', type: 'STOCK', extra: { sector: 'Consumer Discretionary', industry: 'E-commerce' } },
+  
+  // Industrial Stocks
+  { ticker: 'BA', name: 'The Boeing Company', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Aerospace' } },
+  { ticker: 'CAT', name: 'Caterpillar Inc.', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Machinery' } },
+  { ticker: 'GE', name: 'General Electric Company', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Conglomerate' } },
+  { ticker: 'HON', name: 'Honeywell International Inc.', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Conglomerate' } },
+  { ticker: 'RTX', name: 'RTX Corporation', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Aerospace & Defense' } },
+  { ticker: 'LMT', name: 'Lockheed Martin Corporation', type: 'STOCK', extra: { sector: 'Industrials', industry: 'Aerospace & Defense' } },
+  
+  // Additional Energy Stocks
+  { ticker: 'SLB', name: 'Schlumberger Limited', type: 'STOCK', extra: { sector: 'Energy', industry: 'Oil Services' } },
+  { ticker: 'COP', name: 'ConocoPhillips', type: 'STOCK', extra: { sector: 'Energy', industry: 'Oil & Gas' } },
+  { ticker: 'EOG', name: 'EOG Resources, Inc.', type: 'STOCK', extra: { sector: 'Energy', industry: 'Oil & Gas' } },
+  
+  // Additional Communication Services Stocks
+  { ticker: 'T', name: 'AT&T Inc.', type: 'STOCK', extra: { sector: 'Communication Services', industry: 'Telecom' } },
+  { ticker: 'VZ', name: 'Verizon Communications Inc.', type: 'STOCK', extra: { sector: 'Communication Services', industry: 'Telecom' } },
+  { ticker: 'CHTR', name: 'Charter Communications, Inc.', type: 'STOCK', extra: { sector: 'Communication Services', industry: 'Cable' } },
+  { ticker: 'PARA', name: 'Paramount Global', type: 'STOCK', extra: { sector: 'Communication Services', industry: 'Entertainment' } },
+  
+  // Real Estate Stocks
+  { ticker: 'AMT', name: 'American Tower Corporation', type: 'STOCK', extra: { sector: 'Real Estate', industry: 'REIT' } },
+  { ticker: 'PLD', name: 'Prologis, Inc.', type: 'STOCK', extra: { sector: 'Real Estate', industry: 'REIT' } },
+  { ticker: 'EQIX', name: 'Equinix, Inc.', type: 'STOCK', extra: { sector: 'Real Estate', industry: 'REIT' } },
+  
+  // Utilities Stocks
+  { ticker: 'NEE', name: 'NextEra Energy, Inc.', type: 'STOCK', extra: { sector: 'Utilities', industry: 'Electric Utilities' } },
+  { ticker: 'DUK', name: 'Duke Energy Corporation', type: 'STOCK', extra: { sector: 'Utilities', industry: 'Electric Utilities' } },
+  { ticker: 'SO', name: 'The Southern Company', type: 'STOCK', extra: { sector: 'Utilities', industry: 'Electric Utilities' } },
+  
+  // Materials Stocks
+  { ticker: 'LIN', name: 'Linde plc', type: 'STOCK', extra: { sector: 'Materials', industry: 'Chemicals' } },
+  { ticker: 'APD', name: 'Air Products and Chemicals, Inc.', type: 'STOCK', extra: { sector: 'Materials', industry: 'Chemicals' } },
+  { ticker: 'SHW', name: 'The Sherwin-Williams Company', type: 'STOCK', extra: { sector: 'Materials', industry: 'Chemicals' } },
+  
   // ETFs - Equity (~20% of typical portfolio)
   { ticker: 'SPY', name: 'SPDR S&P 500 ETF Trust', type: 'ETF', extra: { fundType: 'Equity ETF', category: 'Large Cap', expenseRatio: 0.0009 } },
   { ticker: 'QQQ', name: 'Invesco QQQ Trust', type: 'ETF', extra: { fundType: 'Equity ETF', category: 'Technology', expenseRatio: 0.0020 } },
@@ -94,6 +163,13 @@ const realisticUsers = [
   { name: 'Mia Robinson', email: 'mia.robinson@smg.com' },
   { name: 'Liam Davis', email: 'liam.davis@smg.com' },
   { name: 'Zoe Martinez', email: 'zoe.martinez@smg.com' },
+  { name: 'Oliver Rodriguez', email: 'oliver.rodriguez@smg.com' },
+  { name: 'Emma Lee', email: 'emma.lee@smg.com' },
+  { name: 'Dimitrios Antos', email: 'dimitrios.antos@smg.com' },
+  { name: 'Mike Macko', email: 'mike.macko@smg.com' },
+  { name: 'Beau Davenport', email: 'beau.davenport@smg.com' },
+  { name: 'Andrew Watterson', email: 'andrew.watterson@smg.com' },
+  { name: 'Benjamin Williams', email: 'benjamin.williams@smg.com' },
 ];
 
 const demoUsers = realisticUsers.map(u => ({ ...u, password: 'user123' }));
@@ -501,11 +577,16 @@ async function createWatchlistsForUser(
   existingHoldings: string[]
 ): Promise<void> {
   const watchlistConfigs = [
-    { name: 'Tech Watchlist', tickers: ['AAPL', 'MSFT', 'GOOGL', 'META', 'NVDA', 'AMD', 'CRM', 'NFLX', 'TSLA'] },
-    { name: 'Value Stocks', tickers: ['JPM', 'BAC', 'WMT', 'PG', 'KO', 'JNJ', 'XOM', 'CVX'] },
-    { name: 'Growth Picks', tickers: ['AMZN', 'TSLA', 'NFLX', 'HD', 'COST', 'MA', 'V', 'UNH'] },
-    { name: 'Dividend Plays', tickers: ['KO', 'PEP', 'PG', 'JNJ', 'ABBV', 'XOM', 'CVX'] },
-    { name: 'Blue Chips', tickers: ['AAPL', 'MSFT', 'JPM', 'JNJ', 'WMT', 'PG', 'KO'] },
+    { name: 'Tech Watchlist', tickers: ['AAPL', 'MSFT', 'GOOGL', 'META', 'NVDA', 'AMD', 'CRM', 'NFLX', 'TSLA', 'ADBE', 'ORCL', 'NOW', 'SNOW', 'PLTR', 'CRWD'] },
+    { name: 'Value Stocks', tickers: ['JPM', 'BAC', 'WFC', 'C', 'WMT', 'TGT', 'PG', 'KO', 'JNJ', 'XOM', 'CVX', 'INTC', 'CSCO'] },
+    { name: 'Growth Picks', tickers: ['AMZN', 'TSLA', 'NFLX', 'HD', 'COST', 'MA', 'V', 'UNH', 'SHOP', 'BKNG', 'LULU', 'CMG'] },
+    { name: 'Dividend Plays', tickers: ['KO', 'PEP', 'PG', 'JNJ', 'ABBV', 'PFE', 'MRK', 'XOM', 'CVX', 'T', 'VZ', 'DUK'] },
+    { name: 'Blue Chips', tickers: ['AAPL', 'MSFT', 'JPM', 'GS', 'JNJ', 'WMT', 'PG', 'KO', 'MCD', 'DIS'] },
+    { name: 'Healthcare Focus', tickers: ['JNJ', 'UNH', 'PFE', 'MRK', 'ABBV', 'TMO', 'DHR', 'ABT', 'GILD', 'BIIB'] },
+    { name: 'Financial Services', tickers: ['JPM', 'BAC', 'GS', 'WFC', 'C', 'V', 'MA', 'SCHW', 'BLK'] },
+    { name: 'Industrial Leaders', tickers: ['BA', 'CAT', 'GE', 'HON', 'RTX', 'LMT', 'HD', 'LOW'] },
+    { name: 'Cybersecurity', tickers: ['CRWD', 'ZS', 'PLTR', 'NOW', 'CSCO'] },
+    { name: 'Energy Sector', tickers: ['XOM', 'CVX', 'COP', 'EOG', 'SLB'] },
   ];
 
   // Create 2-3 watchlists per user
