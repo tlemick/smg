@@ -554,4 +554,24 @@ export class Formatters {
   static compactNumber(value: number | null | undefined): string {
     return this.abbreviateNumber(value);
   }
+  
+  // ==================== TEXT FORMATTING ====================
+  
+  /**
+   * Format a user's name for display (First Last. format)
+   * 
+   * @example
+   * Formatters.formatUserName("John Smith") // "John S."
+   * Formatters.formatUserName("Madonna") // "Madonna"
+   * Formatters.formatUserName("") // "Player"
+   */
+  static formatUserName(name: string | null | undefined): string {
+    if (!name) return 'Player';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0];
+    const lastInitial = parts.length > 1 
+      ? `${parts[parts.length - 1][0].toUpperCase()}.` 
+      : '';
+    return lastInitial ? `${first} ${lastInitial}` : first;
+  }
 }

@@ -1,24 +1,10 @@
 import { useUserRanking } from '@/hooks/useUserRanking';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-
-function formatName(name: string): string {
-  if (!name) return 'Player';
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0];
-  const lastInitial = parts.length > 1 ? `${parts[parts.length - 1][0].toUpperCase()}.` : '';
-  return lastInitial ? `${first} ${lastInitial}` : first;
-}
-
-function formatPercent(pct?: number): string {
-  if (pct === undefined || pct === null) return '--.--%';
-  const rounded = Number(pct).toFixed(2);
-  const signed = Number(pct) > 0 ? `+${rounded}` : rounded;
-  return `${signed}%`;
-}
+import { Formatters } from '@/lib/financial';
 
 export function LeaderboardCard() {
-  const { topUsers, isLoading, error } = useUserRanking();
+  const { topUsers, isLoading, error, data } = useUserRanking();
 
   const topThree = (topUsers || []).slice(0, 3);
   const others = (topUsers || []).slice(3);
@@ -32,13 +18,17 @@ export function LeaderboardCard() {
   })();
 
   return (
-    <Card
-      className="relative overflow-hidden"
-      style={{ backgroundImage: 'url(/leaderboard-bg.webp)', backgroundSize: 'cover', backgroundPosition: 'center' }}
-    >
-      <div className="bg-background/20 backdrop-blur-sm">
+    <Card className="leaderboard-gradient-bg border-0">
+      <div className="leaderboard-gradient-content bg-background/75 dark:bg-background/85 backdrop-blur-md">
         <CardHeader>
-          <CardTitle className="text-base">Leaderboard</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Leaderboard</CardTitle>
+            {data?.meta?.isCached && (
+              <span className="text-xs text-muted-foreground">
+                Updated {new Date(data.meta.calculatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {error && (
@@ -95,7 +85,7 @@ export function LeaderboardCard() {
                           )}
                           <span className={badgeClass}>{u.rank}</span>
                         </div>
-                        <div className={`mt-2 text-foreground ${nameClass}`}>{formatName(u.name)}</div>
+                        <div className={`mt-2 text-foreground ${nameClass}`}>{Formatters.formatUserName(u.name)}</div>
                         <div
                           className={`${percentClass} font-mono font-bold ${
                             (u.returnPercent ?? 0) > 0
@@ -105,7 +95,7 @@ export function LeaderboardCard() {
                               : 'text-muted-foreground'
                           }`}
                         >
-                          {formatPercent(u.returnPercent)}
+                          {Formatters.percentage(u.returnPercent ?? 0, { decimals: 2, showSign: true })}
                         </div>
                       </div>
                     );
@@ -137,7 +127,7 @@ export function LeaderboardCard() {
                         ) : (
                           <div className="h-7 w-7 rounded-full bg-muted" />
                         )}
-                        <span className={`text-sm ${isCurrentUser ? 'font-semibold text-foreground' : 'text-foreground'}`}>{formatName(name)}</span>
+                        <span className={`text-sm ${isCurrentUser ? 'font-semibold text-foreground' : 'text-foreground'}`}>{Formatters.formatUserName(name)}</span>
                       </div>
                       <span
                         className={`text-sm font-mono font-bold ${
@@ -148,7 +138,7 @@ export function LeaderboardCard() {
                             : 'text-muted-foreground'
                         }`}
                       >
-                        {formatPercent(returnPercent)}
+                        {Formatters.percentage(returnPercent ?? 0, { decimals: 2, showSign: true })}
                       </span>
                     </div>
                   ))}

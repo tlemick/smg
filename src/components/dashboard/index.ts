@@ -1,8 +1,8 @@
 // Dashboard Components
 export { PortfolioCard } from './PortfolioCard';
+export { PortfolioHighlightsCard } from './PortfolioHighlightsCard';
 export { Watchlists } from './watchlists';
 export { TransactionsCard } from './TransactionsCard';
-export { Leaderboard } from './Leaderboard';
 export { LeaderboardCard } from './LeaderboardCard';
 export { TikTokLessons } from './TikTokLessons';
 export { LessonsCard } from './LessonsCard';

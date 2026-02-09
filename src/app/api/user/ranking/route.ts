@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '../../../../../prisma/client';
 import { getAssetQuoteWithCache } from '@/lib/yahoo-finance-service';
@@ -23,10 +23,38 @@ async function getAuthenticatedUser(): Promise<{ id: string; email: string; name
 }
 
 /**
+ * Get rankings from cache (UserRanking table)
+ * Returns null if cache is missing or stale
+ */
+async function getRankingsFromCache(sessionId: string, maxAgeHours: number = 24) {
+  const rankings = await prisma.userRanking.findMany({
+    where: { sessionId },
+    orderBy: { rank: 'asc' },
+    include: { user: true },
+  });
+
+  if (rankings.length === 0) {
+    return null;
+  }
+
+  // Check if cache is stale (older than maxAgeHours)
+  const latestCalculation = rankings[0].calculatedAt;
+  const ageHours = (Date.now() - latestCalculation.getTime()) / (1000 * 60 * 60);
+  
+  if (ageHours > maxAgeHours) {
+    console.log(`Ranking cache is stale (${ageHours.toFixed(1)} hours old)`);
+    return null;
+  }
+
+  return rankings;
+}
+
+/**
  * GET /api/user/ranking
  * Get current user's ranking among all users based on portfolio performance
+ * Supports query param: ?fresh=true to bypass cache
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Get authenticated user (required)
     const user = await getAuthenticatedUser();
@@ -37,6 +65,10 @@ export async function GET() {
       );
     }
 
+    // Check if fresh data is requested (bypass cache)
+    const { searchParams } = new URL(request.url);
+    const forceFresh = searchParams.get('fresh') === 'true';
+
     // Scope to the active game session
     const activeSession = await prisma.gameSession.findFirst({ where: { isActive: true } });
     if (!activeSession) {
@@ -45,11 +77,57 @@ export async function GET() {
         data: {
           currentUser: { rank: 0, totalUsers: 0, totalPortfolioValue: 0, returnPercent: 0, name: user.name || user.email.split('@')[0], avatarUrl: getUserAvatarUrl(user.id) },
           topUsers: [],
-          meta: { totalActiveUsers: 0, calculatedAt: new Date().toISOString(), sessionId: null, startingCash: null }
+          meta: { totalActiveUsers: 0, calculatedAt: new Date().toISOString(), sessionId: null, startingCash: null, isCached: false }
         },
         timestamp: new Date().toISOString()
       });
     }
+
+    // Try to get rankings from cache (unless forceFresh is true)
+    if (!forceFresh) {
+      const cachedRankings = await getRankingsFromCache(activeSession.id);
+      
+      if (cachedRankings && cachedRankings.length > 0) {
+        // Use cached data
+        const currentUserRanking = cachedRankings.find(r => r.userId === user.id);
+        const totalUsers = cachedRankings.length;
+        const calculatedAt = cachedRankings[0].calculatedAt.toISOString();
+
+        const topUsers = cachedRankings.slice(0, 10).map(r => ({
+          rank: r.rank,
+          name: r.user.name || r.user.email.split('@')[0],
+          returnPercent: Number(r.returnPercent.toFixed(2)),
+          isCurrentUser: r.userId === user.id,
+          avatarUrl: getUserAvatarUrl(r.userId),
+        }));
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            currentUser: {
+              rank: currentUserRanking?.rank || 0,
+              totalUsers,
+              totalPortfolioValue: currentUserRanking?.totalPortfolioValue || 0,
+              returnPercent: currentUserRanking ? Number(currentUserRanking.returnPercent.toFixed(2)) : 0,
+              name: currentUserRanking?.user.name || user.name || user.email.split('@')[0],
+              avatarUrl: getUserAvatarUrl(currentUserRanking?.userId || user.id),
+            },
+            topUsers,
+            meta: {
+              totalActiveUsers: totalUsers,
+              calculatedAt,
+              sessionId: activeSession.id,
+              startingCash: Number(activeSession.startingCash),
+              isCached: true,
+            }
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Fall back to real-time calculation if cache is missing or fresh data requested
+    console.log('Computing rankings in real-time (cache miss or fresh request)')
 
     // Get all portfolios in the active session with holdings and users
     const portfoliosInSession = await prisma.portfolio.findMany({
@@ -170,6 +248,7 @@ export async function GET() {
           calculatedAt: new Date().toISOString(),
           sessionId: activeSession.id,
           startingCash: sessionStartingCash,
+          isCached: false,
         }
       },
       timestamp: new Date().toISOString()

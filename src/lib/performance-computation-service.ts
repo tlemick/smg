@@ -344,6 +344,112 @@ export async function computeSessionPerformance(sessionId: string): Promise<void
 }
 
 /**
+ * Compute and store user rankings for a session
+ * This pre-computes the leaderboard data for fast loading
+ */
+export async function computeAndStoreSessionRankings(sessionId: string): Promise<void> {
+  console.log(`Computing rankings for session ${sessionId}`);
+
+  const session = await prisma.gameSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session) {
+    throw new Error(`Session ${sessionId} not found`);
+  }
+
+  // Get all portfolios in the session with holdings and users
+  const portfoliosInSession = await prisma.portfolio.findMany({
+    where: { sessionId },
+    include: {
+      user: true,
+      holdings: { select: { assetId: true, quantity: true } },
+    },
+  });
+
+  if (portfoliosInSession.length === 0) {
+    console.log(`No portfolios found for session ${sessionId}`);
+    return;
+  }
+
+  // Collect unique assetIds to fetch quotes in bulk from cache
+  const uniqueAssetIds = Array.from(
+    new Set(portfoliosInSession.flatMap((p) => p.holdings.map((h) => h.assetId)))
+  );
+  const cachedQuotes =
+    uniqueAssetIds.length > 0
+      ? await prisma.assetQuoteCache.findMany({ where: { assetId: { in: uniqueAssetIds } } })
+      : [];
+  const priceMap = new Map<number, number>();
+  for (const q of cachedQuotes) {
+    priceMap.set(q.assetId, Number(q.regularMarketPrice));
+  }
+
+  // Aggregate per-user totals across their portfolios in this session
+  const byUser = new Map<
+    string,
+    { userId: string; name: string; email: string; totalPortfolioValue: number; portfolioCount: number }
+  >();
+
+  for (const pf of portfoliosInSession) {
+    let total = Number(pf.cash_balance) || 0;
+    for (const h of pf.holdings) {
+      const price = priceMap.get(h.assetId) || 0;
+      total += Number(h.quantity) * price;
+    }
+    const key = pf.user.id;
+    const existing = byUser.get(key);
+    if (existing) {
+      existing.totalPortfolioValue += total;
+      existing.portfolioCount += 1;
+    } else {
+      byUser.set(key, {
+        userId: pf.user.id,
+        name: pf.user.name || pf.user.email.split('@')[0],
+        email: pf.user.email,
+        totalPortfolioValue: total,
+        portfolioCount: 1,
+      });
+    }
+  }
+
+  const perUser = Array.from(byUser.values());
+
+  // Compute return percent against session starting cash
+  const sessionStartingCash = Number(session.startingCash);
+  const userRankings = perUser.map((u) => {
+    const base = sessionStartingCash * Math.max(1, u.portfolioCount);
+    const returnPercent = base > 0 ? ((u.totalPortfolioValue / base - 1) * 100) : 0;
+    return { ...u, returnPercent };
+  });
+
+  // Sort by return percent desc
+  userRankings.sort((a, b) => b.returnPercent - a.returnPercent || a.name.localeCompare(b.name));
+
+  // Delete existing rankings for this session
+  await prisma.userRanking.deleteMany({
+    where: { sessionId },
+  });
+
+  // Create new rankings
+  const rankingRecords = userRankings.map((u, index) => ({
+    userId: u.userId,
+    sessionId,
+    rank: index + 1,
+    totalPortfolioValue: Number(u.totalPortfolioValue.toFixed(2)),
+    returnPercent: Number(u.returnPercent.toFixed(2)),
+  }));
+
+  if (rankingRecords.length > 0) {
+    await prisma.userRanking.createMany({
+      data: rankingRecords,
+    });
+  }
+
+  console.log(`Stored ${rankingRecords.length} rankings for session ${sessionId}`);
+}
+
+/**
  * Compute performance for all active sessions
  * Run this as a cron job (e.g., nightly at 6 PM after market close)
  */
@@ -357,6 +463,8 @@ export async function computeAllActiveSessionsPerformance(): Promise<void> {
   for (const session of activeSessions) {
     try {
       await computeSessionPerformance(session.id);
+      // Also compute rankings after performance data
+      await computeAndStoreSessionRankings(session.id);
     } catch (error) {
       console.error(`Failed to compute performance for session ${session.id}:`, error);
     }

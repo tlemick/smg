@@ -24,20 +24,22 @@ model User {
   transactions            Transaction[]
   activities              UserActivity[]
   watchlists              Watchlist[]
+  rankings                UserRanking[]
 
   @@index([role])
   @@index([active])
 }
 
 model GameSession {
-  id           String      @id @default(cuid())
+  id           String        @id @default(cuid())
   startDate    DateTime
   endDate      DateTime
-  startingCash Float       @default(100000)
+  startingCash Float         @default(100000)
   name         String?
   description  String?
-  isActive     Boolean     @default(false)
+  isActive     Boolean       @default(false)
   portfolios   Portfolio[]
+  rankings     UserRanking[]
 }
 
 model Portfolio {
@@ -280,6 +282,22 @@ model PortfolioPerformance {
   @@unique([portfolioId, date], name: "portfolioId_date")
   @@index([portfolioId])
   @@index([date])
+}
+
+model UserRanking {
+  id                  String      @id @default(cuid())
+  userId              String
+  sessionId           String
+  rank                Int
+  totalPortfolioValue Float
+  returnPercent       Float
+  calculatedAt        DateTime    @default(now())
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSession         GameSession @relation(fields: [sessionId], references: [id])
+
+  @@unique([userId, sessionId])
+  @@index([sessionId, rank])
+  @@index([calculatedAt])
 }
 
 model SystemConfig {

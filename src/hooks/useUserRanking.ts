@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ApiClient, ApiError } from '@/lib/api';
+import { Formatters } from '@/lib/financial';
 
 export interface UserRankingData {
   currentUser: {
@@ -23,6 +24,7 @@ export interface UserRankingData {
     calculatedAt: string;
     sessionId?: string | null;
     startingCash?: number | null;
+    isCached?: boolean;
   };
 }
 
@@ -87,5 +89,11 @@ export function useUserRanking() {
     currentUserRank: data?.currentUser?.rank || 0,
     totalUsers: data?.currentUser?.totalUsers || 0,
     topUsers: data?.topUsers || [],
+    // Formatted display values
+    formattedTotalUsers: Formatters.number(data?.currentUser?.totalUsers),
+    formattedCurrentRankDisplay:
+      data?.currentUser?.rank && data?.currentUser?.totalUsers
+        ? `${data.currentUser.rank} / ${Formatters.number(data.currentUser.totalUsers)}`
+        : null,
   };
 }
