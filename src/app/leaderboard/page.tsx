@@ -29,16 +29,6 @@ export default function LeaderboardPage() {
     );
   }
 
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
-        <p className="text-muted-foreground">
-          See how you stack up against other players in the game
-        </p>
-      </div>
-      <LeaderboardCard />
-    </div>
-  );
+  return <LeaderboardCard />;
 }
 

@@ -21,11 +21,9 @@ export default function LeaderboardLayout({
         {/* Dashboard Header - Desktop only */}
         <DashboardHeader className="hidden lg:flex" />
         
-        {/* Scrollable Content - padding follows 4px baseline (p-4=16px, p-6=24px, p-8=32px) */}
-        <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 lg:pb-4">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+        {/* Scrollable Content - full bleed so leaderboard bg goes to menu edges */}
+        <main className="flex-1 overflow-y-auto bg-background pb-20 lg:pb-4">
+          {children}
         </main>
       </div>
       
