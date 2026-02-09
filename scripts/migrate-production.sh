@@ -1,19 +1,30 @@
 #!/bin/bash
 # Run Prisma migrations against production database
+#
+# Requires DATABASE_URL to be set. Options:
+#   1. Export before running: export DATABASE_URL="postgres://..." && ./scripts/migrate-production.sh
+#   2. Or create .env.production (gitignored) with DATABASE_URL=... and run: source .env.production 2>/dev/null; ./scripts/migrate-production.sh
 
 echo "🚀 Applying migrations to production database..."
 
-# Disable Node TLS certificate verification (for Prisma Cloud)
+if [ -z "$DATABASE_URL" ]; then
+  echo "❌ DATABASE_URL is not set."
+  echo "   Set it from .env.production or export it before running this script."
+  echo "   Example: export \$(grep DATABASE_URL .env.production | xargs) && ./scripts/migrate-production.sh"
+  exit 1
+fi
+
+# Disable Node TLS certificate verification (for Prisma Cloud) - optional, remove if not needed
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# Use production DATABASE_URL
-DATABASE_URL="postgres://24946c1147dc2505d0934eaa2979ba995530107cf178b401a492f85eafd2968f:sk_a_I7v8SSmUS-xpTFR4Mcw@db.prisma.io:5432/postgres?sslmode=require" npx prisma migrate deploy
+npx prisma migrate deploy
 
-if [ $? -eq 0 ]; then
+result=$?
+unset NODE_TLS_REJECT_UNAUTHORIZED
+
+if [ $result -eq 0 ]; then
   echo "✅ Migrations applied successfully!"
-  unset NODE_TLS_REJECT_UNAUTHORIZED
 else
   echo "❌ Migration failed. Check the error above."
-  unset NODE_TLS_REJECT_UNAUTHORIZED
   exit 1
 fi
