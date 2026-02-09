@@ -16,6 +16,9 @@ interface BatchChartResponse {
     ticker: string;
     success: boolean;
     data?: number[];
+    firstPrice?: number; // First price in the period (for calculating price change %)
+    lastPrice?: number;  // Last price in the period
+    priceChangePercent?: number; // Price change % over the period
     error?: string;
   }[];
 }
@@ -32,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     if (!requests || !Array.isArray(requests) || requests.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Requests array is required' },
+        { success: false, error: 'Requests array is required', data: null },
         { status: 400 }
       );
     }
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Limit batch size to prevent abuse
     if (requests.length > 50) {
       return NextResponse.json(
-        { success: false, error: 'Maximum 50 tickers per batch request' },
+        { success: false, error: 'Maximum 50 tickers per batch request', data: null },
         { status: 400 }
       );
     }
@@ -106,10 +109,18 @@ export async function POST(request: NextRequest) {
             };
           }
 
+          // Calculate price change % over the period
+          const firstPrice = closePrices[0];
+          const lastPrice = closePrices[closePrices.length - 1];
+          const priceChangePercent = ((lastPrice - firstPrice) / firstPrice) * 100;
+
           return {
             ticker: upperTicker,
             success: true,
             data: closePrices,
+            firstPrice,
+            lastPrice,
+            priceChangePercent,
           };
         } catch (error: any) {
           return {
@@ -121,14 +132,22 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    // Return in ApiResponse format (expected by ApiClient)
     return NextResponse.json({
       success: true,
-      results,
-    } as BatchChartResponse);
+      data: {
+        success: true,
+        results,
+      },
+    });
   } catch (error: any) {
     console.error('Batch chart API error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { 
+        success: false, 
+        error: error.message || 'Internal server error',
+        data: null 
+      },
       { status: 500 }
     );
   }

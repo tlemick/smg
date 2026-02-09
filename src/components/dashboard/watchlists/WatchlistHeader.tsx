@@ -14,30 +14,36 @@ export function WatchlistHeader({
   onCreateNew,
 }: WatchlistHeaderProps) {
   return (
-    <div className="flex flex-col justify-start gap-4">
-      <h1 className="text-2xl font-mono text-foreground">Watchlists</h1>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center space-x-3">
+    <div className="flex flex-col justify-start gap-0">
+      <h1 className="text-2xl font-sans text-foreground">Watchlists</h1>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           {/* Search */}
-          <div className="relative w-48">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Icon icon={MagnifyingGlassIcon} size="sm" className="text-muted-foreground" />
+          <div className="flex-1 max-w-md min-w-0">
+            <div className="rounded-full p-[2px] bg-[linear-gradient(135deg,hsl(var(--chart-1)),hsl(var(--chart-4)))]">
+              <div className="relative rounded-full bg-background">
+                <Icon
+                  icon={MagnifyingGlassIcon}
+                  size="sm"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                />
+                <Input
+                  type="text"
+                  placeholder="Filter"
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-9 pr-4 h-9 bg-transparent border-0 shadow-none rounded-full focus-visible:ring-0 text-sm"
+                />
+              </div>
             </div>
-            <Input
-              type="text"
-              placeholder="Filter"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 h-8 text-sm"
-            />
           </div>
 
           {/* Add new watchlist button */}
           <Button
             onClick={onCreateNew}
-            size="sm"
+            size="md"
             className="text-sm"
-            variant="outline"
+            variant="secondary"
           >
             + New
           </Button>

@@ -2,7 +2,9 @@
 
 /*
   Seed 10 demo users and backdate trades to Day 1 of the active game session.
-  - Ensures a single active game session is used by all users
+  - Session: 6 months starting Dec 8, 2025 (see DEMO_SESSION_* constants).
+  - If an active session exists, its start/end are updated; demo users are deleted
+    and re-seeded, so no need to manually clear the session.
   - Seeds a mix of STOCK, BOND, and MUTUAL_FUND assets with quote caches
   - Creates portfolios for each user in the active session
   - Trades ~85-95% of starting cash across diversified assets
@@ -180,14 +182,16 @@ function getDayStart(date: Date): Date {
   return d;
 }
 
+const DEMO_SESSION_START = new Date('2025-12-08T00:00:00Z');
+const DEMO_SESSION_MONTHS = 6;
+
 async function ensureActiveSession(): Promise<{ id: string; startingCash: number; startDate: Date }> {
+  const startDate = new Date(DEMO_SESSION_START);
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + DEMO_SESSION_MONTHS);
+
   let session = await prisma.gameSession.findFirst({ where: { isActive: true } });
   if (!session) {
-    // Demo-specific session window: start on June 30, 2025
-    const startDate = new Date('2025-06-30T00:00:00Z');
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + 5);
-
     session = await prisma.gameSession.create({
       data: {
         name: 'Demo Session',
@@ -199,16 +203,10 @@ async function ensureActiveSession(): Promise<{ id: string; startingCash: number
       },
     });
   } else {
-    // Align existing active session to demo window (June 30, 2025 start, 5 months duration)
-    const desiredStart = new Date('2025-06-30T00:00:00Z');
-    const desiredEnd = new Date(desiredStart);
-    desiredEnd.setMonth(desiredEnd.getMonth() + 9);
+    // Update existing session to current demo window; old portfolios are cleared when we delete demo users below
     session = await prisma.gameSession.update({
       where: { id: session.id },
-      data: {
-        startDate: desiredStart,
-        endDate: desiredEnd,
-      },
+      data: { startDate, endDate },
     });
   }
   return { id: session.id, startingCash: Number(session.startingCash), startDate: session.startDate };

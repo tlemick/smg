@@ -13,6 +13,7 @@ interface FormattedLegend {
 interface ChartConfig {
   yDomain: [number, number];
   dateMarkers: DateMarker[];
+  gridYValues: number[];
 }
 
 export interface PortfolioPerformanceData {
@@ -97,6 +98,7 @@ export function usePortfolioPerformanceSeries() {
       return {
         yDomain: [0, 0],
         dateMarkers: [],
+        gridYValues: [],
       };
     }
 
@@ -115,9 +117,22 @@ export function usePortfolioPerformanceSeries() {
       4
     );
 
+    // Horizontal guide lines (skip bottom edge line)
+    const [yMin, yMax] = yDomain;
+    const range = yMax - yMin;
+    const gridYValues =
+      range > 0
+        ? [
+            yMin + range * 0.25,
+            yMin + range * 0.5,
+            yMin + range * 0.75,
+          ]
+        : [];
+
     return {
       yDomain,
       dateMarkers,
+      gridYValues,
     };
   }, [points, data?.meta]);
 

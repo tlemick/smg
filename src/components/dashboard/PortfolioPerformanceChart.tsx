@@ -34,7 +34,7 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
   };
 
   return (
-    <div className="bg-neutral/95 backdrop-blur-sm border border-border/50 rounded-lg shadow-lg px-4 py-3">
+    <div className="bg-neutral backdrop-blur-sm border border-border rounded-lg shadow-lg px-4 py-3">
       {/* Date header */}
       <div className="text-xs font-medium text-neutral-foreground mb-2 pb-2 border-b border-border/50">
         {label}
@@ -73,7 +73,17 @@ function CustomTooltip({ active, payload, label, colors }: CustomTooltipProps) {
   );
 }
 
-export function PortfolioPerformanceChart() {
+interface PortfolioPerformanceChartProps {
+  portfolioValue: string;
+  totalReturn: string;
+  totalReturnColorClass?: string;
+}
+
+export function PortfolioPerformanceChart({
+  portfolioValue,
+  totalReturn,
+  totalReturnColorClass,
+}: PortfolioPerformanceChartProps) {
   const { points, formatted, chartConfig, isLoading, error } = usePortfolioPerformanceSeries();
   const { colors: resolvedColors } = useChartColors();
   
@@ -89,60 +99,72 @@ export function PortfolioPerformanceChart() {
   );
 
   return (
-    <div>
+    <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
       {error && (
-        <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded p-2">{error}</div>
+        <div className="text-sm text-destructive border-b border-foreground bg-destructive/10 p-3">
+          {error}
+        </div>
       )}
 
-      <div className="mb-3 flex flex-col items-end gap-2">
-        <div className="flex items-end gap-6">
-          {/* Badge 1: You */}
-          <div className="flex flex-col items-center">
-            <span 
-              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
-              style={{ borderColor: colors.you, color: colors.you }}
-            >
-              You
-            </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.you}</span>
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] sm:items-stretch border-b border-foreground">
+        {/* Key metrics (left) */}
+        <div className="grid grid-cols-1 sm:border-r sm:border-foreground">
+          <div className="p-3 border-b border-foreground flex flex-col justify-center">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Portfolio Value
+            </div>
+            <div className="text-3xl font-semibold tracking-tight text-foreground tabular-nums sm:text-4xl">
+              {portfolioValue}
+            </div>
           </div>
 
-          {/* Badge 2: S&P 500 */}
-          <div className="flex flex-col items-center">
-            <span 
-              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
-              style={{ borderColor: colors.benchmark, color: colors.benchmark }}
+          <div className="p-3 flex flex-col justify-center">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Total Return
+            </div>
+            <div
+              className={`text-xl font-semibold tracking-tight tabular-nums sm:text-2xl ${
+                totalReturnColorClass ?? 'text-foreground'
+              }`}
             >
-              S&P 500
-            </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.sp500}</span>
+              {totalReturn}
+            </div>
           </div>
+        </div>
 
-          {/* Badge 3: Leader */}
-          <div className="flex flex-col items-center">
-            <span 
-              className="px-2 py-0.5 text-xs rounded-full border bg-transparent font-medium" 
-              style={{ borderColor: colors.leader, color: colors.leader }}
-            >
-              Leader
-            </span>
-            <span className="text-xs mt-1 font-medium text-foreground">{formatted.legend.leader}</span>
-          </div>
+        {/* Legend (right) */}
+        <div className="grid grid-rows-3 sm:w-56 border-t border-foreground sm:border-t-0 divide-y divide-foreground">
+          <LegendRow label="You" value={formatted.legend.you} color={colors.you} />
+          <LegendRow label="S&P 500" value={formatted.legend.sp500} color={colors.benchmark} />
+          <LegendRow label="Leader" value={formatted.legend.leader} color={colors.leader} />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="h-64 space-y-2">
+        <div className="flex-1 min-h-[256px]">
           <Skeleton className="h-full w-full" />
         </div>
       ) : points.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-muted-foreground">No data yet</div>
+        <div className="flex-1 min-h-[256px] flex items-center justify-center text-muted-foreground">No data yet</div>
       ) : (
-        <div className="h-64">
+        <div className="flex-1 min-h-[256px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points} margin={{ top: 8, left: 0, right: 16, bottom: 32 }}>
+            <LineChart data={points} margin={{ top: 0, left: 0, right: 0, bottom: 0 }}>
               <XAxis dataKey="date" hide />
               <YAxis hide domain={chartConfig.yDomain} tickFormatter={(v) => `${v}%`} />
+
+              {/* Horizontal guide lines (no bottom edge line) */}
+              {chartConfig.gridYValues.map((y, idx) => (
+                <ReferenceLine
+                  key={`grid-${idx}`}
+                  y={y}
+                  stroke={colors.label}
+                  strokeDasharray="3 3"
+                  strokeWidth={1}
+                  strokeOpacity={0.18}
+                />
+              ))}
+
               <Tooltip 
                 content={<CustomTooltip colors={colors} />}
                 cursor={{
@@ -152,43 +174,42 @@ export function PortfolioPerformanceChart() {
                   opacity: 0.5
                 }}
               />
-              
-              {/* Game start line with date */}
+
+              {/* Game start label (no visible line) */}
               {chartConfig.dateMarkers.length > 0 && chartConfig.dateMarkers[0].isStart && (
-                <ReferenceLine 
-                  x={chartConfig.dateMarkers[0].date} 
-                  stroke={colors.reference} 
-                  strokeDasharray="3 3" 
-                  strokeWidth={2}
-                  strokeOpacity={0.6}
-                  label={{ 
-                    value: `Game start: ${chartConfig.dateMarkers[0].label}`, 
-                    position: 'insideBottomLeft', 
-                    fill: colors.label, 
+                <ReferenceLine
+                  x={chartConfig.dateMarkers[0].date}
+                  stroke="transparent"
+                  label={{
+                    value: `Game start: ${chartConfig.dateMarkers[0].label}`,
+                    position: 'insideBottomLeft',
+                    fill: colors.label,
                     fontSize: 11,
-                    offset: -2,
-                    dx: 6
-                  }} 
+                    offset: 10,
+                    dy: 0,
+                    dx: 0,
+                  }}
                 />
               )}
-              
-              {/* Intermediate date markers */}
+
+              {/* Keep intermediate date marker lines */}
               {chartConfig.dateMarkers.slice(1).map((marker, idx) => (
-                <ReferenceLine 
+                <ReferenceLine
                   key={idx}
-                  x={marker.date} 
-                  stroke={colors.label} 
-                  strokeDasharray="2 2" 
+                  x={marker.date}
+                  stroke={colors.label}
+                  strokeDasharray="2 2"
                   strokeWidth={1}
                   strokeOpacity={0.3}
-                  label={{ 
-                    value: marker.label, 
-                    position: 'insideBottomLeft', 
-                    fill: colors.label, 
+                  label={{
+                    value: marker.label,
+                    position: 'insideBottomLeft',
+                    fill: colors.label,
                     fontSize: 11,
-                    offset: -2,
-                    dx: 6
-                  }} 
+                    offset: 10,
+                    dy: 0,
+                    dx: 2,
+                  }}
                 />
               ))}
               
@@ -223,6 +244,23 @@ export function PortfolioPerformanceChart() {
           </ResponsiveContainer>
         </div>
       )}
+    </div>
+  );
+}
+
+function LegendRow({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="p-3 h-full flex items-center">
+      <div className="flex items-center justify-between gap-3 w-full">
+        <div className="flex items-center gap-2">
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: color, opacity: 0.85 }}
+          />
+          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        </div>
+        <span className="text-xs font-mono font-semibold text-foreground tabular-nums">{value}</span>
+      </div>
     </div>
   );
 }

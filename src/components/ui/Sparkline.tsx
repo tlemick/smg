@@ -1,22 +1,29 @@
 import React from 'react';
-import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, YAxis, ReferenceLine, Label } from 'recharts';
 
 interface SparklineProps {
   data: number[];
-  color?: 'green' | 'red' | 'neutral';
+  color?: 'positive' | 'negative' | 'neutral';
   className?: string;
   showFill?: boolean;
+  referenceLine?: number; // Cost basis or other reference value
+  referenceLineLabel?: string;
 }
 
 /**
  * Sparkline component - a small, simplified chart for showing trends
  * Used to visualize price movement over time in a compact space
+ * 
+ * Optional referenceLine prop shows a horizontal dashed line (e.g., cost basis)
+ * This helps visualize performance relative to entry price
  */
 export function Sparkline({
   data,
   color = 'neutral',
   className = '',
-  showFill = true
+  showFill = false,
+  referenceLine,
+  referenceLineLabel
 }: SparklineProps) {
   // Transform data into format needed by Recharts
   const chartData = data.map((value, index) => ({
@@ -27,22 +34,28 @@ export function Sparkline({
   // Determine if trend is positive or negative
   const isPositive = data.length >= 2 && data[data.length - 1] >= data[0];
   
-  // Color mapping
-  const colorMap = {
-    green: '#10B981',
-    red: '#EF4444',
-    neutral: '#6B7280',
+  // Use semantic colors from UI system (CSS variables)
+  const getStrokeColor = () => {
+    if (color === 'positive') {
+      return 'hsl(var(--chart-positive))';
+    }
+    if (color === 'negative') {
+      return 'hsl(var(--chart-negative))';
+    }
+    // Neutral: auto-determine based on trend
+    return isPositive 
+      ? 'hsl(var(--chart-positive))' 
+      : 'hsl(var(--chart-negative))';
   };
 
-  // Use provided color, or auto-determine based on trend if neutral
-  const strokeColor = color === 'neutral' 
-    ? (isPositive ? colorMap.green : colorMap.red)
-    : colorMap[color];
+  const strokeColor = getStrokeColor();
 
   // Calculate domain with slight padding for better visualization
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const padding = (max - min) * 0.1 || 1;
+  // Include referenceLine in domain calculation if provided
+  const allValues = referenceLine !== undefined ? [...data, referenceLine] : data;
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
+  const padding = (max - min) * 0.15 || 1; // Slightly more padding for reference line
   const yDomain: [number, number] = [min - padding, max + padding];
 
   if (data.length === 0) {
@@ -53,30 +66,68 @@ export function Sparkline({
     );
   }
 
+  // Calculate approximate pixel positions for labels
+  // We'll position them at the start (left) of the chart area
+  const chartHeight = 100; // percentage
+  const referenceLinePosition = referenceLine !== undefined
+    ? ((yDomain[1] - referenceLine) / (yDomain[1] - yDomain[0])) * 100
+    : 50;
+  
+  // Find the first data point's position for the price line
+  const firstValuePosition = data.length > 0
+    ? ((yDomain[1] - data[0]) / (yDomain[1] - yDomain[0])) * 100
+    : 20;
+
   return (
-    <div className={`w-full h-full ${className}`}>
+    <div className={`w-full h-full relative ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: -1, right: -1, bottom: -1, left: -1 }}>
-          <defs>
-            <linearGradient id={`sparklineGradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          
+        <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 4, left: 38 }}>
           <YAxis hide domain={yDomain} />
+          
+          {/* Reference line (e.g., cost basis) */}
+          {referenceLine !== undefined && (
+            <ReferenceLine
+              y={referenceLine}
+              stroke="hsl(var(--muted-foreground))"
+              strokeDasharray="3 3"
+              strokeWidth={1.5}
+              strokeOpacity={0.6}
+            />
+          )}
           
           <Area
             type="monotone"
             dataKey="value"
             stroke={strokeColor}
             strokeWidth={2.5}
-            fill={showFill ? `url(#sparklineGradient-${color})` : 'none'}
-            fillOpacity={showFill ? 1 : 0}
+            fill="none"
             isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
+      
+      {/* Labels positioned at the start of lines */}
+      {referenceLine !== undefined && (
+        <div 
+          className="absolute left-0 px-1 py-0.5 rounded text-[9px] font-medium bg-muted/80 text-muted-foreground border border-muted-foreground/30"
+          style={{ top: `${Math.max(5, Math.min(85, referenceLinePosition))}%`, transform: 'translateY(-50%)' }}
+        >
+          COST
+        </div>
+      )}
+      
+      <div 
+        className="absolute left-0 px-1 py-0.5 rounded text-[9px] font-medium border"
+        style={{ 
+          top: `${Math.max(5, Math.min(85, firstValuePosition))}%`, 
+          transform: 'translateY(-50%)',
+          backgroundColor: strokeColor === 'hsl(var(--chart-positive))' ? 'hsl(var(--chart-positive) / 0.15)' : 'hsl(var(--chart-negative) / 0.15)',
+          color: strokeColor,
+          borderColor: strokeColor
+        }}
+      >
+        PRICE
+      </div>
     </div>
   );
 }

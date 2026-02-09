@@ -168,8 +168,7 @@ export function WatchlistsContainer() {
   }
 
   return (
-    <div className="bg-card pt-16">
-      {/* Header */}
+    <div className="bg-card pt-16 flex flex-col gap-6">
       <WatchlistHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}

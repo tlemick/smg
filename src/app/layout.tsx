@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Mono, Outfit } from "next/font/google";
+import { Hanken_Grotesk, Manrope } from "next/font/google";
 import { UserProvider } from "@/context/UserContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -7,17 +7,17 @@ import { ToastContainer } from "@/components/ui/toast";
 import { BaselineGrid } from "@/components/dev/BaselineGrid";
 import "./globals.css";
 
-const dmMono = DM_Mono({
+const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  variable: "--font-dm-mono",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-hanken-grotesk",
   display: "swap",
 });
 
-const outfit = Outfit({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-outfit",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmMono.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className={`${hankenGrotesk.variable} ${manrope.variable} font-sans antialiased bg-background text-foreground`}>
         <ThemeProvider>
           <UserProvider>
             <ToastProvider>

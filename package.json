@@ -20,7 +20,8 @@
     "test:auth": "tsx scripts/test-auth.ts",
     "audit:schema": "tsx scripts/audit-schema.ts",
     "perf:compute": "tsx scripts/compute-performance.ts",
-    "perf:compute-local": "tsx scripts/compute-performance.ts"
+    "perf:compute-local": "tsx scripts/compute-performance.ts",
+    "populate-beta": "tsx scripts/populate-missing-beta.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -76,7 +77,7 @@
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
     "ts-jest": "^29.4.6",
-    "tsx": "^4.20.3",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

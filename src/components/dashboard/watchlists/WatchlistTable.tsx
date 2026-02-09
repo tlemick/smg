@@ -22,11 +22,11 @@ export function WatchlistTable({ items, quotes, holdings }: WatchlistTableProps)
   const router = useRouter();
 
   return (
-    <div className="bg-card rounded-b-md overflow-hidden">
+    <div className="bg-card rounded-b-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[140px]">Ticker</TableHead>
+            <TableHead className="w-[140px] pl-4">Ticker</TableHead>
             <TableHead className="text-left">Shares</TableHead>
             <TableHead className="text-left">Last Price</TableHead>
             <TableHead className="text-left">Open</TableHead>
@@ -47,7 +47,7 @@ export function WatchlistTable({ items, quotes, holdings }: WatchlistTableProps)
                 onClick={() => router.push(`/asset/${item.asset.ticker}`)}
                 className="cursor-pointer"
               >
-                <TableCell className="w-[140px]">
+                <TableCell className="w-[140px] pl-4">
                   <div>
                     <div className="font-medium">{item.asset.ticker}</div>
                     <div className="text-xs text-muted-foreground truncate max-w-20">

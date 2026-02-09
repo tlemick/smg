@@ -30,8 +30,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Full Width Stacked Layout - 32px spacing (8 baseline units) for clear section separation */}
+    <div className="space-y-2">
       <PortfolioCard />
       <Watchlists />
       <TransactionsCard />

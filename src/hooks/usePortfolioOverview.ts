@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PortfolioOverviewResponse } from '@/types';
 import { ApiClient, ApiError } from '@/lib/api';
+import { Formatters } from '@/lib/financial';
 
 export function usePortfolioOverview() {
   const [data, setData] = useState<PortfolioOverviewResponse | null>(null);
@@ -60,5 +61,16 @@ export function usePortfolioOverview() {
     allocations: data?.data?.allocations || [],
     portfolioBreakdown: data?.data?.portfolioBreakdown || [],
     hasHoldings: (data?.data?.allocations?.length || 0) > 0,
+    // Formatted display values (components should prefer these)
+    formattedTotalPortfolioValue: Formatters.currency(data?.data?.totalPortfolioValue),
+    formattedCashBalance: Formatters.currency(data?.data?.cashBalance),
+    formattedTotalUnrealizedPnLPercent: Formatters.percentage(
+      data?.data?.totalUnrealizedPnLPercent,
+      { showSign: true, multiplier: 1 }
+    ),
+    totalUnrealizedPnLColorClass:
+      (data?.data?.totalUnrealizedPnLPercent ?? 0) >= 0
+        ? 'text-chart-positive'
+        : 'text-chart-negative',
   };
 } 

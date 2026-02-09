@@ -76,26 +76,30 @@ export function GlobalSearchBar() {
 
   return (
     <div ref={containerRef} className="relative flex-1 max-w-md">
-      <div className="relative">
-        <Icon
-          icon={MagnifyingGlassIcon}
-          size="sm"
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-        />
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder="Search stocks, ETFs, bonds..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsOpen(query.length >= 2)}
-          onKeyDown={handleKeyDown}
-          className="pl-9 pr-4 h-9 bg-background"
-        />
+      <div
+        className="rounded-full p-[2px] bg-[linear-gradient(135deg,hsl(var(--chart-1)),hsl(var(--chart-4)))]"
+      >
+        <div className="relative rounded-full bg-background">
+          <Icon
+            icon={MagnifyingGlassIcon}
+            size="sm"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+          <Input
+            ref={inputRef}
+            type="text"
+            placeholder="Search stocks, ETFs, bonds..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsOpen(query.length >= 2)}
+            onKeyDown={handleKeyDown}
+            className="pl-9 pr-4 h-9 bg-transparent border-0 shadow-none rounded-full focus-visible:ring-0"
+          />
+        </div>
       </div>
 
       {showResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-md shadow-lg z-50 max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-md z-50 max-h-[400px] overflow-y-auto">
           {/* Loading State */}
           {isSearching && (
             <div className="p-4 text-center">

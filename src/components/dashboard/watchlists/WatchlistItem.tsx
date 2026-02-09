@@ -45,10 +45,12 @@ export function WatchlistItem({
     <Collapsible
       open={isExpanded}
       onOpenChange={onToggleExpand}
-      className="overflow-hidden"
+      className="overflow-hidden border border-neutral rounded-lg"
     >
       <CollapsibleTrigger asChild>
-        <div className="w-full py-3 border-b border-muted-foreground flex items-center transition-colors cursor-pointer">
+        <div
+          className={`w-full px-4 py-3 rounded-t-lg bg-card text-foreground flex items-center transition-colors cursor-pointer ${!isExpanded ? 'rounded-b-lg' : 'border-b border-border'}`}
+        >
           <Icon
             icon={CaretRightIcon}
             size="sm"
@@ -93,7 +95,7 @@ export function WatchlistItem({
         {watchlist.items && watchlist.items.length > 0 ? (
           <WatchlistTable items={watchlist.items} quotes={quotes} holdings={holdings} />
         ) : (
-          <div className="bg-card px-4 py-8 text-center border-t border-border rounded-b-md">
+          <div className="bg-card px-4 py-8 text-center border-t border-border rounded-b-lg">
             <p className="text-muted-foreground mb-3">No assets in this watchlist yet</p>
             <Button variant="link" onClick={onManageAssets}>
               Add your first asset

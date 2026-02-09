@@ -41,16 +41,16 @@ function useSessionDataFreshness() {
 interface StockItemProps {
   allocation: PortfolioAllocation;
   sparklineData?: number[];
-  colorScheme?: 'green' | 'red';
+  colorScheme?: 'positive' | 'negative';
 }
 
 interface RankedStockViewerProps {
   allocations: PortfolioAllocation[];
   sparklineDataMap: Record<string, number[]>;
-  colorScheme: 'green' | 'red';
+  colorScheme: 'positive' | 'negative';
 }
 
-function StockItem({ allocation, sparklineData, colorScheme = 'green' }: StockItemProps) {
+function StockItem({ allocation, sparklineData, colorScheme = 'positive' }: StockItemProps) {
   const { 
     asset, 
     currentValue, 
@@ -63,7 +63,7 @@ function StockItem({ allocation, sparklineData, colorScheme = 'green' }: StockIt
   // Color palettes
   const greenColors = ['#191B1F', '#1B4A3A', '#287C5F', '#24966F'];
   const redColors = ['#1F1918', '#4A1B1B', '#7C2828', '#964B4B'];
-  const colors = colorScheme === 'green' ? greenColors : redColors;
+  const colors = colorScheme === 'positive' ? greenColors : redColors;
   const textColor = 'text-white';
 
   return (
@@ -318,7 +318,7 @@ export function PerformanceHighlights() {
             <RankedStockViewer
               allocations={top}
               sparklineDataMap={sparklineData}
-              colorScheme="green"
+              colorScheme="positive"
             />
 
             {/* Right: Educational Content */}
@@ -345,7 +345,7 @@ export function PerformanceHighlights() {
             <RankedStockViewer
               allocations={bottom}
               sparklineDataMap={sparklineData}
-              colorScheme="red"
+              colorScheme="negative"
             />
 
             {/* Right: Educational Content */}
