@@ -18,16 +18,14 @@ export function LeaderboardCard() {
   })();
 
   return (
-    <div className="leaderboard-gradient-bg w-full">
-      <Card className="leaderboard-gradient-content border-0">
-        <CardHeader>
+    <>
+      <div className="leaderboard-gradient-bg" />
+      <div className="min-h-screen w-full flex items-center justify-center p-8">
+        <Card className="leaderboard-gradient-content border-0">
+          <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Leaderboard</CardTitle>
-            {data?.meta?.isCached && (
-              <span className="text-xs text-muted-foreground">
-                Updated {new Date(data.meta.calculatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
+            
           </div>
         </CardHeader>
         <CardContent>
@@ -147,7 +145,8 @@ export function LeaderboardCard() {
             </>
           )}
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </>
   );
 }

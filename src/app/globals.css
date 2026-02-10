@@ -246,13 +246,14 @@
 }
 
 .leaderboard-gradient-bg {
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border-radius: 0 !important;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .leaderboard-gradient-bg::before {
@@ -301,8 +302,6 @@
     );
   animation: leaderboard-gradient-breathe 35s ease-in-out infinite;
   will-change: transform, opacity;
-  z-index: 0;
-  pointer-events: none;
 }
 
 .leaderboard-gradient-content {
@@ -315,10 +314,10 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   max-width: 600px;
   width: 100%;
-  margin: 2rem;
   max-height: calc(100vh - 4rem);
   overflow-y: auto;
   overflow-x: hidden;
+  pointer-events: auto;
 }
 
 @media (prefers-color-scheme: dark) {
