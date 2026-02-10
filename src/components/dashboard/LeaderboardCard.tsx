@@ -18,8 +18,8 @@ export function LeaderboardCard() {
   })();
 
   return (
-    <Card className="leaderboard-gradient-bg border-0 w-full">
-      <div className="leaderboard-gradient-content bg-background/75 dark:bg-background/85 backdrop-blur-md w-full">
+    <div className="leaderboard-gradient-bg w-full">
+      <Card className="leaderboard-gradient-content border-0">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Leaderboard</CardTitle>
@@ -147,7 +147,7 @@ export function LeaderboardCard() {
             </>
           )}
         </CardContent>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
