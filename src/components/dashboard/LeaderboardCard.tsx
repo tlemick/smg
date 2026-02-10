@@ -95,7 +95,7 @@ export function LeaderboardCard() {
                               : 'text-muted-foreground'
                           }`}
                         >
-                          {Formatters.percentage(u.returnPercent ?? 0, { decimals: 2, showSign: true })}
+                          {Formatters.percentage(u.returnPercent ?? 0, { decimals: 2, showSign: true, multiplier: 1 })}
                         </div>
                       </div>
                     );
@@ -138,7 +138,7 @@ export function LeaderboardCard() {
                             : 'text-muted-foreground'
                         }`}
                       >
-                        {Formatters.percentage(returnPercent ?? 0, { decimals: 2, showSign: true })}
+                        {Formatters.percentage(returnPercent ?? 0, { decimals: 2, showSign: true, multiplier: 1 })}
                       </span>
                     </div>
                   ))}
