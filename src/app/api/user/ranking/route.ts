@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         const totalUsers = cachedRankings.length;
         const calculatedAt = cachedRankings[0].calculatedAt.toISOString();
 
-        const topUsers = cachedRankings.slice(0, 10).map(r => ({
+        const topUsers = cachedRankings.slice(0, 20).map(r => ({
           rank: r.rank,
           name: r.user.name || r.user.email.split('@')[0],
           returnPercent: Number(r.returnPercent.toFixed(2)),
@@ -222,8 +222,8 @@ export async function GET(request: NextRequest) {
     const currentUserData = currentIndex >= 0 ? userRankings[currentIndex] : null;
     const totalUsers = userRankings.length;
 
-    // Get top 10 for leaderboard
-    const topUsers = userRankings.slice(0, 10).map((u, index) => ({
+    // Get top 20 for leaderboard (or all if less than 20)
+    const topUsers = userRankings.slice(0, 20).map((u, index) => ({
       rank: index + 1,
       name: u.name,
       returnPercent: Number(u.returnPercent.toFixed(2)),
