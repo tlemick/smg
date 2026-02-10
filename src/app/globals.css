@@ -247,19 +247,17 @@
 
 .leaderboard-gradient-bg {
   position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 0 !important;
-  padding: 2rem;
+  height: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  min-height: 100%;
 }
 
 .leaderboard-gradient-bg::before {
   content: '';
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -317,7 +315,10 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   max-width: 600px;
   width: 100%;
-  margin: 2rem 0;
+  margin: 2rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
