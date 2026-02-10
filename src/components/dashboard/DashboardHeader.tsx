@@ -22,7 +22,7 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
   return (
     <header
       className={cn(
-        'h-20 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 gap-4 flex-shrink-0',
+        'h-20 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 gap-4 flex-shrink-0 relative z-50',
         // h-20 = 80px (20 baseline units), gap-4 = 16px (4 units), px-4/6 = 16px/24px (4/6 units)
         className
       )}
