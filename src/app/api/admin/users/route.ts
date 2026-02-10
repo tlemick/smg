@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Joi from 'joi';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 // Demo helper functions (simplified for demo purposes)
 function hashPassword(password: string): Promise<string> {
   // Demo mode - store passwords as plain text

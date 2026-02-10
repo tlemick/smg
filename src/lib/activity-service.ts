@@ -1,4 +1,4 @@
-import { prisma } from '../../prisma/client';
+import { prisma } from '@/prisma/client';
 import type { Order, LimitOrder, Transaction, Holding, UserActivity } from '@prisma/client';
 
 /**

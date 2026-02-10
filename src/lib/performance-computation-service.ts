@@ -5,7 +5,7 @@
  * real-time calculations. This should be run as a background job.
  */
 
-import { prisma } from '../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { getAssetHistoricalData, syncAssetHistoricalData } from './yahoo-finance-service';
 
 interface DailyValuePoint {

@@ -1,4 +1,4 @@
-import { prisma } from '../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { getAssetQuoteWithCache } from './yahoo-finance-service';
 import { MarketStateService } from './market-state-service';
 import { CashManagementService } from './cash-management-service';

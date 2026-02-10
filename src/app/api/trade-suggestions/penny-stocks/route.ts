@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPennyStockCandidates, getBatchQuotes } from '@/lib/yahoo-finance-service';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 import type { StockSuggestion } from '@/types';
 
 /**

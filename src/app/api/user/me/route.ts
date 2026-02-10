@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 export async function GET() {
   try {

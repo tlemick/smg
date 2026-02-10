@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createAssetFromTicker } from '@/lib/yahoo-finance-service';
-import { prisma } from '../../../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 /**
  * Helper function to get authenticated user from session cookie

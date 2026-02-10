@@ -1,5 +1,5 @@
 import YahooFinance from 'yahoo-finance2';
-import { prisma } from '../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { getCompanyLogoUrl } from './logo-service';
 import type { AnalystConsensus } from '@/types';
 

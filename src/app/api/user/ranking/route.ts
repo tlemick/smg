@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { getAssetQuoteWithCache } from '@/lib/yahoo-finance-service';
 import { getUserAvatarUrl } from '@/lib/avatar-service';
 

@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 async function getAuthenticatedUser() {
   try {

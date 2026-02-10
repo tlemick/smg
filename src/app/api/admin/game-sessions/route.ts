@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 
 // Helper function to get authenticated user

@@ -5,7 +5,7 @@
  * Run with: npx tsx src/scripts/diagnose-database.ts
  */
 
-import { prisma } from '../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 async function diagnoseDatabaseState() {
   console.log('\n=== Database Diagnostic ===\n');

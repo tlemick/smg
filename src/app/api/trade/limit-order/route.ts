@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { MarketStateService } from '@/lib/market-state-service';
 import { CashManagementService } from '@/lib/cash-management-service';
 import { getAssetQuoteWithCache } from '@/lib/yahoo-finance-service';

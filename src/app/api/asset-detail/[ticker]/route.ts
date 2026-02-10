@@ -20,7 +20,7 @@ import {
 // Simple in-memory cache for risk measures (per server instance)
 const RISK_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const RISK_CACHE = new Map<string, { data: any; expiresAt: number }>();
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 /**
  * Helper function to get authenticated user from session cookie

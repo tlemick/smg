@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncAssetHistoricalData, getAssetHistoricalData } from '@/lib/yahoo-finance-service';
-import { prisma } from '../../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 
 interface BatchChartRequest {
   requests: {

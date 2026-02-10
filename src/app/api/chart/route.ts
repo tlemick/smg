@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncAssetHistoricalData, getAssetHistoricalData, createAssetFromTicker, getChartDataDirect, ValidInterval } from '@/lib/yahoo-finance-service';
-import { prisma } from '../../../../prisma/client';
+import { prisma } from '@/prisma/client';
 import { ChartApiRequest, ChartQuoteSerializable } from '@/types';
 
 export async function POST(request: NextRequest) {
