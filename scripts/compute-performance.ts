@@ -3,7 +3,15 @@
  * 
  * Run this to pre-compute performance data for all active sessions.
  * Usage: npx tsx scripts/compute-performance.ts
+ * 
+ * Loads .env.local for DATABASE_URL (or .env as fallback).
  */
+
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+config({ path: resolve(process.cwd(), '.env') });
+config({ path: resolve(process.cwd(), '.env.local') }); // overrides for local dev
 
 import { computeAllActiveSessionsPerformance } from '../src/lib/performance-computation-service';
 

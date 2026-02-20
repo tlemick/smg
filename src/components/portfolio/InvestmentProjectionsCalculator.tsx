@@ -110,7 +110,7 @@ export function InvestmentProjectionsCalculator() {
        
       </div>
 
-      <div className="p-6 pt-12 rounded-lg bg-white dark:bg-neutral-800">
+      <div className="p-6 pt-12 rounded-lg bg-white dark:bg-neutral-800 border border-neutral">
         
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Column: Inputs */}

@@ -57,7 +57,7 @@ const getPerformanceFillClass = (pnlPercent: number): string => {
 
 export function PortfolioTreemap() {
   const router = useRouter();
-  const { allocations, loading, error, refresh } = usePortfolioOverview();
+  const { allocations, isLoading, error, refresh } = usePortfolioOverview();
   const [parentGroups, setParentGroups] = useState<Array<{ name: string; x: number; y: number; width: number; height: number }>>([]);
   const isCollectingPositions = useRef(false);
 
@@ -197,12 +197,11 @@ export function PortfolioTreemap() {
     // For child nodes (individual assets), render colored rectangles
     const fillClass = getPerformanceFillClass(pnlPercent);
     
-    // Add spacing for visual separation between assets
-    const gap = 1;
-    const adjustedX = x + gap;
-    const adjustedY = y + gap;
-    const adjustedWidth = Math.max(0, width - gap * 2);
-    const adjustedHeight = Math.max(0, height - gap * 2);
+    // No gap: rects are flush; black stroke creates the border between elements
+    const adjustedX = x;
+    const adjustedY = y;
+    const adjustedWidth = width;
+    const adjustedHeight = height;
     
     // Determine text display based on size
     const showMainText = adjustedWidth > 60 && adjustedHeight > 40;
@@ -223,8 +222,9 @@ export function PortfolioTreemap() {
           y={adjustedY}
           width={adjustedWidth}
           height={adjustedHeight}
-          className={` ${fillClass}`}
-          rx={4}
+          className={fillClass}
+          stroke="black"
+          strokeWidth={1}
         />
         
         {/* Asset ticker */}
@@ -289,7 +289,7 @@ export function PortfolioTreemap() {
 
     return (
       // Tooltip content
-      <div className="bg-popover min-w-[220px] p-4 rounded-lg shadow-lg border border-border">
+      <div className="bg-popover min-w-[220px] p-4 rounded-lg shadow-lg border border-neutral">
         <div className="space-y-1">
           <div className="font-semibold text-popover-foreground">
             {data.name}
@@ -313,7 +313,7 @@ export function PortfolioTreemap() {
               <span className="text-muted-foreground">Allocation:</span>
               <span className="font-medium text-popover-foreground">{data.value.toFixed(2)}%</span>
             </div>
-            <div className="flex justify-between space-x-6 pt-1 border-t border-border">
+            <div className="flex justify-between space-x-6 pt-1 border-t border-neutral">
               <span className="text-muted-foreground">Performance:</span>
               <span className={cn(
                 "font-semibold",
@@ -334,9 +334,9 @@ export function PortfolioTreemap() {
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
-      <Card className="border-0 shadow-none">
+      <Card className="border-neutral shadow-none p-2">
         <CardHeader className="p-0">
           <CardTitle>Asset Treemap</CardTitle>
           <CardDescription>
@@ -344,46 +344,47 @@ export function PortfolioTreemap() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 mt-2">
-          <div className="h-[480px] relative flex items-center justify-center">
+          <div className="-mx-2 border-b border-foreground" aria-hidden />
+          <div className="-mx-2 h-[480px] relative flex items-center justify-center">
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="text-muted-foreground">Loading portfolio...</span>
             </div>
           </div>
-          {/* Legend spacing placeholder */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
+          {/* Legend - full-width bottom line */}
+          <div className="-mx-2 pt-4 border-t border-foreground">
+            <div className="px-2 flex items-center justify-between">
               <div className="flex flex-col gap-2">
                 <div className="text-xs font-medium text-foreground">
                   Performance Color Scale:
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <div className="w-6 h-4 bg-rose-500"></div>
                     <span className="text-xs text-muted-foreground">-10%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <div className="w-6 h-4 bg-rose-400"></div>
                     <span className="text-xs text-muted-foreground">-5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <div className="w-6 h-4 bg-rose-300"></div>
                     <span className="text-xs text-muted-foreground">-2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <div className="w-6 h-4 bg-muted-foreground"></div>
                     <span className="text-xs text-muted-foreground">±2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <div className="w-6 h-4 bg-emerald-300"></div>
                     <span className="text-xs text-muted-foreground">+2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <div className="w-6 h-4 bg-emerald-400"></div>
                     <span className="text-xs text-muted-foreground">+5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <div className="w-6 h-4 bg-emerald-500"></div>
                     <span className="text-xs text-muted-foreground">+10%</span>
                   </div>
                 </div>
@@ -398,7 +399,7 @@ export function PortfolioTreemap() {
   // Error state
   if (error) {
     return (
-      <Card className="border-0 shadow-none">
+      <Card className="border-neutral shadow-none p-2">
         <CardHeader className="p-0">
           <CardTitle>Asset Treemap</CardTitle>
           <CardDescription>
@@ -406,7 +407,8 @@ export function PortfolioTreemap() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 mt-2">
-          <div className="h-[480px] relative flex flex-col items-center justify-center">
+          <div className="-mx-2 px-2 border-b border-foreground" aria-hidden />
+          <div className="h-[480px] relative flex flex-col items-center justify-center mt-2">
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -425,40 +427,40 @@ export function PortfolioTreemap() {
               Try Again
             </Button>
           </div>
-          {/* Legend spacing placeholder */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
+          {/* Legend - full-width bottom line */}
+          <div className="-mx-2 pt-4 border-t border-foreground">
+            <div className="px-2 flex items-center justify-between">
               <div className="flex flex-col gap-2">
                 <div className="text-xs font-medium text-foreground">
                   Performance Color Scale:
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <div className="w-6 h-4 bg-rose-500"></div>
                     <span className="text-xs text-muted-foreground">-10%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <div className="w-6 h-4 bg-rose-400"></div>
                     <span className="text-xs text-muted-foreground">-5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <div className="w-6 h-4 bg-rose-300"></div>
                     <span className="text-xs text-muted-foreground">-2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <div className="w-6 h-4 bg-muted-foreground"></div>
                     <span className="text-xs text-muted-foreground">±2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <div className="w-6 h-4 bg-emerald-300"></div>
                     <span className="text-xs text-muted-foreground">+2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <div className="w-6 h-4 bg-emerald-400"></div>
                     <span className="text-xs text-muted-foreground">+5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <div className="w-6 h-4 bg-emerald-500"></div>
                     <span className="text-xs text-muted-foreground">+10%</span>
                   </div>
                 </div>
@@ -473,7 +475,7 @@ export function PortfolioTreemap() {
   // Empty state
   if (treemapData.length === 0) {
     return (
-      <Card className="border-0 shadow-none">
+      <Card className="border-neutral shadow-none p-2">
         <CardHeader className="p-0">
           <CardTitle>Asset Treemap</CardTitle>
           <CardDescription>
@@ -481,7 +483,8 @@ export function PortfolioTreemap() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 mt-2">
-          <div className="h-[480px] relative flex flex-col items-center justify-center">
+          <div className="-mx-2 px-2 border-b border-foreground" aria-hidden />
+          <div className="h-[480px] relative flex flex-col items-center justify-center mt-2">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -500,40 +503,40 @@ export function PortfolioTreemap() {
               Start Trading
             </Button>
           </div>
-          {/* Legend spacing placeholder */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
+          {/* Legend - full-width bottom line */}
+          <div className="-mx-2 pt-4 border-t border-foreground">
+            <div className="px-2 flex items-center justify-between">
               <div className="flex flex-col gap-2">
                 <div className="text-xs font-medium text-foreground">
                   Performance Color Scale:
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-500"></div>
+                    <div className="w-6 h-4 bg-rose-500"></div>
                     <span className="text-xs text-muted-foreground">-10%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-400"></div>
+                    <div className="w-6 h-4 bg-rose-400"></div>
                     <span className="text-xs text-muted-foreground">-5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-rose-300"></div>
+                    <div className="w-6 h-4 bg-rose-300"></div>
                     <span className="text-xs text-muted-foreground">-2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                    <div className="w-6 h-4 bg-muted-foreground"></div>
                     <span className="text-xs text-muted-foreground">±2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                    <div className="w-6 h-4 bg-emerald-300"></div>
                     <span className="text-xs text-muted-foreground">+2%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                    <div className="w-6 h-4 bg-emerald-400"></div>
                     <span className="text-xs text-muted-foreground">+5%</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                    <div className="w-6 h-4 bg-emerald-500"></div>
                     <span className="text-xs text-muted-foreground">+10%</span>
                   </div>
                 </div>
@@ -547,15 +550,17 @@ export function PortfolioTreemap() {
 
   // Render treemap
   return (
-    <Card className="border-0 shadow-none">
-      <CardHeader className="p-0">
+    <Card className="border-foreground shadow-none p-2">
+      <CardHeader className="py-2 px-0">
         <CardTitle>Asset Treemap</CardTitle>
         <CardDescription>
           Holdings grouped by asset class • Color shows performance • Size shows allocation
         </CardDescription>
       </CardHeader>
-        <CardContent className="p-0 mt-2">
-      <div className="h-[480px] relative">
+      <CardContent className="p-0 mt-2">
+        {/* Top horizontal line - below title/subtitle, above chart */}
+        <div className="-mx-2 border-b border-foreground" aria-hidden />
+        <div className="-mx-2 h-[480px] relative">
         <ResponsiveContainer width="100%" height="100%">
           <Treemap
             data={treemapData}
@@ -578,14 +583,13 @@ export function PortfolioTreemap() {
           >
             {parentGroups.map((group) => (
               <g key={group.name}>
-                {/* Label background */}
+                {/* Label background - no rounded corners */}
                 <rect
                   x={group.x + 8}
                   y={group.y + 8}
                   width={Math.min(group.name.length * 9 + 16, group.width - 16)}
                   height={26}
                   className="fill-foreground opacity-95"
-                  rx={4}
                 />
                 {/* Label text */}
                 <text
@@ -602,11 +606,11 @@ export function PortfolioTreemap() {
             ))}
           </svg>
         )}
-      </div>
-      
-      {/* Legend and Lesson Button */}
-      <div className="mt-4 pt-4 border-t border-border">
-        <div className="flex items-center justify-between">
+        </div>
+
+        {/* Legend - full-width bottom line */}
+        <div className="-mx-2 pt-4 border-t border-foreground">
+          <div className="px-2 flex items-center justify-between">
           {/* Performance Color Scale Legend */}
           <div className="flex flex-col gap-2">
             <div className="text-xs font-medium text-foreground">
@@ -614,31 +618,31 @@ export function PortfolioTreemap() {
             </div>
             <div className="flex items-center gap-1">
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-rose-500"></div>
+                <div className="w-6 h-4 bg-rose-500"></div>
                 <span className="text-xs text-muted-foreground">-10%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-rose-400"></div>
+                <div className="w-6 h-4 bg-rose-400"></div>
                 <span className="text-xs text-muted-foreground">-5%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-rose-300"></div>
+                <div className="w-6 h-4 bg-rose-300"></div>
                 <span className="text-xs text-muted-foreground">-2%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-muted-foreground"></div>
+                <div className="w-6 h-4 bg-muted-foreground"></div>
                 <span className="text-xs text-muted-foreground">±2%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-emerald-300"></div>
+                <div className="w-6 h-4 bg-emerald-300"></div>
                 <span className="text-xs text-muted-foreground">+2%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-emerald-400"></div>
+                <div className="w-6 h-4 bg-emerald-400"></div>
                 <span className="text-xs text-muted-foreground">+5%</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-6 h-4 rounded bg-emerald-500"></div>
+                <div className="w-6 h-4 bg-emerald-500"></div>
                 <span className="text-xs text-muted-foreground">+10%</span>
               </div>
             </div>
@@ -695,7 +699,7 @@ export function PortfolioTreemap() {
                     </ul>
                   </div>
 
-                  <div className="bg-accent border border-border rounded-lg p-4">
+                  <div className="bg-accent border border-neutral rounded-lg p-4">
                     <h4 className="font-semibold text-foreground mb-2">⚠️ Warning Signs</h4>
                     <ul className="text-sm text-foreground space-y-1 ml-4 list-disc">
                       <li>One asset class = 80%+ of portfolio (over-concentrated!)</li>

@@ -137,7 +137,7 @@ function RankedStockViewer({ allocations, sparklineDataMap, colorScheme }: Omit<
   
   if (allocations.length === 0) {
     return (
-      <Card>
+      <Card className="border-neutral">
         <CardContent className="p-6 text-muted-foreground">
           No stock positions yet.
         </CardContent>
@@ -292,7 +292,7 @@ export function PerformanceHighlights() {
       </div>
 
       {!hasHoldings && !loading && (
-        <Card className="mt-6">
+        <Card className="mt-6 border-neutral">
           <CardContent className="p-6 text-muted-foreground">
             You don't have any stock holdings yet. Make some trades to see highlights here.
           </CardContent>
@@ -300,7 +300,7 @@ export function PerformanceHighlights() {
       )}
 
       {hasHoldings && (daysSinceStart !== undefined && daysSinceStart < 14) && (
-        <Card className="mt-6 border-accent bg-accent/50">
+        <Card className="mt-6 border-neutral bg-accent/50">
           <CardContent className="p-4">
             <div className="text-sm text-foreground font-semibold mb-1">Not enough data yet</div>
             <div className="text-sm text-muted-foreground">

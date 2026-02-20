@@ -37,7 +37,7 @@ export function ExploreWinningPortfolios() {
         {portfolios.map((portfolio) => (
           <div 
             key={portfolio.id}
-            className="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-neutral-800"
+            className="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-neutral-800 border border-neutral"
           >
             <div className="flex flex-col md:flex-row h-full min-h-[400px] relative"> {/* Add 'relative' here */}              
               {/* Left side - Info */}

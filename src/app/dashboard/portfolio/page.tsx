@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { PortfolioTreemap, InvestmentProjectionsCalculator, PerformanceHighlights, ExploreWinningPortfolios } from '@/components/portfolio';
-import { Highlight, CircleNotchIcon, Icon } from '@/components/ui';
+import { CircleNotchIcon, Icon } from '@/components/ui';
 
 export default function PortfolioPage() {
   const { user, isLoading } = useUser();
@@ -30,30 +30,21 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div>
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-mono text-foreground">
-            Your portfolio
-        </h1>
-        {/* <p className="text-foreground mt-2 max-w-prose">
-          In this section you can see all your <Highlight>assets by size and performance</Highlight> in the treemap. Get some advice on what to do with <Highlight>winners, losers</Highlight>, and the assets that don't seem to be doing much at all. Also, check out <Highlight>some past portfolios</Highlight> with an analysis on why they performed so well!
-        </p> */}
-      </div>
+    <div className="space-y-2">
+      {/* Page container: spacing and background only; borders go on individual cards below */}
+      <div className="bg-card flex flex-col">
+        <div className="mb-8">
+          <h1 className="text-2xl font-sans text-foreground">
+            Your Portfolio
+          </h1>
+        </div>
 
-      {/* Portfolio Content */}
-      <div className="space-y-12">
-        {/* Portfolio Treemap */}
-        <PortfolioTreemap />
-
-        {/* Performance Highlights - Full Width */}
-        <PerformanceHighlights />
-
-        {/* Explore Winning Portfolios - Full Width */}
-        <ExploreWinningPortfolios />
-
-        {/* Investment Projections Calculator */}
-        <InvestmentProjectionsCalculator />
+        <div className="space-y-6 pb-8">
+          <PortfolioTreemap />
+          <PerformanceHighlights />
+          <ExploreWinningPortfolios />
+          <InvestmentProjectionsCalculator />
+        </div>
       </div>
     </div>
   );
