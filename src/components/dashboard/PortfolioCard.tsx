@@ -46,7 +46,7 @@ export function PortfolioCard() {
   // Show error state if portfolio data failed to load
   if (error && !loading) {
     return (
-      <Card className="border-border shadow-none">
+      <Card className="border-border shadow-none bg-muted/40">
         <CardContent>
           <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
             <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export function PortfolioCard() {
       <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
         {/* Left: Performance Chart - takes 2/3 width on desktop */}
         <div className="lg:w-2/3">
-          <Card className="border-0 shadow-none h-full flex flex-col">
+          <Card className="border-0 shadow-none h-full flex flex-col bg-muted/40">
             <CardContent className="p-0 flex-1 flex flex-col">
               <PortfolioPerformanceChart
                 portfolioValue={formattedTotalPortfolioValue}

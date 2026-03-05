@@ -99,17 +99,17 @@ export function PortfolioPerformanceChart({
   );
 
   return (
-    <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
+    <div className="border border-border rounded-lg overflow-hidden flex flex-col h-full">
       {error && (
-        <div className="text-sm text-destructive border-b border-foreground bg-destructive/10 p-3">
+        <div className="text-sm text-destructive border-b border-border bg-destructive/10 p-3">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] sm:items-stretch border-b border-foreground">
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] sm:items-stretch border-b border-border">
         {/* Key metrics (left) */}
-        <div className="grid grid-cols-1 sm:border-r sm:border-foreground">
-          <div className="p-3 border-b border-foreground flex flex-col justify-center">
+        <div className="grid grid-cols-1 sm:border-r sm:border-border">
+          <div className="p-3 border-b border-border flex flex-col justify-center">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
               Portfolio Value
             </div>
@@ -133,7 +133,7 @@ export function PortfolioPerformanceChart({
         </div>
 
         {/* Legend (right) */}
-        <div className="grid grid-rows-3 sm:w-56 border-t border-foreground sm:border-t-0 divide-y divide-foreground">
+        <div className="grid grid-rows-3 sm:w-56 border-t border-border sm:border-t-0 divide-y divide-border">
           <LegendRow label="You" value={formatted.legend.you} color={colors.you} />
           <LegendRow label="S&P 500" value={formatted.legend.sp500} color={colors.benchmark} />
           <LegendRow label="Leader" value={formatted.legend.leader} color={colors.leader} />

@@ -113,8 +113,8 @@ export function PortfolioHighlightsCard() {
   // Loading state
   if (isPortfolioLoading) {
     return (
-      <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
-        <div className="flex items-center justify-between border-b border-foreground p-3">
+      <div className="bg-muted/40 border border-border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="flex items-center justify-between border-b border-border p-3">
           <div className="text-xs font-medium uppercase tracking-wide">
             <Skeleton className="h-4 w-32" />
           </div>
@@ -132,8 +132,8 @@ export function PortfolioHighlightsCard() {
   // Empty state - no holdings
   if (!data?.hasHoldings) {
     return (
-      <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
-        <div className="border-b border-foreground p-3">
+      <div className="bg-muted/40 border border-border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="border-b border-border p-3">
           <div className="text-xs font-medium uppercase tracking-wide">Top Performers</div>
         </div>
         <div className="p-6 text-center flex-1 flex items-center justify-center">
@@ -152,15 +152,15 @@ export function PortfolioHighlightsCard() {
       : 'All positions are profitable!';
     
     return (
-      <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
-        <div className="flex items-center justify-between border-b border-foreground">
+      <div className="bg-muted/40 border border-border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="flex items-center justify-between border-b border-border">
           <div className="p-3 flex-1">
             <div className="text-xs font-medium uppercase tracking-wide">
               {view === 'earners' ? 'Top Earners' : 'Worst Performers'}
             </div>
           </div>
           {/* Segmented toggle showing both options */}
-          <div className="flex border-l border-foreground">
+          <div className="flex border-l border-border">
             <Button
               variant="ghost"
               size="sm"
@@ -178,7 +178,7 @@ export function PortfolioHighlightsCard() {
               variant="ghost"
               size="sm"
               onClick={() => setView('worstPerformers')}
-              className={`h-10 w-10 p-0 rounded-none border-l border-foreground transition-colors ${
+              className={`h-10 w-10 p-0 rounded-none border-l border-border transition-colors ${
                 view === 'worstPerformers' 
                   ? 'bg-chart-negative/10 text-chart-negative' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -197,8 +197,8 @@ export function PortfolioHighlightsCard() {
   }
 
   return (
-    <div className="border border-foreground rounded-lg overflow-hidden flex flex-col h-full">
-      <div className="flex items-center justify-between border-b border-foreground">
+    <div className="bg-muted/40 border border-border rounded-lg overflow-hidden flex flex-col h-full">
+      <div className="flex items-center justify-between border-b border-border">
         <div className="p-3 flex-1">
           <div className="text-xs font-medium uppercase tracking-wide">
             {view === 'earners' ? 'Top Earners' : 'Worst Performers'}
@@ -209,7 +209,7 @@ export function PortfolioHighlightsCard() {
           {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
         </div>
         {/* Segmented toggle showing both options */}
-        <div className="flex border-l border-foreground">
+        <div className="flex border-l border-border">
           <Button
             variant="ghost"
             size="sm"
@@ -227,7 +227,7 @@ export function PortfolioHighlightsCard() {
             variant="ghost"
             size="sm"
             onClick={() => setView('worstPerformers')}
-            className={`h-10 w-10 p-0 rounded-none border-l border-foreground transition-colors ${
+            className={`h-10 w-10 p-0 rounded-none border-l border-border transition-colors ${
               view === 'worstPerformers' 
                 ? 'bg-chart-negative/10 text-chart-negative' 
                 : 'text-muted-foreground hover:text-foreground'

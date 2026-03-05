@@ -22,7 +22,7 @@ export function WatchlistTable({ items, quotes, holdings }: WatchlistTableProps)
   const router = useRouter();
 
   return (
-    <div className="bg-card rounded-b-lg overflow-hidden">
+    <div className="bg-muted/40 rounded-b-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>

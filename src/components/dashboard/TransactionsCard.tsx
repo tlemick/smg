@@ -35,7 +35,7 @@ export function TransactionsCard({
   });
 
   return (
-    <div className={`bg-card pt-16 ${className}`}>
+    <div className={`pt-16 ${className}`}>
       {/* Header */}
       {showHeader && (
         <div className="mb-8">
@@ -43,8 +43,8 @@ export function TransactionsCard({
         </div>
       )}
 
-      {/* Content */}
-      <div>
+      {/* Content card */}
+      <div className="bg-muted/40 border border-border rounded-lg p-6">
         {/* Loading State */}
         {isLoading && (
           <div className="space-y-6">

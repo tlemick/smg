@@ -124,32 +124,36 @@ export function WatchlistsContainer() {
     }
   };
 
-  // Loading state
+  // No-user state: header outside, content card for message
   if (!user) {
     return (
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h5 className="text-xs font-bold text-foreground mb-4">Watchlists</h5>
-        <p className="text-muted-foreground text-center py-8">
-          Please log in to view your watchlists
-        </p>
+      <div className="pt-16">
+        <div className="bg-muted/40 border border-border rounded-lg p-6">
+          <h5 className="text-xs font-bold text-foreground mb-4">Watchlists</h5>
+          <p className="text-muted-foreground text-center py-8">
+            Please log in to view your watchlists
+          </p>
+        </div>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="bg-card pt-16">
-        <div className="flex items-center justify-between mb-6">
+      <div className="pt-16 flex flex-col gap-6">
+        <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-32" />
           <div className="flex items-center space-x-3">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-8 w-20" />
           </div>
         </div>
-        <div className="space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
+        <div className="bg-muted/40 border border-border rounded-lg p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -157,25 +161,27 @@ export function WatchlistsContainer() {
 
   if (error) {
     return (
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h5 className="text-xs font-bold text-foreground mb-4">Watchlists</h5>
-        <div className="text-center py-8">
-          <p className="text-destructive mb-2">Error loading watchlists</p>
-          <p className="text-muted-foreground text-sm">{error}</p>
+      <div className="pt-16">
+        <div className="bg-muted/40 border border-border rounded-lg p-6">
+          <h5 className="text-xs font-bold text-foreground mb-4">Watchlists</h5>
+          <div className="text-center py-8">
+            <p className="text-destructive mb-2">Error loading watchlists</p>
+            <p className="text-muted-foreground text-sm">{error}</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-card pt-16 flex flex-col gap-6">
+    <div className="pt-16 flex flex-col gap-6">
       <WatchlistHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onCreateNew={handleOpenCreateModal}
       />
 
-      {/* Watchlists */}
+      {/* Watchlists: each WatchlistItem is its own card */}
       {filteredWatchlists.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">
