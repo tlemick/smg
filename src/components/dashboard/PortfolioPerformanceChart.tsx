@@ -5,7 +5,7 @@ import { usePortfolioPerformanceSeries } from '@/hooks/usePortfolioPerformanceSe
 import { useChartColors } from '@/hooks/useChartColors';
 import { Formatters } from '@/lib/financial';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ResponsiveContainer, LineChart, Line, Tooltip, YAxis, XAxis, ReferenceLine } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, Tooltip, YAxis, XAxis, ReferenceLine, ReferenceArea } from 'recharts';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -98,6 +98,31 @@ export function PortfolioPerformanceChart({
     [resolvedColors]
   );
 
+  // Weekend regions for visual indicator (trading week vs weekend)
+  const weekendAreas = useMemo(() => {
+    const areas: { x1: string; x2: string }[] = [];
+    for (let i = 0; i < points.length; i++) {
+      const day = points[i].dateObj.getUTCDay();
+      if (day !== 0 && day !== 6) continue;
+      let j = i;
+      while (j + 1 < points.length) {
+        const nextDay = points[j + 1].dateObj.getUTCDay();
+        if (nextDay !== 0 && nextDay !== 6) break;
+        j++;
+      }
+      let x1 = points[i].date;
+      let x2 = points[j].date;
+      if (x1 === x2) {
+        if (j < points.length - 1) x2 = points[j + 1].date;
+        else if (i > 0) x1 = points[i - 1].date;
+        else continue;
+      }
+      areas.push({ x1, x2 });
+      i = j;
+    }
+    return areas;
+  }, [points]);
+
   return (
     <div className="border border-border rounded-lg overflow-hidden flex flex-col h-full">
       {error && (
@@ -152,6 +177,17 @@ export function PortfolioPerformanceChart({
             <LineChart data={points} margin={{ top: 0, left: 0, right: 0, bottom: 0 }}>
               <XAxis dataKey="date" hide />
               <YAxis hide domain={chartConfig.yDomain} tickFormatter={(v) => `${v}%`} />
+
+              {/* Weekend background bands - slightly darker to show trading week vs weekend */}
+              {weekendAreas.map((area, idx) => (
+                <ReferenceArea
+                  key={`weekend-${idx}`}
+                  x1={area.x1}
+                  x2={area.x2}
+                  fill="rgba(0,0,0,0.06)"
+                  fillOpacity={1}
+                />
+              ))}
 
               {/* Horizontal guide lines (no bottom edge line) */}
               {chartConfig.gridYValues.map((y, idx) => (
