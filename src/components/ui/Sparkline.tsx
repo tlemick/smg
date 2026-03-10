@@ -106,10 +106,10 @@ export function Sparkline({
         </AreaChart>
       </ResponsiveContainer>
       
-      {/* Labels positioned at the start of lines */}
+      {/* Labels: cost at end of line (right), price at start (left) */}
       {referenceLine !== undefined && (
         <div 
-          className="absolute left-0 px-1 py-0.5 rounded text-[9px] font-medium bg-muted/80 text-muted-foreground border border-muted-foreground/30"
+          className="absolute right-0 px-1 py-0.5 rounded text-[9px] font-medium bg-muted/80 text-muted-foreground border border-muted-foreground/30"
           style={{ top: `${Math.max(5, Math.min(85, referenceLinePosition))}%`, transform: 'translateY(-50%)' }}
         >
           COST
