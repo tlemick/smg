@@ -218,8 +218,9 @@ export function PerformanceHighlights() {
         setSparklineLoading(true);
 
         // First, fetch the first purchase date for each stock
-        let purchaseDates: Record<string, string> = {};
-        
+        let firstPurchaseMap: Record<string, { date: string; price: number }> = {};
+        const fallbackPeriod1 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
         try {
           const purchaseDatesResponse = await fetch('/api/user/portfolio/first-purchase-dates', {
             method: 'POST',
@@ -232,7 +233,7 @@ export function PerformanceHighlights() {
           if (purchaseDatesResponse.ok) {
             const purchaseDatesData = await purchaseDatesResponse.json();
             if (purchaseDatesData.success && purchaseDatesData.data) {
-              purchaseDates = purchaseDatesData.data;
+              firstPurchaseMap = purchaseDatesData.data;
             }
           }
         } catch (err) {
@@ -242,7 +243,7 @@ export function PerformanceHighlights() {
         // Build batch chart requests
         const requests = stockAllocations.map(a => ({
           ticker: a.asset.ticker,
-          period1: purchaseDates[a.asset.ticker] || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          period1: firstPurchaseMap[a.asset.ticker]?.date ?? fallbackPeriod1,
           period2: new Date().toISOString(),
         }));
 

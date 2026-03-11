@@ -26,8 +26,9 @@ interface FirstPurchaseDatesRequest {
 }
 
 /**
- * Get the first purchase date for each ticker in the user's portfolio
- * Returns a map of ticker -> ISO date string
+ * Get the first purchase date and price for each ticker in the user's portfolio
+ * Returns a map of ticker -> { date: ISO string, price: number }
+ * Used for "Price Change (since first buy)" to align with actual transaction price
  */
 export async function POST(request: NextRequest) {
   try {
@@ -71,8 +72,8 @@ export async function POST(request: NextRequest) {
 
     const assetMap = new Map(assets.map(a => [a.ticker, a.id]));
 
-    // For each ticker, find the first BUY transaction
-    const firstPurchaseDates: Record<string, string> = {};
+    // For each ticker, find the first BUY transaction (date + price)
+    const firstPurchaseData: Record<string, { date: string; price: number }> = {};
 
     for (const ticker of tickers) {
       const upperTicker = ticker.toUpperCase();
@@ -94,17 +95,21 @@ export async function POST(request: NextRequest) {
         },
         select: {
           date: true,
+          price: true,
         },
       });
 
       if (firstTransaction) {
-        firstPurchaseDates[upperTicker] = firstTransaction.date.toISOString();
+        firstPurchaseData[upperTicker] = {
+          date: firstTransaction.date.toISOString(),
+          price: firstTransaction.price,
+        };
       }
     }
 
     return NextResponse.json({
       success: true,
-      data: firstPurchaseDates,
+      data: firstPurchaseData,
     });
   } catch (error: any) {
     console.error('Error fetching first purchase dates:', error);

@@ -3,7 +3,8 @@ import { ApiClient, ApiError } from '@/lib/api';
 import { usePortfolioOverview } from '@/hooks/usePortfolioOverview';
 import type { PortfolioAllocation } from '@/types';
 
-type PurchaseDatesMap = Record<string, string>;
+type FirstPurchaseData = { date: string; price: number };
+type FirstPurchaseMap = Record<string, FirstPurchaseData>;
 
 // API route response structure (what /api/chart/batch returns)
 type BatchChartApiResponse = {
@@ -74,17 +75,16 @@ export function usePortfolioHighlights() {
       const allAllocations = [...topEarners, ...topWorstPerformers];
       const uniqueTickers = Array.from(new Set(allAllocations.map((a) => a.asset.ticker)));
 
-      // Prefer per-ticker first purchase date; fallback to 30d
-      let purchaseDates: PurchaseDatesMap = {};
+      // Prefer per-ticker first purchase date + price; fallback to 30d
+      let firstPurchaseMap: FirstPurchaseMap = {};
       try {
-        const purchaseDatesResp = await ApiClient.post<PurchaseDatesMap>(
+        const resp = await ApiClient.post<FirstPurchaseMap>(
           '/api/user/portfolio/first-purchase-dates',
           { tickers: uniqueTickers },
-          // This endpoint is optional; silence console noise on failure
           { skipErrorHandling: true, retry: false }
         );
-        if (purchaseDatesResp.success && purchaseDatesResp.data) {
-          purchaseDates = purchaseDatesResp.data;
+        if (resp.success && resp.data) {
+          firstPurchaseMap = resp.data;
         }
       } catch (err) {
         // Fall back silently if purchase dates unavailable
@@ -95,7 +95,7 @@ export function usePortfolioHighlights() {
 
       const requests = uniqueTickers.map((ticker) => ({
         ticker,
-        period1: purchaseDates[ticker] || fallbackPeriod1,
+        period1: firstPurchaseMap[ticker]?.date ?? fallbackPeriod1,
         period2: nowIso,
       }));
 
@@ -124,9 +124,18 @@ export function usePortfolioHighlights() {
       const nextMap: Record<string, SparklineMetadata> = {};
       apiData.results.forEach((r) => {
         if (r.success && r.data) {
+          const firstBuyData = firstPurchaseMap[r.ticker];
+          const lastPrice = r.lastPrice ?? (r.data?.length ? r.data[r.data.length - 1] : undefined);
+
+          // Use transaction price for Price Change when available (aligns with Your Gain)
+          let priceChangePercent = r.priceChangePercent;
+          if (firstBuyData?.price != null && lastPrice != null && firstBuyData.price > 0) {
+            priceChangePercent = ((lastPrice - firstBuyData.price) / firstBuyData.price) * 100;
+          }
+
           nextMap[r.ticker] = {
             data: r.data,
-            priceChangePercent: r.priceChangePercent,
+            priceChangePercent,
             firstPrice: r.firstPrice,
             lastPrice: r.lastPrice,
           };

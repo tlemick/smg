@@ -8,8 +8,8 @@
 Verification against real app data (UNH holding) confirms:
 
 1. **Your Gain** — Calculation is **correct**. Uses cost basis from holdings vs current quote.
-2. **Price Change** — The label "(since first buy)" is **incorrect**. The value shown is actually **last 30 days** due to an auth bug in the first-purchase-dates API.
-3. **Root cause of discrepancy** — Different time periods and reference prices. When auth is fixed, "since first buy" would still differ from "Your Gain" when cost basis ≠ first trading day close (e.g., adjusted vs unadjusted close, or date boundaries).
+2. **Price Change** — Auth fixed (first-purchase-dates now uses `user_session`). The value shown is **correctly** "since first buy" when the API succeeds.
+3. **Aligned reference** — Price Change now uses the **transaction price** (first buy) instead of the first close. With a single buy, Your Gain and Price Change match. With multiple buys, they differ by design (avg cost vs first buy price).
 
 ---
 
@@ -107,25 +107,13 @@ So cost basis and transaction price are consistent at seed time. Any mismatch wi
 
 ## Recommendations
 
-### 1. Fix first-purchase-dates auth (high priority)
+### 1. ~~Fix first-purchase-dates auth~~ ✅ DONE
 
-Use `user_session` like other routes instead of `auth_token`:
+First-purchase-dates now uses `user_session` like other routes. "Price Change" correctly uses the first-purchase period.
 
-```typescript
-// first-purchase-dates/route.ts
-const sessionCookie = cookieStore.get('user_session');
-if (!sessionCookie) return null;
-const user = JSON.parse(sessionCookie.value);
-```
+### 2. ~~Align cost basis and chart reference price~~ ✅ DONE
 
-This will make "Price Change" use the real first-purchase period and align the label with the calculation.
-
-### 2. Align cost basis and chart reference price (medium priority)
-
-To reduce divergence between "Your Gain" and "Price Change (since first buy)":
-
-- Use the same price source for both (e.g., `close` vs `adjustedClose`).
-- Or derive the chart’s first price from the transaction’s price when it exists, instead of from `DailyAggregate`.
+Price Change now uses the transaction price from the first-purchase-dates API. With a single buy, both metrics use the same reference.
 
 ### 3. Clarify labels (low priority)
 

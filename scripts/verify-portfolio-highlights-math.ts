@@ -106,19 +106,17 @@ async function main() {
   console.log('   unrealizedPnLPercent =', unrealizedPnLPercent.toFixed(2) + '%');
   console.log('');
 
-  // 5. Chart period: first-purchase-dates uses auth_token (JWT) but login sets user_session
-  //    → first-purchase-dates returns 401 → hook falls back to 30 days
+  // 5. Chart period: first-purchase-dates now uses user_session (fixed)
+  //    → Returns actual first buy date; chart uses that period
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const now = new Date();
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  PRICE CHANGE (from chart/batch logic)');
+  console.log('  PRICE CHANGE (chart/batch) — 30-day FALLBACK only if API fails');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('   ⚠️  AUTH BUG: first-purchase-dates uses auth_token (JWT)');
-  console.log('      but login only sets user_session → always 401');
-  console.log('      → Hook falls back to 30-day period (not "since first buy")');
-  console.log('   Chart period used: 30 days ago → now');
-  console.log('   period1:', thirtyDaysAgo.toISOString().slice(0, 10));
+  console.log('   With auth fixed, first-purchase-dates returns actual dates.');
+  console.log('   Fallback (30d) used only if API fails.');
+  console.log('   period1 (30d fallback):', thirtyDaysAgo.toISOString().slice(0, 10));
   console.log('   period2:', now.toISOString().slice(0, 10));
   console.log('');
 
@@ -169,17 +167,16 @@ async function main() {
     .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
     .map((h: any) => h.close);
 
-  let priceChangeSinceFirstBuy: number | null = null;
-  let firstCloseOnOrAfterBuy: number | null = null;
-  if (closesSinceFirst.length >= 2) {
-    firstCloseOnOrAfterBuy = closesSinceFirst[0];
-    const lastClose = closesSinceFirst[closesSinceFirst.length - 1];
-    priceChangeSinceFirstBuy =
-      ((lastClose - firstCloseOnOrAfterBuy) / firstCloseOnOrAfterBuy) * 100;
-  }
+  // With transaction-price fix: Price Change = (lastClose - txPrice) / txPrice * 100
+  const txPrice = firstTx.price;
+  const lastCloseForSinceFirstBuy = closesSinceFirst.length > 0 ? closesSinceFirst[closesSinceFirst.length - 1] : currentPrice;
+  const priceChangeSinceFirstBuy = txPrice > 0
+    ? ((lastCloseForSinceFirstBuy - txPrice) / txPrice) * 100
+    : null;
+  const firstCloseOnOrAfterBuy = closesSinceFirst.length >= 2 ? closesSinceFirst[0] : null;
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  PRICE CHANGE "since first buy" (if auth worked)');
+  console.log('  PRICE CHANGE "since first buy" (using transaction price)');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('   First buy date:', firstBuyDate.toISOString().slice(0, 10));
   if (firstCloseOnOrAfterBuy != null) {
@@ -213,15 +210,15 @@ async function main() {
 
   // 9. Summary
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  SUMMARY');
+  console.log('  SUMMARY (what user sees with auth fixed)');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('   Your Gain:      ', unrealizedPnLPercent.toFixed(2) + '%', '($' + unrealizedPnL.toFixed(2) + ')');
-  console.log('   Price Change:   ', priceChangePercent != null ? priceChangePercent.toFixed(2) + '% (30d)' : 'N/A');
-  console.log('   Since first buy:', priceChangeSinceFirstBuy != null ? priceChangeSinceFirstBuy.toFixed(2) + '%' : 'N/A');
+  console.log('   Your Gain:       ', unrealizedPnLPercent.toFixed(2) + '%', '($' + unrealizedPnL.toFixed(2) + ')');
+  console.log('   Price Change:    ', priceChangeSinceFirstBuy != null ? priceChangeSinceFirstBuy.toFixed(2) + '% (since first buy)' : 'N/A');
+  console.log('   (30d fallback):  ', priceChangePercent != null ? priceChangePercent.toFixed(2) + '%' : 'N/A');
   console.log('');
-  console.log('   ✅ Your Gain uses: Holding.averagePrice (cost basis) vs current quote');
-  console.log('   ⚠️  Price Change uses: 30-day period (auth bug) or first-purchase date');
-  console.log('   ⚠️  Fix: first-purchase-dates should use user_session like other routes');
+  console.log('   ✅ Your Gain: Holding.averagePrice (cost basis) vs current quote');
+  console.log('   ✅ Price Change: transaction price vs last close (aligned with Your Gain)');
+  console.log('   ℹ️  With single buy: both use same reference (tx price = cost basis)');
   console.log('');
 }
 
