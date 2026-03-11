@@ -1,26 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
 import { prisma } from '@/prisma/client';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
+/**
+ * Helper function to get authenticated user from session cookie
+ * Matches pattern used by overview and other user routes
+ */
 async function getAuthenticatedUser(): Promise<{ id: string; email: string; name: string; role: string } | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  
-  if (!token) {
-    return null;
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; name: string; role: string };
-    return {
-      id: decoded.userId,
-      email: decoded.email,
-      name: decoded.name,
-      role: decoded.role,
-    };
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('user_session');
+
+    if (!sessionCookie) {
+      return null;
+    }
+
+    return JSON.parse(sessionCookie.value);
   } catch (error) {
     return null;
   }
